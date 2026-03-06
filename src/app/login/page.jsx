@@ -84,8 +84,10 @@ function Login() {
     setError('');
     setSuccess('');
     setIsLoading(true);
+    console.log(formData.email, formData.password)
 
     try {
+      console.log("1")
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -95,9 +97,10 @@ function Login() {
           password: formData.password,
           role // Send selected role to set activeRole
         })
-      });
-
+      })
+      console.log("2")
       const data = await response.json();
+      console.log("data",data)
 
       if (!response.ok) {
         // Handle specific error cases
@@ -211,7 +214,7 @@ function Login() {
           {/* Success Message */}
           {success && (
             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
               <p className="text-sm text-green-600">{success}</p>
             </div>
           )}
@@ -219,7 +222,7 @@ function Login() {
           {/* Error Message */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
