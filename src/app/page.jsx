@@ -3,13 +3,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles, TrendingUp, Target, Zap, Users, MessageSquare, Search, Star, Award,
   Play, ChevronDown, ChevronRight, Check, Briefcase, ArrowRight, X, Globe, Rocket,
-  ChevronLeft, Package, UserCheck, MapPin, Menu, FileText
+  ChevronLeft, Package, UserCheck, MapPin, Menu, FileText, User, LogOut, LayoutDashboard, Settings
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 function HomePage() {
   const router = useRouter();
+  const { isAuthenticated, user, logout } = useAuth();
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [questionIndex, setQuestionIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
@@ -19,10 +21,28 @@ function HomePage() {
   const [activeTab, setActiveTab] = useState('pre-launch');
   const [openFAQ, setOpenFAQ] = useState(null);
   const [showSignInDropdown, setShowSignInDropdown] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [dynamicWordIndex, setDynamicWordIndex] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const signInRef = useRef(null);
+  const profileRef = useRef(null);
+
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setShowProfileDropdown(false);
+    router.push('/');
+  };
+
+  const getDashboardPath = () => {
+    if (user?.activeRole === 'expert') return '/expert-dashboard';
+    return '/business-dashboard';
+  };
 
   // Dynamic words for Slide 2
   const dynamicWords = [
@@ -64,6 +84,9 @@ function HomePage() {
     const handleClickOutside = (event) => {
       if (signInRef.current && !signInRef.current.contains(event.target)) {
         setShowSignInDropdown(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowProfileDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -212,7 +235,7 @@ function HomePage() {
   const prevSlide = () => setHeroSlide((prev) => (prev - 1 + 2) % 2);
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-hidden">
+    <div className="min-h-screen bg-gray-50">
       {/* Global Animated Background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-violet-50"></div>
@@ -228,6 +251,9 @@ function HomePage() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-300/10 rounded-full blur-3xl animate-pulse-slow animation-delay-2000"></div>
         <div className="absolute top-1/2 right-1/3 w-64 h-64 bg-blue-300/10 rounded-full blur-3xl animate-float"></div>
       </div>
+
+      {/* Content wrapper — sits above the fixed background in CSS stacking order */}
+      <div className="relative">
 
       {/* ==================== NAVIGATION HEADER ==================== */}
       <div className="relative z-50">
@@ -257,50 +283,94 @@ function HomePage() {
 
             {/* Auth Buttons */}
             <div className="hidden md:flex items-center gap-3">
-              <div className="relative" ref={signInRef}>
-                <button
-                  onClick={() => setShowSignInDropdown(!showSignInDropdown)}
-                  className="px-4 py-2 text-gray-900 font-medium transition-all border border-gray-300 rounded-xl hover:border-indigo-300 hover:bg-indigo-50 flex items-center gap-2 group"
-                >
-                  Sign In
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showSignInDropdown ? 'rotate-180' : ''}`} />
-                </button>
-                {showSignInDropdown && (
-                  <div className="absolute right-0 mt-3 w-56 bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl shadow-indigo-500/10 overflow-hidden animate-slideDown">
+              {isAuthenticated ? (
+                <div className="relative" ref={profileRef}>
+                  <button
+                    onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-all group"
+                  >
+                    <div className="w-9 h-9 bg-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-md group-hover:shadow-indigo-500/30 transition-shadow">
+                      {getInitials(user?.name)}
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${showProfileDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+                  {showProfileDropdown && (
+                    <div className="absolute right-0 mt-3 w-52 bg-white border border-gray-200 rounded-2xl shadow-2xl shadow-indigo-500/10 overflow-hidden animate-slideDown z-50">
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="font-semibold text-gray-900 text-sm truncate">{user?.name || 'User'}</p>
+                        <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                      </div>
+                      <button
+                        onClick={() => { router.push(getDashboardPath()); setShowProfileDropdown(false); }}
+                        className="w-full px-4 py-3 text-left text-gray-700 hover:bg-indigo-50 flex items-center gap-3 transition-all text-sm"
+                      >
+                        <LayoutDashboard className="w-4 h-4 text-indigo-500" /> Dashboard
+                      </button>
+                      <button
+                        onClick={() => { router.push('/preferences'); setShowProfileDropdown(false); }}
+                        className="w-full px-4 py-3 text-left text-gray-700 hover:bg-indigo-50 flex items-center gap-3 transition-all text-sm"
+                      >
+                        <Settings className="w-4 h-4 text-indigo-500" /> Settings
+                      </button>
+                      <div className="border-t border-gray-100">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 flex items-center gap-3 transition-all text-sm"
+                        >
+                          <LogOut className="w-4 h-4" /> Logout
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="relative" ref={signInRef}>
                     <button
-                      onClick={() => { router.push('/login?role=owner'); setShowSignInDropdown(false); }}
-                      className="w-full px-4 py-4 text-left text-gray-900 hover:bg-indigo-50 flex items-center gap-3 transition-all group"
+                      onClick={() => setShowSignInDropdown(!showSignInDropdown)}
+                      className="px-4 py-2 text-gray-900 font-medium transition-all border border-gray-300 rounded-xl hover:border-indigo-300 hover:bg-indigo-50 flex items-center gap-2 group"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Briefcase className="w-5 h-5 text-indigo-500" />
-                      </div>
-                      <div>
-                        <div className="font-medium">As Business</div>
-                        <div className="text-xs text-gray-500">Hire experts & manage projects</div>
-                      </div>
+                      Sign In
+                      <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showSignInDropdown ? 'rotate-180' : ''}`} />
                     </button>
-                    <button
-                      onClick={() => { router.push('/login?role=expert'); setShowSignInDropdown(false); }}
-                      className="w-full px-4 py-4 text-left text-gray-900 hover:bg-emerald-50 flex items-center gap-3 transition-all border-t border-gray-200 group"
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <UserCheck className="w-5 h-5 text-emerald-500" />
+                    {showSignInDropdown && (
+                      <div className="absolute right-0 mt-3 w-56 bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl shadow-indigo-500/10 overflow-hidden animate-slideDown">
+                        <button
+                          onClick={() => { router.push('/login?role=owner'); setShowSignInDropdown(false); }}
+                          className="w-full px-4 py-4 text-left text-gray-900 hover:bg-indigo-50 flex items-center gap-3 transition-all group"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Briefcase className="w-5 h-5 text-indigo-500" />
+                          </div>
+                          <div>
+                            <div className="font-medium">As Business</div>
+                            <div className="text-xs text-gray-500">Hire experts & manage projects</div>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => { router.push('/login?role=expert'); setShowSignInDropdown(false); }}
+                          className="w-full px-4 py-4 text-left text-gray-900 hover:bg-emerald-50 flex items-center gap-3 transition-all border-t border-gray-200 group"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <UserCheck className="w-5 h-5 text-emerald-500" />
+                          </div>
+                          <div>
+                            <div className="font-medium">As Expert</div>
+                            <div className="text-xs text-gray-500">Find work & grow your career</div>
+                          </div>
+                        </button>
                       </div>
-                      <div>
-                        <div className="font-medium">As Expert</div>
-                        <div className="text-xs text-gray-500">Find work & grow your career</div>
-                      </div>
-                    </button>
+                    )}
                   </div>
-                )}
-              </div>
-              <button
-                onClick={() => router.push('/register')}
-                className="relative px-5 py-2 bg-indigo-600 rounded-xl text-white font-medium transition-all hover:scale-105 hover:shadow-xl hover:shadow-indigo-500/20 group overflow-hidden"
-              >
-                <span className="relative z-10">Get Started</span>
-                <div className="absolute inset-0 bg-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              </button>
+                  <button
+                    onClick={() => router.push('/register')}
+                    className="relative px-5 py-2 bg-indigo-600 rounded-xl text-white font-medium transition-all hover:scale-105 hover:shadow-xl hover:shadow-indigo-500/20 group overflow-hidden"
+                  >
+                    <span className="relative z-10">Get Started</span>
+                    <div className="absolute inset-0 bg-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -328,18 +398,37 @@ function HomePage() {
                   </Link>
                 ))}
                 <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={() => { router.push('/login'); setMobileMenuOpen(false); }}
-                    className="flex-1 px-4 py-2 text-gray-900 font-medium border border-gray-300 rounded-lg"
-                  >
-                    Sign In
-                  </button>
-                  <button
-                    onClick={() => { router.push('/register'); setMobileMenuOpen(false); }}
-                    className="flex-1 px-4 py-2 bg-indigo-600 rounded-lg text-white font-medium"
-                  >
-                    Get Started
-                  </button>
+                  {isAuthenticated ? (
+                    <>
+                      <button
+                        onClick={() => { router.push(getDashboardPath()); setMobileMenuOpen(false); }}
+                        className="flex-1 px-4 py-2 bg-indigo-600 rounded-lg text-white font-medium flex items-center justify-center gap-2"
+                      >
+                        <LayoutDashboard className="w-4 h-4" /> Dashboard
+                      </button>
+                      <button
+                        onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                        className="flex-1 px-4 py-2 text-red-600 font-medium border border-red-200 rounded-lg flex items-center justify-center gap-2"
+                      >
+                        <LogOut className="w-4 h-4" /> Logout
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => { router.push('/login'); setMobileMenuOpen(false); }}
+                        className="flex-1 px-4 py-2 text-gray-900 font-medium border border-gray-300 rounded-lg"
+                      >
+                        Sign In
+                      </button>
+                      <button
+                        onClick={() => { router.push('/register'); setMobileMenuOpen(false); }}
+                        className="flex-1 px-4 py-2 bg-indigo-600 rounded-lg text-white font-medium"
+                      >
+                        Get Started
+                      </button>
+                    </>
+                  )}
                 </div>
               </nav>
             </div>
@@ -693,7 +782,7 @@ function HomePage() {
       </div>
 
       {/* Pain Points */}
-      <section className="py-10 sm:py-12 px-4 sm:px-6">
+      <section className="pt-10 sm:pt-12 pb-4 sm:pb-6 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {painPoints.map((point, index) => (
@@ -715,7 +804,7 @@ function HomePage() {
       </section>
 
       {/* Platform Capabilities */}
-      <section className="py-10 sm:py-12 px-4 sm:px-6">
+      <section className="pt-10 sm:pt-12 pb-4 sm:pb-6 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-2 sm:mb-3">Platform Capabilities</h2>
           <p className="text-gray-500 text-sm sm:text-base text-center mb-6 sm:mb-8">Everything you need to execute your go-to-market strategy</p>
@@ -760,7 +849,7 @@ function HomePage() {
       </section>
 
       {/* Use Cases */}
-      <section className="py-10 sm:py-12 px-4 sm:px-6">
+      <section className="py-6 sm:py-8 px-4 sm:px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-6 sm:mb-8">Solutions for Every Stage</h2>
           <div className="flex justify-center gap-2 sm:gap-3 mb-6 sm:mb-8 flex-wrap">
@@ -768,19 +857,19 @@ function HomePage() {
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
-                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base transition-all ${activeTab === key ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-white text-gray-500 hover:text-gray-900 hover:bg-gray-100 border border-gray-200'}`}
+                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base transition-all ${activeTab === key ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-gray-100 text-gray-700 hover:text-gray-900 hover:bg-gray-200 border border-gray-300'}`}
               >
                 {stage.title}
               </button>
             ))}
           </div>
-          <div className="bg-white border border-gray-200 shadow-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6">
+          <div className="bg-gray-50 border border-gray-300 shadow-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6">
             <div className="space-y-4 sm:space-y-6">
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">Typical Challenges</h3>
                 <ul className="space-y-1.5 sm:space-y-2">
                   {currentStage.challenges.map((c, i) => (
-                    <li key={i} className="flex items-start gap-2 sm:gap-3 text-gray-600 text-xs sm:text-sm">
+                    <li key={i} className="flex items-start gap-2 sm:gap-3 text-gray-700 text-xs sm:text-sm">
                       <X className="w-3 sm:w-4 h-3 sm:h-4 text-red-500 flex-shrink-0 mt-0.5" />{c}
                     </li>
                   ))}
@@ -790,19 +879,19 @@ function HomePage() {
                 <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">Recommended Experts</h3>
                 <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   {currentStage.experts.map((e, i) => (
-                    <span key={i} className="px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-700 text-xs sm:text-sm font-medium">{e}</span>
+                    <span key={i} className="px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-100 border border-indigo-300 rounded-lg text-indigo-800 text-xs sm:text-sm font-medium">{e}</span>
                   ))}
                 </div>
               </div>
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">90-Day Plan</h3>
-                <p className="text-gray-600 text-xs sm:text-base">{currentStage.plan}</p>
+                <p className="text-gray-700 text-xs sm:text-base">{currentStage.plan}</p>
               </div>
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">Expected Outcomes</h3>
-                <p className="text-green-600 font-semibold text-sm sm:text-base">{currentStage.outcomes}</p>
+                <p className="text-green-700 font-semibold text-sm sm:text-base">{currentStage.outcomes}</p>
               </div>
-              <button className="text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-2 group text-xs sm:text-sm">
+              <button className="text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-2 group text-xs sm:text-sm">
                 Read Case Study: {currentStage.caseStudy} <ChevronRight className="w-3 sm:w-4 h-3 sm:h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
@@ -811,7 +900,7 @@ function HomePage() {
       </section>
 
       {/* Expert Categories */}
-      <section className="py-10 sm:py-12 px-4 sm:px-6">
+      <section className="py-6 sm:py-8 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-6 sm:mb-8">Expert Categories</h2>
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
@@ -843,7 +932,7 @@ function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-10 sm:py-12 px-4 sm:px-6">
+      <section className="py-6 sm:py-8 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-6 sm:mb-8">Trusted by Growing Businesses</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
@@ -870,7 +959,7 @@ function HomePage() {
       </section>
 
       {/* Pricing */}
-      <section className="py-10 sm:py-12 px-4 sm:px-6">
+      <section className="pt-10 sm:pt-12 pb-4 sm:pb-6 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-2 sm:mb-3">Transparent Pricing</h2>
           <p className="text-gray-500 text-sm sm:text-base text-center mb-6 sm:mb-8">No hidden fees. Pay for results.</p>
@@ -906,19 +995,19 @@ function HomePage() {
       </section>
 
       {/* FAQ */}
-      <section className="py-10 sm:py-12 px-4 sm:px-6">
+      <section className="py-6 sm:py-8 px-4 sm:px-6 bg-white">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-6 sm:mb-8">Frequently Asked Questions</h2>
           <div className="space-y-2 sm:space-y-3">
             {faqs.map((faq, i) => (
-              <div key={i} className="bg-white border border-gray-200 shadow-sm rounded-xl sm:rounded-2xl overflow-hidden hover:border-indigo-200 transition-all">
-                <button onClick={() => toggleFAQ(i)} className="w-full p-4 sm:p-5 flex items-center justify-between hover:bg-gray-50 text-left transition-all">
+              <div key={i} className="bg-gray-50 border border-gray-300 shadow-sm rounded-xl sm:rounded-2xl overflow-hidden hover:border-indigo-400 transition-all">
+                <button onClick={() => toggleFAQ(i)} className="w-full p-4 sm:p-5 flex items-center justify-between hover:bg-gray-100 text-left transition-all">
                   <span className="font-semibold text-gray-900 text-sm sm:text-base pr-4">{faq.question}</span>
-                  <ChevronDown className={`w-4 sm:w-5 h-4 sm:h-5 text-indigo-500 transition-transform duration-300 flex-shrink-0 ${openFAQ === i ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 sm:w-5 h-4 sm:h-5 text-indigo-600 transition-transform duration-300 flex-shrink-0 ${openFAQ === i ? 'rotate-180' : ''}`} />
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openFAQ === i ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
-                  <div className="p-4 sm:p-5 pt-0 border-t border-gray-200">
-                    <p className="text-gray-600 text-xs sm:text-sm">{faq.answer}</p>
+                  <div className="p-4 sm:p-5 pt-0 border-t border-gray-300">
+                    <p className="text-gray-700 text-xs sm:text-sm">{faq.answer}</p>
                   </div>
                 </div>
               </div>
@@ -975,7 +1064,7 @@ function HomePage() {
 
         .animate-blob { animation: blob 7s infinite; }
         .animate-float { animation: float 6s ease-in-out infinite; }
-        .animate-fadeInUp { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
+        .animate-fadeInUp { animation: fadeInUp 0.6s ease-out both; }
         .animate-slideDown { animation: slideDown 0.3s ease-out; }
         .animate-gradient { animation: gradient 3s ease infinite; background-size: 200% 200%; }
         .animate-blink { animation: blink 1s step-end infinite; }
@@ -991,6 +1080,8 @@ function HomePage() {
 
         .bg-size-200 { background-size: 200% 200%; }
       `}</style>
+
+      </div>{/* end content wrapper */}
     </div>
   );
 }

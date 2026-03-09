@@ -7,6 +7,7 @@ import {
   Play, ChevronDown, ChevronRight, Check, Zap, Users, Target, TrendingUp,
   MessageSquare, BarChart3, Briefcase, Star, ArrowRight, X, Search, Globe, Rocket
 } from 'lucide-react';
+import NavbarAuth from '@/components/NavbarAuth';
 
 function BusinessLanding() {
   const router = useRouter();
@@ -97,8 +98,7 @@ function BusinessLanding() {
               <span className="text-xl font-bold text-gray-900">Karya-AI</span>
             </div>
             <div className="flex items-center gap-4">
-              <button onClick={() => router.push('/login?role=owner')} className="px-6 py-2 text-gray-700 hover:text-indigo-600 font-medium transition-colors">Sign In</button>
-              <button onClick={() => router.push('/register')} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium transition-all">Get Started Free</button>
+              <NavbarAuth loginRole="owner" ctaText="Get Started Free" ctaPath="/register" />
             </div>
           </div>
         </div>

@@ -7,6 +7,7 @@ import {
   MessageSquare, BarChart3, Briefcase, Star, ArrowRight, Trophy, DollarSign,
   Shield, Clock, Award, Calendar, FileText, Settings, Database
 } from 'lucide-react';
+import NavbarAuth from '@/components/NavbarAuth';
 
 function ExpertLanding() {
   const router = useRouter();
@@ -245,8 +246,7 @@ function ExpertLanding() {
               <span className="text-xl font-bold text-white">Karya-AI</span>
             </div>
             <div className="flex items-center gap-4">
-              <button onClick={() => router.push('/login?role=expert')} className="px-6 py-2 text-white hover:text-blue-300 font-medium transition-colors">Sign In</button>
-              <button onClick={() => router.push('/register?role=expert')} className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 rounded-lg text-white font-medium transition-all">Apply Now</button>
+              <NavbarAuth theme="dark" loginRole="expert" ctaText="Apply Now" ctaPath="/register?role=expert" />
             </div>
           </div>
         </div>

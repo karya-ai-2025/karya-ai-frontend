@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Search, Bell, ChevronDown, Home, Briefcase, Target, Users, DollarSign,
   FolderOpen, Phone, Wrench, Settings, Plus, Calendar, Clock, CheckCircle,
@@ -412,6 +413,8 @@ function EarningsChart({ data }) {
 // Main Expert Dashboard Component
 function ExpertDashboard() {
   const router = useRouter();
+  const { user, logout } = useAuth();
+  const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeNav, setActiveNav] = useState('dashboard');
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -423,13 +426,13 @@ function ExpertDashboard() {
   const quarterProgress = (mockExpert.earnings.thisQuarter / mockExpert.earnings.quarterGoal * 100).toFixed(0);
 
   return (
-    <div className="min-h-screen bg-gray-50 page-enter">
+    <div className="h-screen flex flex-col bg-gray-50 page-enter">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200 shadow-sm sticky top-0 z-50">
+      <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200 shadow-sm flex-shrink-0 z-50">
         <div className="flex items-center justify-between px-4 lg:px-6 py-3">
           {/* Left */}
           <div className="flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors lg:hidden">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <Menu className="w-5 h-5 text-gray-500" />
             </button>
             <Link href="/expert/dashboard" className="flex items-center gap-2">
@@ -512,7 +515,7 @@ function ExpertDashboard() {
                 className="flex items-center gap-2 p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">{mockExpert.avatar}</span>
+                  <span className="text-white text-sm font-bold">{getInitials(user?.name)}</span>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-500 hidden sm:block" />
               </button>
@@ -520,8 +523,8 @@ function ExpertDashboard() {
               {showUserMenu && (
                 <div className="absolute right-0 top-12 w-56 bg-white border border-gray-200 shadow-xl rounded-xl overflow-hidden z-50">
                   <div className="p-3 border-b border-gray-200">
-                    <p className="font-semibold text-gray-900">{mockExpert.name}</p>
-                    <p className="text-sm text-gray-500">{mockExpert.title}</p>
+                    <p className="font-semibold text-gray-900">{user?.name || 'Expert'}</p>
+                    <p className="text-sm text-gray-500">{user?.email || ''}</p>
                   </div>
                   <div className="p-1">
                     <button className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-100 rounded-lg text-left">
@@ -538,7 +541,10 @@ function ExpertDashboard() {
                     </button>
                   </div>
                   <div className="p-1 border-t border-gray-200">
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-500/10 rounded-lg text-left text-red-400">
+                    <button
+                      onClick={async () => { await logout(); router.push('/'); }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-500/10 rounded-lg text-left text-red-400"
+                    >
                       <LogOut className="w-4 h-4" />
                       <span className="text-sm">Logout</span>
                     </button>
@@ -550,10 +556,10 @@ function ExpertDashboard() {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className={`${sidebarOpen ? 'w-64' : 'w-0 lg:w-20'} flex-shrink-0 transition-all duration-300 overflow-hidden`}>
-          <div className="bg-white border-r border-gray-200 h-[calc(100vh-64px)] sticky top-16 p-4">
+        <aside className={`${sidebarOpen ? 'w-64' : 'w-0 lg:w-16'} flex-shrink-0 transition-all duration-300 overflow-hidden`}>
+          <div className={`bg-white border-r border-gray-200 h-full overflow-y-auto ${sidebarOpen ? 'p-4' : 'p-2'}`}>
             {/* Navigation */}
             <nav className="space-y-1">
               {sidebarNavItems.map(item => {
@@ -562,7 +568,8 @@ function ExpertDashboard() {
                   <button
                     key={item.id}
                     onClick={() => { setActiveNav(item.id); router.push(item.path); }}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+                    title={!sidebarOpen ? item.label : ''}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${!sidebarOpen ? 'justify-center' : ''} ${
                       activeNav === item.id
                         ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
@@ -587,13 +594,13 @@ function ExpertDashboard() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-6 min-w-0">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 min-w-0">
           {/* Welcome Section */}
           <div className="mb-6 animate-fade-in-up">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
                 <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-                  Welcome back, {mockExpert.name.split(' ')[0]}! 👋
+                  Welcome back, {(user?.name || 'there').split(' ')[0]}! 👋
                 </h1>
                 <p className="text-gray-500">
                   You have <span className="text-indigo-500 font-semibold">{mockProjects.length} active projects</span> and{' '}

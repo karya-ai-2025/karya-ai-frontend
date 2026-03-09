@@ -488,7 +488,7 @@ html {
 
 /* Legacy homepage animation classes */
 .animate-fadeInUp {
-  animation: fadeInUp 0.6s ease-out forwards;
+  animation: fadeInUp 0.6s ease-out both;
 }
 
 /* Animation delay utilities for homepage */

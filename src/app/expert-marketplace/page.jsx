@@ -10,6 +10,7 @@ import {
   TrendingUp, Users, Target, BarChart3, Mail, DollarSign, Calendar, Globe,
   Check, X, RefreshCw, Sparkles, ArrowUpDown, SlidersHorizontal, BookOpen, Loader2
 } from 'lucide-react';
+import NavbarAuth from '@/components/NavbarAuth';
 
 // ============================================
 // INLINE API FUNCTIONS
@@ -347,12 +348,7 @@ function ExpertMarketplace() {
             </div>
 
             <div className="flex items-center gap-4">
-              <button onClick={() => router.push('/login?role=owner')} className="px-5 py-2 text-gray-700 hover:text-indigo-600 font-medium transition-colors border border-gray-300 rounded-lg hover:border-indigo-300">
-                Sign In
-              </button>
-              <button onClick={() => router.push('/register')} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium transition-all hover:scale-105">
-                Get Started
-              </button>
+              <NavbarAuth loginRole="owner" ctaText="Get Started" ctaPath="/register" />
             </div>
           </div>
         </div>
