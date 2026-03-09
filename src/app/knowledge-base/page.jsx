@@ -396,10 +396,10 @@ function FolderTreeItem({ item, level = 0, selectedFolder, onSelect, onToggle, e
         style={{ paddingLeft: `${8 + level * 16}px` }}
       >
         {isFolder && (
-          <ChevronRight className={`w-4 h-4 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+          <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
         )}
         {isFolder ? (
-          isExpanded ? <FolderOpen className="w-4 h-4 text-amber-400 flex-shrink-0" /> : <Folder className="w-4 h-4 text-amber-400 flex-shrink-0" />
+          isExpanded ? <FolderOpen className="w-4 h-4 text-amber-400 shrink-0" /> : <Folder className="w-4 h-4 text-amber-400 shrink-0" />
         ) : (
           getFileIcon(item.fileType)
         )}
@@ -584,7 +584,7 @@ function DocumentDetailModal({ doc, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex">
       {/* Preview Pane - 70% */}
-      <div className="flex-[7] bg-slate-900 flex flex-col">
+      <div className="flex-7 bg-slate-900 flex flex-col">
         {/* Preview Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-700">
           <div className="flex items-center gap-3">
@@ -632,7 +632,7 @@ function DocumentDetailModal({ doc, onClose }) {
       </div>
 
       {/* Info Panel - 30% */}
-      <div className="flex-[3] bg-slate-800 border-l border-slate-700 flex flex-col max-w-md">
+      <div className="flex-3 bg-slate-800 border-l border-slate-700 flex flex-col max-w-md">
         {/* Panel Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-700">
           <h3 className="font-semibold text-white">Document Details</h3>
@@ -788,7 +788,7 @@ function DocumentDetailModal({ doc, onClose }) {
             <div className="space-y-3">
               {mockDocActivity.map(activity => (
                 <div key={activity.id} className="flex items-start gap-3 p-2">
-                  <div className="w-6 h-6 bg-slate-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-6 bg-slate-600 rounded-full flex items-center justify-center shrink-0">
                     <span className="text-white text-xs">{activity.user.charAt(0)}</span>
                   </div>
                   <div>
@@ -808,7 +808,7 @@ function DocumentDetailModal({ doc, onClose }) {
               {mockDocComments.map(comment => (
                 <div key={comment.id} className="space-y-2">
                   <div className="flex items-start gap-2">
-                    <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center shrink-0">
                       <span className="text-white text-xs">{comment.avatar}</span>
                     </div>
                     <div className="flex-1">
@@ -824,7 +824,7 @@ function DocumentDetailModal({ doc, onClose }) {
                   </div>
                   {comment.replies.map(reply => (
                     <div key={reply.id} className="flex items-start gap-2 ml-10">
-                      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shrink-0">
                         <span className="text-white text-xs">{reply.avatar}</span>
                       </div>
                       <div>
@@ -1035,7 +1035,7 @@ function KnowledgeBase() {
   return (
     <div className="flex h-full min-h-screen bg-slate-900">
       {/* Left Sidebar */}
-      <div className="w-64 flex-shrink-0 border-r border-slate-700 flex flex-col">
+      <div className="w-64 shrink-0 border-r border-slate-700 flex flex-col">
         {/* Folder Tree */}
         <div className="flex-1 overflow-y-auto p-3">
           <div className="flex items-center justify-between mb-3">
