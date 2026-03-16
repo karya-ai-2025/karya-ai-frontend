@@ -232,7 +232,7 @@ function ProjectCard({ project, onClick }) {
 }
 
 // Main Dashboard Component
-function BusinessDashboard() {
+export default function BusinessDashboard() {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeNav, setActiveNav] = useState('dashboard');
