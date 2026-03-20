@@ -74,9 +74,8 @@ export default function ProjectWorkspace() {
     checkProjectAccess();
   }, [projectSlug, getAuthHeader]);
 
-  // Get the dynamic project component and sidebar
+  // Get the dynamic project component
   const ProjectComponent = getProjectComponent(projectSlug);
-  const ProjectSidebar = getProjectSidebar(projectSlug);
 
   // Loading state
   if (loading) {
@@ -122,46 +121,28 @@ export default function ProjectWorkspace() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 relative">
-      {/* Dynamic Sidebar - Absolutely positioned to cover top-left */}
-      <div className="absolute top-0 left-0 h-full z-10">
-        {ProjectSidebar ? (
-          <ProjectSidebar projectMetadata={projectMetadata} />
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* Global Top Navigation */}
+      <TopNavbar />
+
+      {/* Dynamic Project Content - Full Control */}
+      <div className="flex-1">
+        {ProjectComponent ? (
+          <ProjectComponent projectMetadata={projectMetadata} />
         ) : (
-          <div className="w-[260px] h-full bg-gradient-to-b from-gray-600 to-gray-800 text-white flex-shrink-0 overflow-y-auto">
-            <div className="p-4 border-b border-gray-500/30">
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <p className="text-gray-500 text-lg">Project component not found</p>
               <button
                 onClick={() => router.push('/business-dashboard')}
-                className="w-full flex items-center space-x-2 text-gray-200 hover:text-white transition-colors"
+                className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center mx-auto"
               >
-                <ArrowLeft size={16} />
-                <span className="text-sm">Back to Dashboard</span>
+                <ArrowLeft size={16} className="mr-2" />
+                Back to Dashboard
               </button>
-            </div>
-            <div className="p-6 text-center">
-              <p className="text-gray-300">Sidebar not available for this project</p>
             </div>
           </div>
         )}
-      </div>
-
-      {/* Top Navigation - Full Width (sidebar will visually override left portion) */}
-      <TopNavbar />
-
-      {/* Main Layout - Below Navbar with left margin for sidebar */}
-      <div className="flex flex-1 ml-[260px]">
-        {/* Dynamic Project Content */}
-        <div className="flex-1 overflow-auto">
-          <div className="px-4 py-2">
-            {ProjectComponent ? (
-              <ProjectComponent />
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-500">Project component not found</p>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );

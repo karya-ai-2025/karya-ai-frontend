@@ -10,14 +10,56 @@ import {
   LogOut,
   UserCog,
   ChevronDown,
-  Edit3
+  Edit3,
+  Crown,
+  Zap,
+  RefreshCw
 } from 'lucide-react';
+import { checkUserPlanAccess } from '@/services/planService';
 
 export default function TopNavbar() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [planData, setPlanData] = useState(null);
+  const [planLoading, setPlanLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Fetch user plan data
+  const fetchPlanData = async () => {
+    if (!user?.token) {
+      setPlanLoading(false);
+      return;
+    }
+
+    try {
+      setPlanLoading(true);
+      const response = await checkUserPlanAccess(user.token);
+      setPlanData(response);
+    } catch (error) {
+      console.error('Error fetching plan data:', error);
+      setPlanData({ hasActivePlan: false });
+    } finally {
+      setPlanLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPlanData();
+  }, [user?.token]);
+
+  // Listen for plan updates (e.g., after successful upgrade)
+  useEffect(() => {
+    const handlePlanUpdate = () => {
+      fetchPlanData();
+    };
+
+    window.addEventListener('planUpdated', handlePlanUpdate);
+    return () => {
+      window.removeEventListener('planUpdated', handlePlanUpdate);
+    };
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -60,6 +102,13 @@ export default function TopNavbar() {
     router.push('/settings?section=account');
   };
 
+  // Handle manual refresh of plan data
+  const handleRefreshPlanData = async () => {
+    setRefreshing(true);
+    await fetchPlanData();
+    setTimeout(() => setRefreshing(false), 500); // Show refresh animation for at least 500ms
+  };
+
   // Get user initials for avatar
   const getUserInitials = (name) => {
     if (!name) return 'U';
@@ -70,22 +119,76 @@ export default function TopNavbar() {
       .join('');
   };
 
+  // Get remaining credits
+  const getRemainingCredits = () => {
+    if (planLoading) return '...';
+    if (!planData?.hasActivePlan) return '0';
+
+    const remainingCredits = planData.data?.limits?.remainingCredits || 0;
+    return remainingCredits.toLocaleString();
+  };
+
+  // Get plan display name
+  const getPlanDisplayName = () => {
+    if (planLoading) return 'Loading...';
+    if (!planData?.hasActivePlan) return 'Free Plan';
+
+    const planName = planData.data?.userPlan?.planId?.displayName || 'Unknown Plan';
+    const packageName = planData.data?.userPlan?.planPackageId?.name || '';
+    return packageName ? `${planName} - ${packageName}` : planName;
+  };
+
+  // Get credits color based on remaining amount
+  const getCreditsColor = () => {
+    if (planLoading || !planData?.hasActivePlan) return 'text-gray-600';
+
+    const remaining = planData.data?.limits?.remainingCredits || 0;
+    const total = planData.data?.userPlan?.planPackageId?.credits || 1;
+    const percentage = (remaining / total) * 100;
+
+    if (percentage > 50) return 'text-green-600';
+    if (percentage > 25) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 px-5 py-1.5">
       <div className="flex items-center justify-end mt-1">
         {/* Right side - Actions */}
         <div className="flex items-center space-x-4">
-          {/* Credits Left */}
-          <button className="flex items-center space-x-1 px-3 py-2 bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-colors">
-            <span className="text-sm font-medium">Credits Left: 150</span>
-          </button>
+          {/* Credits Left with Refresh Button */}
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => router.push('/settings?section=upgrade')}
+              className={`flex items-center space-x-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors ${getCreditsColor()}`}
+            >
+              <Zap className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                Credits: {getRemainingCredits()}
+              </span>
+            </button>
+
+            <button
+              onClick={handleRefreshPlanData}
+              disabled={refreshing}
+              className="p-2 text-purple-700 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+              title="Refresh credits"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
 
           {/* Plan Details */}
           <button
             onClick={() => router.push('/settings?section=upgrade')}
-            className="flex items-center space-x-1 px-3 py-2 bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-colors"
+            className={`flex items-center space-x-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors ${
+              planData?.hasActivePlan ? 'text-indigo-600 hover:text-indigo-700' : 'text-gray-600 hover:text-gray-900'
+            }`}
           >
-            <span className="text-sm font-medium">Free Plan</span>
+            <Crown className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              {getPlanDisplayName()}
+            </span>
           </button>
 
           {/* Notifications */}

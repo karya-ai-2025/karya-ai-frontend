@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import TopNavbar from '@/components/TopNavbar';
+import PlanSelection from '@/components/PlanSelection';
 import {
   ArrowLeft,
   User,
@@ -606,17 +607,7 @@ function SettingsContent() {
           </div>
         );
       case 'upgrade':
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold text-gray-900">Upgrade Plan</h2>
-              <p className="text-gray-600 mt-1">Choose the plan that works best for you.</p>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <p className="text-gray-500">Plan upgrade options coming soon...</p>
-            </div>
-          </div>
-        );
+        return <PlanSelection />;
       case 'billing':
         return (
           <div className="space-y-6">
@@ -652,14 +643,9 @@ function SettingsContent() {
         {/* Settings Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Header */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-            </div>
-
             <div className="flex gap-8">
               {/* Settings Sidebar */}
-              <div className="w-64 flex-shrink-0">
+              <div className="w-64 shrink-0">
                 <nav className="bg-white rounded-lg border border-gray-200 p-4">
                   <ul className="space-y-2">
                     {sidebarItems.map((item) => {

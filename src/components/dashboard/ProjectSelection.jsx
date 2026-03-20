@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronRight, Clock, Star, Tag } from 'lucide-react';
+import { ChevronRight, Clock, Star, Tag, Crown } from 'lucide-react';
+import { checkUserPlanAccess } from '@/services/planService';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -13,8 +14,32 @@ export default function ProjectSelection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [planStatus, setPlanStatus] = useState(null);
+  const [planLoading, setPlanLoading] = useState(true);
   const router = useRouter();
   const { getAuthHeader } = useAuth();
+
+  // Fetch user plan status
+  useEffect(() => {
+    const fetchPlanStatus = async () => {
+      try {
+        setPlanLoading(true);
+        const authHeader = getAuthHeader();
+        const token = authHeader?.Authorization?.split(' ')[1];
+
+        if (token) {
+          const planCheck = await checkUserPlanAccess(token);
+          setPlanStatus(planCheck);
+        }
+      } catch (err) {
+        console.error('Error fetching plan status:', err);
+      } finally {
+        setPlanLoading(false);
+      }
+    };
+
+    fetchPlanStatus();
+  }, [getAuthHeader]);
 
   // Fetch projects from API
   useEffect(() => {
@@ -77,6 +102,34 @@ export default function ProjectSelection() {
   // Handle project selection
   const handleSelectProject = async (project) => {
     try {
+      // First check if user has an active plan
+      const authHeader = getAuthHeader();
+      const token = authHeader?.Authorization?.split(' ')[1];
+
+      if (!token) {
+        alert('Please log in to access projects');
+        return;
+      }
+
+      const planCheck = await checkUserPlanAccess(token);
+
+      if (!planCheck.success) {
+        throw new Error(planCheck.message || 'Failed to check plan access');
+      }
+
+      // If user doesn't have an active plan, redirect to pricing
+      if (!planCheck.hasActivePlan) {
+          router.push('/settings?section=upgrade');
+        return;
+      }
+
+      // Check if user can create more projects
+      if (!planCheck.data.limits.canCreateProject) {
+        alert(`You've reached your project limit (${planCheck.data.userPlan.planPackageId.projectsAvailable}). Please upgrade your plan or complete existing projects.`);
+        return;
+      }
+
+      // If plan check passes, proceed with project selection
       const response = await fetch(`${API_BASE_URL}/projects/${project._id}/select`, {
         method: 'POST',
         headers: {
@@ -156,6 +209,55 @@ export default function ProjectSelection() {
 
   return (
     <div className="p-6">
+      {/* Plan Status Widget */}
+      {!planLoading && (
+        <div className="mb-6">
+          {planStatus?.hasActivePlan ? (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Crown className="h-5 w-5 text-green-600" />
+                  <div>
+                    <h3 className="font-medium text-green-900">
+                      {planStatus.data.userPlan.planId.displayName} - {planStatus.data.userPlan.planPackageId.name}
+                    </h3>
+                    <p className="text-sm text-green-700">
+                      {planStatus.data.limits.remainingCredits.toLocaleString()} credits • {planStatus.data.limits.remainingProjects} projects remaining
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => router.push('/settings?section=upgrade')}
+                  className="text-green-600 hover:text-green-500 text-sm font-medium"
+                >
+                  Manage Plan
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Crown className="h-5 w-5 text-yellow-600" />
+                  <div>
+                    <h3 className="font-medium text-yellow-900">Free Plan</h3>
+                    <p className="text-sm text-yellow-700">
+                      Upgrade to access projects and unlock advanced features
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => router.push('/settings?section=upgrade')}
+                  className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition-colors text-sm font-medium"
+                >
+                  Upgrade Plan
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Filter Tabs */}
       <div className="mb-6">
         <div className="border-b border-gray-200">
@@ -208,7 +310,7 @@ export default function ProjectSelection() {
             {currentProjects.map((project) => (
             <div
               key={project._id}
-              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden border border-gray-200 cursor-pointer"
+              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden border border-gray-200"
             >
               {/* Project Image */}
               {project.thumbnailImage && (
@@ -241,24 +343,6 @@ export default function ProjectSelection() {
                   {project.name}
                 </h3>
 
-                {/* Progress (for My Projects only) */}
-                {selectedFilter === 'my-projects' && project.progress && (
-                  <div className="mb-3">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs font-medium text-gray-600">Progress</span>
-                      <span className="text-xs font-medium text-indigo-600">{project.progress.percentage}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${project.progress.percentage}%` }}
-                      ></div>
-                    </div>
-                    <div className="mt-1 text-xs text-gray-500">
-                      Started {new Date(project.startedAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                )}
 
                 {/* Description */}
                 <p className="text-gray-600 text-sm mb-4 line-clamp-3">
@@ -274,14 +358,22 @@ export default function ProjectSelection() {
                   disabled={project.status !== 'active'}
                   className={`w-full px-4 py-2 rounded-md transition-colors duration-200 flex items-center justify-center font-medium cursor-pointer ${
                     project.status === 'active'
-                      ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      ? (planStatus?.hasActivePlan
+                          ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                          : 'bg-yellow-600 text-white hover:bg-yellow-700')
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
                   {project.status === 'active'
-                    ? (selectedFilter === 'my-projects' ? 'Continue Project' : 'Get Started')
+                    ? (selectedFilter === 'my-projects'
+                        ? 'Continue Project'
+                        : (planStatus?.hasActivePlan ? 'Get Started' : 'Upgrade to Access'))
                     : project.status === 'coming-soon' ? 'Coming Soon' : 'Unavailable'}
-                  {project.status === 'active' && <ChevronRight size={16} className="ml-2" />}
+                  {project.status === 'active' && (
+                    planStatus?.hasActivePlan
+                      ? <ChevronRight size={16} className="ml-2" />
+                      : <Crown size={16} className="ml-2" />
+                  )}
                 </button>
               </div>
             </div>
