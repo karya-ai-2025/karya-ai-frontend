@@ -8,10 +8,7 @@ import {
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getPlansWithPackages } from '@/services/planService';
-<<<<<<< Updated upstream
 import { useAuth } from '@/contexts/AuthContext';
-=======
->>>>>>> Stashed changes
 
 function HomePage() {
   const router = useRouter();
@@ -1022,11 +1019,7 @@ function HomePage() {
       </section>
 
       {/* Pricing */}
-<<<<<<< Updated upstream
       <section className="pt-10 sm:pt-12 pb-4 sm:pb-6 px-4 sm:px-6">
-=======
-      <section id="pricing" className="py-10 sm:py-12 px-4 sm:px-6">
->>>>>>> Stashed changes
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-2 sm:mb-3">Transparent Pricing</h2>
           <p className="text-gray-500 text-sm sm:text-base text-center mb-6 sm:mb-8">No hidden fees. Pay for results.</p>
