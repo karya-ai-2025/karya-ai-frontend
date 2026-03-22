@@ -23,8 +23,6 @@ function Preferences() {
     };
     setLocalPreferences(newPrefs);
     setHasChanges(true);
-
-    // Apply immediately for live preview
     updatePreference(key, value);
   };
 
@@ -37,13 +35,10 @@ function Preferences() {
       }
     }));
     setHasChanges(true);
-
-    // Apply immediately for live preview
     updateEmailType(type, value);
   };
 
   const handleSave = () => {
-    // Changes are already applied immediately, just show confirmation
     console.log('Preferences saved:', preferences);
     setHasChanges(false);
     setShowSaveMessage(true);
@@ -66,20 +61,13 @@ function Preferences() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Animated Background */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
-        <div className="absolute top-40 right-20 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-20 left-40 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
-      </div>
-
-      <div className="relative max-w-7xl mx-auto px-6 py-12">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <button
             onClick={() => router.push('/')}
-            className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors font-medium"
           >
             <span>←</span>
             <span>Back to Home</span>
@@ -90,14 +78,14 @@ function Preferences() {
             <div className="flex gap-3">
               <button
                 onClick={handleReset}
-                className="px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-medium transition-all flex items-center gap-2"
+                className="px-6 py-2 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg text-gray-700 font-medium transition-all flex items-center gap-2"
               >
                 <RotateCcw className="w-4 h-4" />
                 Reset
               </button>
               <button
                 onClick={handleSave}
-                className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg text-white font-bold transition-all hover:scale-105 shadow-xl flex items-center gap-2"
+                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-lg text-white font-bold transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2"
               >
                 <Save className="w-4 h-4" />
                 Save Changes
@@ -108,7 +96,7 @@ function Preferences() {
 
         {/* Success Message */}
         {showSaveMessage && (
-          <div className="fixed top-4 right-4 z-50 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 animate-slideIn">
+          <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3">
             <CheckCircle className="w-5 h-5" />
             <span className="font-medium">Preferences saved successfully!</span>
           </div>
@@ -116,52 +104,52 @@ function Preferences() {
 
         {/* Page Title */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 border border-purple-500/30 rounded-full mb-6">
-            <Settings className="w-4 h-4 text-purple-300" />
-            <span className="text-purple-200 text-sm font-medium">Customize Your Experience</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-full mb-6">
+            <Settings className="w-4 h-4 text-blue-600" />
+            <span className="text-blue-700 text-sm font-medium">Customize Your Experience</span>
           </div>
 
-          <h1 className="text-5xl font-bold text-white mb-4">
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">
             Preferences
           </h1>
 
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-500 max-w-3xl mx-auto">
             Personalize your workspace to match your workflow and preferences
           </p>
         </div>
 
         {/* Current Settings Preview */}
-        <div className="mb-12 bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6">
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <Eye className="w-5 h-5 text-blue-400" />
+        <div className="mb-12 bg-blue-50 border border-blue-200 rounded-2xl p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Eye className="w-5 h-5 text-blue-500" />
             Current Settings Preview
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-gray-400 mb-1">Theme</p>
-              <p className="text-white font-semibold capitalize">{preferences.theme}</p>
+            <div className="bg-white border border-gray-200 rounded-lg p-3">
+              <p className="text-gray-500 mb-1">Theme</p>
+              <p className="text-gray-900 font-semibold capitalize">{preferences.theme}</p>
             </div>
-            <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-gray-400 mb-1">Color Scheme</p>
-              <p className="text-white font-semibold capitalize">{preferences.colorScheme}</p>
+            <div className="bg-white border border-gray-200 rounded-lg p-3">
+              <p className="text-gray-500 mb-1">Color Scheme</p>
+              <p className="text-gray-900 font-semibold capitalize">{preferences.colorScheme}</p>
             </div>
-            <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-gray-400 mb-1">Font Size</p>
-              <p className="text-white font-semibold capitalize">{preferences.fontSize.replace('-', ' ')}</p>
+            <div className="bg-white border border-gray-200 rounded-lg p-3">
+              <p className="text-gray-500 mb-1">Font Size</p>
+              <p className="text-gray-900 font-semibold capitalize">{preferences.fontSize.replace('-', ' ')}</p>
             </div>
-            <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-gray-400 mb-1">High Contrast</p>
-              <p className="text-white font-semibold">{preferences.highContrast ? 'Enabled' : 'Disabled'}</p>
+            <div className="bg-white border border-gray-200 rounded-lg p-3">
+              <p className="text-gray-500 mb-1">High Contrast</p>
+              <p className="text-gray-900 font-semibold">{preferences.highContrast ? 'Enabled' : 'Disabled'}</p>
             </div>
           </div>
-          <div className="mt-4 p-4 bg-white/5 rounded-lg flex items-center justify-between gap-4">
-            <p className="text-gray-300 text-sm flex-1">
-              <strong className="text-white">✨ Live Preview:</strong> Changes are applied immediately!
+          <div className="mt-4 p-4 bg-white border border-gray-200 rounded-lg flex items-center justify-between gap-4">
+            <p className="text-gray-600 text-sm flex-1">
+              <strong className="text-gray-900">✨ Live Preview:</strong> Changes are applied immediately!
               Open the test page to see all preferences in action.
             </p>
             <button
               onClick={() => router.push('/preferences-test')}
-              className="px-6 py-2 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 rounded-lg text-white font-medium transition-all hover:scale-105 shadow-lg whitespace-nowrap"
+              className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white font-medium transition-all shadow-md whitespace-nowrap"
             >
               View Test Page →
             </button>
@@ -170,58 +158,58 @@ function Preferences() {
 
         {/* Appearance Section */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-            <Palette className="w-8 h-8 text-purple-400" />
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+            <Palette className="w-8 h-8 text-blue-500" />
             Appearance
           </h2>
 
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 space-y-8">
+          <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-8 space-y-8">
             {/* Theme */}
             <div>
-              <label className="block text-white font-semibold mb-4">Theme</label>
+              <label className="block text-gray-900 font-semibold mb-4">Theme</label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button
                   onClick={() => handlePreferenceChange('theme', 'light')}
                   className={`p-6 rounded-xl border-2 transition-all ${
                     localPreferences.theme === 'light'
-                      ? 'border-purple-500 bg-purple-500/20'
-                      : 'border-white/20 bg-white/5 hover:bg-white/10'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 bg-white hover:bg-gray-50'
                   }`}
                 >
-                  <Sun className="w-8 h-8 text-yellow-400 mx-auto mb-3" />
-                  <span className="block text-white font-medium">Light</span>
+                  <Sun className="w-8 h-8 text-amber-500 mx-auto mb-3" />
+                  <span className="block text-gray-900 font-medium">Light</span>
                 </button>
 
                 <button
                   onClick={() => handlePreferenceChange('theme', 'dark')}
                   className={`p-6 rounded-xl border-2 transition-all ${
                     localPreferences.theme === 'dark'
-                      ? 'border-purple-500 bg-purple-500/20'
-                      : 'border-white/20 bg-white/5 hover:bg-white/10'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 bg-white hover:bg-gray-50'
                   }`}
                 >
-                  <Moon className="w-8 h-8 text-blue-400 mx-auto mb-3" />
-                  <span className="block text-white font-medium">Dark</span>
+                  <Moon className="w-8 h-8 text-blue-500 mx-auto mb-3" />
+                  <span className="block text-gray-900 font-medium">Dark</span>
                 </button>
 
                 <button
                   onClick={() => handlePreferenceChange('theme', 'auto')}
                   className={`p-6 rounded-xl border-2 transition-all ${
                     localPreferences.theme === 'auto'
-                      ? 'border-purple-500 bg-purple-500/20'
-                      : 'border-white/20 bg-white/5 hover:bg-white/10'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 bg-white hover:bg-gray-50'
                   }`}
                 >
-                  <Monitor className="w-8 h-8 text-purple-400 mx-auto mb-3" />
-                  <span className="block text-white font-medium">Auto</span>
-                  <span className="block text-gray-400 text-xs mt-1">System</span>
+                  <Monitor className="w-8 h-8 text-blue-500 mx-auto mb-3" />
+                  <span className="block text-gray-900 font-medium">Auto</span>
+                  <span className="block text-gray-500 text-xs mt-1">System</span>
                 </button>
               </div>
             </div>
 
             {/* Color Scheme */}
             <div>
-              <label className="block text-white font-semibold mb-4">Color Scheme</label>
+              <label className="block text-gray-900 font-semibold mb-4">Color Scheme</label>
               <div className="flex gap-3">
                 {['purple', 'blue', 'green', 'orange', 'pink'].map((color) => (
                   <button
@@ -229,7 +217,7 @@ function Preferences() {
                     onClick={() => handlePreferenceChange('colorScheme', color)}
                     className={`w-12 h-12 rounded-lg transition-all ${
                       localPreferences.colorScheme === color
-                        ? 'ring-4 ring-white scale-110'
+                        ? 'ring-4 ring-blue-500 ring-offset-2 scale-110'
                         : 'hover:scale-105'
                     } ${
                       color === 'purple' ? 'bg-gradient-to-br from-purple-500 to-pink-500' :
@@ -245,7 +233,7 @@ function Preferences() {
 
             {/* View Density */}
             <div>
-              <label className="block text-white font-semibold mb-4">View Density</label>
+              <label className="block text-gray-900 font-semibold mb-4">View Density</label>
               <div className="flex gap-4">
                 {['compact', 'comfortable', 'spacious'].map((density) => (
                   <label key={density} className="flex items-center gap-2 cursor-pointer">
@@ -255,9 +243,9 @@ function Preferences() {
                       value={density}
                       checked={localPreferences.viewDensity === density}
                       onChange={(e) => handlePreferenceChange('viewDensity', e.target.value)}
-                      className="w-4 h-4 text-purple-500 focus:ring-purple-500"
+                      className="w-4 h-4 text-blue-500 focus:ring-blue-500"
                     />
-                    <span className="text-white capitalize">{density}</span>
+                    <span className="text-gray-700 capitalize">{density}</span>
                   </label>
                 ))}
               </div>
@@ -267,20 +255,19 @@ function Preferences() {
 
         {/* Language & Region Section */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-            <Globe className="w-8 h-8 text-blue-400" />
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+            <Globe className="w-8 h-8 text-blue-500" />
             Language & Region
           </h2>
 
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 space-y-6">
+          <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-8 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Language */}
               <div>
-                <label className="block text-white font-semibold mb-2">Language</label>
+                <label className="block text-gray-900 font-semibold mb-2">Language</label>
                 <select
                   value={localPreferences.language}
                   onChange={(e) => handlePreferenceChange('language', e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="en-US">English (US)</option>
                   <option value="en-GB">English (UK)</option>
@@ -292,13 +279,12 @@ function Preferences() {
                 </select>
               </div>
 
-              {/* Timezone */}
               <div>
-                <label className="block text-white font-semibold mb-2">Timezone</label>
+                <label className="block text-gray-900 font-semibold mb-2">Timezone</label>
                 <select
                   value={localPreferences.timezone}
                   onChange={(e) => handlePreferenceChange('timezone', e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="America/New_York">Eastern Time (ET)</option>
                   <option value="America/Chicago">Central Time (CT)</option>
@@ -311,13 +297,12 @@ function Preferences() {
                 </select>
               </div>
 
-              {/* Date Format */}
               <div>
-                <label className="block text-white font-semibold mb-2">Date Format</label>
+                <label className="block text-gray-900 font-semibold mb-2">Date Format</label>
                 <select
                   value={localPreferences.dateFormat}
                   onChange={(e) => handlePreferenceChange('dateFormat', e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                   <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -325,26 +310,24 @@ function Preferences() {
                 </select>
               </div>
 
-              {/* Time Format */}
               <div>
-                <label className="block text-white font-semibold mb-2">Time Format</label>
+                <label className="block text-gray-900 font-semibold mb-2">Time Format</label>
                 <select
                   value={localPreferences.timeFormat}
                   onChange={(e) => handlePreferenceChange('timeFormat', e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="12-hour">12-hour (3:00 PM)</option>
                   <option value="24-hour">24-hour (15:00)</option>
                 </select>
               </div>
 
-              {/* Currency */}
               <div>
-                <label className="block text-white font-semibold mb-2">Currency</label>
+                <label className="block text-gray-900 font-semibold mb-2">Currency</label>
                 <select
                   value={localPreferences.currency}
                   onChange={(e) => handlePreferenceChange('currency', e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="USD">USD - US Dollar ($)</option>
                   <option value="EUR">EUR - Euro (€)</option>
@@ -360,15 +343,14 @@ function Preferences() {
 
         {/* Email Preferences Section */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-            <Mail className="w-8 h-8 text-green-400" />
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+            <Mail className="w-8 h-8 text-emerald-500" />
             Email Preferences
           </h2>
 
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 space-y-6">
-            {/* Email Frequency */}
+          <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-8 space-y-6">
             <div>
-              <label className="block text-white font-semibold mb-4">Email Frequency</label>
+              <label className="block text-gray-900 font-semibold mb-4">Email Frequency</label>
               <div className="flex gap-4">
                 {['realtime', 'daily', 'weekly'].map((freq) => (
                   <label key={freq} className="flex items-center gap-2 cursor-pointer">
@@ -378,17 +360,16 @@ function Preferences() {
                       value={freq}
                       checked={localPreferences.emailFrequency === freq}
                       onChange={(e) => handlePreferenceChange('emailFrequency', e.target.value)}
-                      className="w-4 h-4 text-purple-500 focus:ring-purple-500"
+                      className="w-4 h-4 text-blue-500 focus:ring-blue-500"
                     />
-                    <span className="text-white capitalize">{freq === 'realtime' ? 'Real-time' : freq === 'daily' ? 'Daily Digest' : 'Weekly Digest'}</span>
+                    <span className="text-gray-700 capitalize">{freq === 'realtime' ? 'Real-time' : freq === 'daily' ? 'Daily Digest' : 'Weekly Digest'}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* Email Types */}
             <div>
-              <label className="block text-white font-semibold mb-4">Types of Emails to Receive</label>
+              <label className="block text-gray-900 font-semibold mb-4">Types of Emails to Receive</label>
               <div className="space-y-3">
                 {Object.entries({
                   marketing: 'Marketing & promotional emails',
@@ -403,17 +384,16 @@ function Preferences() {
                       type="checkbox"
                       checked={localPreferences.emailTypes[key]}
                       onChange={(e) => handleEmailTypeChange(key, e.target.checked)}
-                      className="w-5 h-5 text-purple-500 rounded focus:ring-purple-500"
+                      className="w-5 h-5 text-blue-500 rounded focus:ring-blue-500"
                     />
-                    <span className="text-gray-300 group-hover:text-white transition-colors">{label}</span>
+                    <span className="text-gray-600 group-hover:text-gray-900 transition-colors">{label}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* Unsubscribe All */}
-            <div className="pt-6 border-t border-white/10">
-              <button className="px-6 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg text-red-300 font-medium transition-all">
+            <div className="pt-6 border-t border-gray-200">
+              <button className="px-6 py-2 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg text-red-600 font-medium transition-all">
                 Unsubscribe from All Emails
               </button>
               <p className="text-gray-400 text-sm mt-2">You'll still receive critical account and security notifications</p>
@@ -423,20 +403,19 @@ function Preferences() {
 
         {/* Workspace Preferences Section */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-            <Layout className="w-8 h-8 text-orange-400" />
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+            <Layout className="w-8 h-8 text-orange-500" />
             Workspace Preferences
           </h2>
 
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 space-y-6">
+          <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-8 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Default Project View */}
               <div>
-                <label className="block text-white font-semibold mb-2">Default Project View</label>
+                <label className="block text-gray-900 font-semibold mb-2">Default Project View</label>
                 <select
                   value={localPreferences.defaultProjectView}
                   onChange={(e) => handlePreferenceChange('defaultProjectView', e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="kanban">Kanban Board</option>
                   <option value="list">List View</option>
@@ -445,26 +424,24 @@ function Preferences() {
                 </select>
               </div>
 
-              {/* Default File View */}
               <div>
-                <label className="block text-white font-semibold mb-2">Default File View</label>
+                <label className="block text-gray-900 font-semibold mb-2">Default File View</label>
                 <select
                   value={localPreferences.defaultFileView}
                   onChange={(e) => handlePreferenceChange('defaultFileView', e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="grid">Grid View</option>
                   <option value="list">List View</option>
                 </select>
               </div>
 
-              {/* Auto-save Frequency */}
               <div>
-                <label className="block text-white font-semibold mb-2">Auto-save Frequency</label>
+                <label className="block text-gray-900 font-semibold mb-2">Auto-save Frequency</label>
                 <select
                   value={localPreferences.autoSaveFrequency}
                   onChange={(e) => handlePreferenceChange('autoSaveFrequency', e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="1">Every 1 minute</option>
                   <option value="2">Every 2 minutes</option>
@@ -476,10 +453,10 @@ function Preferences() {
             </div>
 
             {/* Keyboard Shortcuts */}
-            <div className="pt-6 border-t border-white/10">
+            <div className="pt-6 border-t border-gray-200">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Keyboard className="w-6 h-6 text-purple-400" />
+                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Keyboard className="w-6 h-6 text-blue-500" />
                   Keyboard Shortcuts
                 </h3>
               </div>
@@ -488,15 +465,15 @@ function Preferences() {
                 {keyboardShortcuts.map((shortcut, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-100"
                   >
-                    <span className="text-gray-300">{shortcut.action}</span>
+                    <span className="text-gray-700">{shortcut.action}</span>
                     <div className="flex items-center gap-3">
-                      <kbd className="px-3 py-1 bg-white/10 border border-white/20 rounded text-white font-mono text-sm">
+                      <kbd className="px-3 py-1 bg-white border border-gray-300 rounded text-gray-700 font-mono text-sm shadow-sm">
                         {shortcut.shortcut}
                       </kbd>
                       {shortcut.customizable && (
-                        <button className="text-purple-400 hover:text-purple-300 text-sm font-medium">
+                        <button className="text-blue-500 hover:text-blue-700 text-sm font-medium">
                           Customize
                         </button>
                       )}
@@ -510,17 +487,16 @@ function Preferences() {
 
         {/* Accessibility Section */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-            <Eye className="w-8 h-8 text-pink-400" />
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+            <Eye className="w-8 h-8 text-pink-500" />
             Accessibility
           </h2>
 
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 space-y-6">
-            {/* Screen Reader */}
+          <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-8 space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-white font-semibold mb-1">Screen Reader Compatibility</h3>
-                <p className="text-gray-400 text-sm">Optimize interface for screen readers</p>
+                <h3 className="text-gray-900 font-semibold mb-1">Screen Reader Compatibility</h3>
+                <p className="text-gray-500 text-sm">Optimize interface for screen readers</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -529,15 +505,14 @@ function Preferences() {
                   onChange={(e) => handlePreferenceChange('screenReader', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-14 h-7 bg-white/10 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500"></div>
+                <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
 
-            {/* High Contrast */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-t border-gray-100 pt-6">
               <div>
-                <h3 className="text-white font-semibold mb-1">High Contrast Mode</h3>
-                <p className="text-gray-400 text-sm">Increase contrast for better visibility</p>
+                <h3 className="text-gray-900 font-semibold mb-1">High Contrast Mode</h3>
+                <p className="text-gray-500 text-sm">Increase contrast for better visibility</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -546,13 +521,12 @@ function Preferences() {
                   onChange={(e) => handlePreferenceChange('highContrast', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-14 h-7 bg-white/10 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500"></div>
+                <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
 
-            {/* Font Size */}
-            <div>
-              <label className="block text-white font-semibold mb-2">Font Size</label>
+            <div className="border-t border-gray-100 pt-6">
+              <label className="block text-gray-900 font-semibold mb-2">Font Size</label>
               <div className="flex gap-4">
                 {['small', 'medium', 'large', 'extra-large'].map((size) => (
                   <label key={size} className="flex items-center gap-2 cursor-pointer">
@@ -562,19 +536,18 @@ function Preferences() {
                       value={size}
                       checked={localPreferences.fontSize === size}
                       onChange={(e) => handlePreferenceChange('fontSize', e.target.value)}
-                      className="w-4 h-4 text-purple-500 focus:ring-purple-500"
+                      className="w-4 h-4 text-blue-500 focus:ring-blue-500"
                     />
-                    <span className="text-white capitalize">{size.replace('-', ' ')}</span>
+                    <span className="text-gray-700 capitalize">{size.replace('-', ' ')}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* Motion Reduction */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-t border-gray-100 pt-6">
               <div>
-                <h3 className="text-white font-semibold mb-1">Reduce Motion</h3>
-                <p className="text-gray-400 text-sm">Minimize animations and transitions</p>
+                <h3 className="text-gray-900 font-semibold mb-1">Reduce Motion</h3>
+                <p className="text-gray-500 text-sm">Minimize animations and transitions</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -583,7 +556,7 @@ function Preferences() {
                   onChange={(e) => handlePreferenceChange('motionReduction', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-14 h-7 bg-white/10 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500"></div>
+                <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
           </div>
@@ -593,44 +566,13 @@ function Preferences() {
         <div className="flex justify-center">
           <button
             onClick={handleSave}
-            className="px-12 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl text-white font-bold text-lg transition-all hover:scale-105 shadow-xl flex items-center gap-2"
+            className="px-12 py-4 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-bold text-lg transition-all shadow-xl shadow-blue-500/20 flex items-center gap-2"
           >
             <Save className="w-5 h-5" />
             Save All Preferences
           </button>
         </div>
       </div>
-
-      {/* CSS for animations */}
-      <style>{`
-        @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        @keyframes slideIn {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-        .animate-slideIn {
-          animation: slideIn 0.3s ease-out;
-        }
-      `}</style>
     </div>
   );
 }

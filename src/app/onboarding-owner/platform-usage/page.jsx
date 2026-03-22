@@ -71,7 +71,7 @@ function PlatformUsage() {
             <span className="text-sm text-gray-500">28% Complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-indigo-500 h-2 rounded-full transition-all duration-300" style={{ width: '28%' }}></div>
+            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '28%' }}></div>
           </div>
         </div>
 
@@ -104,13 +104,13 @@ function PlatformUsage() {
                 disabled={isLoading}
                 className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center gap-4 disabled:opacity-50 ${
                   selectedUsage === option.id
-                    ? 'bg-indigo-50 border-indigo-500 shadow-lg'
+                    ? 'bg-blue-50 border-blue-500 shadow-lg'
                     : 'bg-gray-50 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
                 }`}
               >
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
                   selectedUsage === option.id
-                    ? 'bg-indigo-500 text-white'
+                    ? 'bg-blue-500 text-white'
                     : 'bg-gray-50 text-gray-500'
                 }`}>
                   {option.icon}
@@ -127,7 +127,7 @@ function PlatformUsage() {
                 </div>
                 <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                   selectedUsage === option.id
-                    ? 'border-indigo-500 bg-indigo-500'
+                    ? 'border-blue-500 bg-blue-500'
                     : 'border-gray-300'
                 }`}>
                   {selectedUsage === option.id && (
@@ -151,7 +151,7 @@ function PlatformUsage() {
             <button
               onClick={handleNext}
               disabled={!selectedUsage || isLoading}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {isLoading ? (
                 <>

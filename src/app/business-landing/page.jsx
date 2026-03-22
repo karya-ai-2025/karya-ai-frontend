@@ -2,6 +2,7 @@
 
 // pages/BusinessLanding.jsx
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   Play, ChevronDown, ChevronRight, Check, Zap, Users, Target, TrendingUp,
@@ -92,9 +93,7 @@ function BusinessLanding() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
+              <Image src="/karya-ai-logo.png" alt="Karya AI" width={40} height={40} className="rounded-xl object-contain" />
               <span className="text-xl font-bold text-gray-900">Karya-AI</span>
             </div>
             <div className="flex items-center gap-4">
@@ -107,7 +106,7 @@ function BusinessLanding() {
       {/* Hero Section */}
       <section className="relative py-20 px-6 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
+          <div className="absolute top-20 left-20 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
           <div className="absolute top-40 right-20 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
           <div className="absolute bottom-20 left-40 w-72 h-72 bg-violet-300 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
         </div>
@@ -115,10 +114,10 @@ function BusinessLanding() {
         <div className="relative max-w-6xl mx-auto text-center">
           <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-6">
             From Idea to Customers<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600">in 90 Days</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-violet-600 to-blue-600">in 90 Days</span>
           </h1>
           <p className="text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">AI breaks down your GTM strategy. Experts execute it. You track results.</p>
-          <button onClick={() => router.push('/register')} className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-bold text-lg transition-all hover:scale-105 shadow-xl inline-flex items-center gap-2">
+          <button onClick={() => router.push('/register')} className="px-8 py-4 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-bold text-lg transition-all hover:scale-105 shadow-xl inline-flex items-center gap-2">
             Start Your Project Free
             <ArrowRight className="w-5 h-5" />
           </button>
@@ -146,7 +145,7 @@ function BusinessLanding() {
             {painPoints.map((point, index) => (
               <div key={index} className="bg-white border border-gray-200 shadow-sm rounded-xl p-6 hover:shadow-md transition-all">
                 <h3 className="text-xl font-bold text-gray-900 mb-3">{point.problem}</h3>
-                <div className="h-0.5 w-12 bg-indigo-500 mb-3"></div>
+                <div className="h-0.5 w-12 bg-blue-500 mb-3"></div>
                 <p className="text-gray-600">{point.solution}</p>
               </div>
             ))}
@@ -165,7 +164,7 @@ function BusinessLanding() {
               <div key={cap.id} className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
                 <button onClick={() => toggleAccordion(cap.id)} className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-all">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
                       {cap.id === 'ai-planning' && <Zap className="w-6 h-6 text-white" />}
                       {cap.id === 'expert-marketplace' && <Users className="w-6 h-6 text-white" />}
                       {cap.id === 'workspace' && <Briefcase className="w-6 h-6 text-white" />}
@@ -204,7 +203,7 @@ function BusinessLanding() {
 
           <div className="flex justify-center gap-4 mb-8">
             {Object.entries(useCases).map(([key, stage]) => (
-              <button key={key} onClick={() => setActiveTab(key)} className={`px-6 py-3 rounded-lg font-semibold transition-all ${activeTab === key ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-500 hover:text-gray-900'}`}>
+              <button key={key} onClick={() => setActiveTab(key)} className={`px-6 py-3 rounded-lg font-semibold transition-all ${activeTab === key ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-500 hover:text-gray-900'}`}>
                 {stage.title}
               </button>
             ))}
@@ -228,7 +227,7 @@ function BusinessLanding() {
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Recommended Experts</h3>
                 <div className="flex flex-wrap gap-2">
                   {currentStage.experts.map((expert, idx) => (
-                    <span key={idx} className="px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-700 font-medium">{expert}</span>
+                    <span key={idx} className="px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 font-medium">{expert}</span>
                   ))}
                 </div>
               </div>
@@ -244,7 +243,7 @@ function BusinessLanding() {
               </div>
 
               <div>
-                <button className="text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-2">
+                <button className="text-blue-500 hover:text-blue-600 font-medium flex items-center gap-2">
                   Read Case Study: {currentStage.caseStudy}
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -264,13 +263,13 @@ function BusinessLanding() {
             {expertCategories.map((category, index) => (
               <div key={index} className="group bg-white border border-gray-200 shadow-sm rounded-xl p-6 hover:shadow-md hover:scale-105 transition-all cursor-pointer">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center text-white">{category.icon}</div>
+                  <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white">{category.icon}</div>
                   <div>
                     <h3 className="text-xl font-bold text-gray-900">{category.name}</h3>
                     <p className="text-gray-500 text-sm">{category.count}</p>
                   </div>
                 </div>
-                <button className="text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-2 group-hover:gap-3 transition-all">
+                <button className="text-blue-500 hover:text-blue-600 font-medium flex items-center gap-2 group-hover:gap-3 transition-all">
                   See Experts
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -294,7 +293,7 @@ function BusinessLanding() {
                 </div>
                 <p className="text-gray-600 mb-4">"This platform transformed how we execute our marketing. From zero to 500 customers in 90 days!"</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full"></div>
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-orange-400 rounded-full"></div>
                   <div>
                     <p className="font-semibold text-gray-900">Sarah Johnson</p>
                     <p className="text-sm text-gray-500">CEO, TechStartup</p>
@@ -317,9 +316,9 @@ function BusinessLanding() {
 
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             {pricingTiers.map((tier, index) => (
-              <div key={index} className={`relative bg-white border rounded-2xl p-8 shadow-sm ${tier.popular ? 'border-indigo-500 shadow-xl scale-105' : 'border-gray-200'}`}>
+              <div key={index} className={`relative bg-white border rounded-2xl p-8 shadow-sm ${tier.popular ? 'border-blue-500 shadow-xl scale-105' : 'border-gray-200'}`}>
                 {tier.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-indigo-600 rounded-full text-white text-sm font-semibold">Most Popular</div>
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-blue-600 rounded-full text-white text-sm font-semibold">Most Popular</div>
                 )}
 
                 <div className="text-center mb-6">
@@ -340,7 +339,7 @@ function BusinessLanding() {
                   ))}
                 </ul>
 
-                <button onClick={() => router.push('/register')} className={`w-full py-3 rounded-xl font-semibold transition-all ${tier.popular ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
+                <button onClick={() => router.push('/register')} className={`w-full py-3 rounded-xl font-semibold transition-all ${tier.popular ? 'bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
                   {tier.cta}
                 </button>
               </div>
@@ -374,21 +373,21 @@ function BusinessLanding() {
       {/* Final CTA */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 rounded-3xl p-12">
+          <div className="bg-gradient-to-br from-blue-50 to-violet-50 border border-blue-100 rounded-3xl p-12">
             <h2 className="text-4xl font-bold text-gray-900 text-center mb-4">Start Your Free Project Plan</h2>
             <p className="text-gray-600 text-center mb-8">Get your AI-generated roadmap in 24 hours - no credit card required</p>
 
             <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl mx-auto">
               <div className="grid md:grid-cols-2 gap-4">
-                <input type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="Your Name" required className="px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50" />
-                <input type="email" name="email" value={formData.email} onChange={handleFormChange} placeholder="Email Address" required className="px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50" />
+                <input type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="Your Name" required className="px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50" />
+                <input type="email" name="email" value={formData.email} onChange={handleFormChange} placeholder="Email Address" required className="px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50" />
               </div>
 
-              <input type="text" name="company" value={formData.company} onChange={handleFormChange} placeholder="Company Name" required className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50" />
+              <input type="text" name="company" value={formData.company} onChange={handleFormChange} placeholder="Company Name" required className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50" />
 
-              <textarea name="goal" value={formData.goal} onChange={handleFormChange} placeholder="What's your main goal? (e.g., Launch new product, Scale customer acquisition)" rows={4} required className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 resize-none" />
+              <textarea name="goal" value={formData.goal} onChange={handleFormChange} placeholder="What's your main goal? (e.g., Launch new product, Scale customer acquisition)" rows={4} required className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-none" />
 
-              <button type="submit" className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-bold text-lg transition-all hover:scale-105 shadow-xl flex items-center justify-center gap-2">
+              <button type="submit" className="w-full py-4 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-bold text-lg transition-all hover:scale-105 shadow-xl flex items-center justify-center gap-2">
                 Get AI Roadmap in 24 Hours
                 <ArrowRight className="w-5 h-5" />
               </button>
@@ -403,9 +402,7 @@ function BusinessLanding() {
       <footer className="bg-white border-t border-gray-200 py-12 px-6">
         <div className="max-w-6xl mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
-              <Zap className="w-6 h-6 text-white" />
-            </div>
+            <Image src="/karya-ai-logo.png" alt="Karya AI" width={40} height={40} className="rounded-xl object-contain" />
             <span className="text-xl font-bold text-gray-900">Karya-AI</span>
           </div>
           <p className="text-gray-500">© 2026 Karya-AI. All rights reserved.</p>

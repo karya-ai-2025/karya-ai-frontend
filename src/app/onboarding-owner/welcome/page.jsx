@@ -1,9 +1,9 @@
 'use client';
 // pages/WelcomeOnboard.jsx
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
-  Sparkles,
   Play,
   ArrowRight,
   CheckCircle,
@@ -144,7 +144,7 @@ function WelcomeOnboard() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       {/* Animated Background */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-indigo-300 rounded-full filter blur-xl animate-blob"></div>
+        <div className="absolute top-20 left-20 w-72 h-72 bg-blue-300 rounded-full filter blur-xl animate-blob"></div>
         <div className="absolute top-40 right-20 w-72 h-72 bg-blue-300 rounded-full filter blur-xl animate-blob animation-delay-2000"></div>
         <div className="absolute bottom-20 left-40 w-72 h-72 bg-violet-300 rounded-full filter blur-xl animate-blob animation-delay-4000"></div>
       </div>
@@ -153,9 +153,7 @@ function WelcomeOnboard() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
-            <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
+            <Image src="/karya-ai-logo.png" alt="Karya AI" width={48} height={48} className="rounded-xl object-contain" />
             <span className="text-2xl font-bold text-gray-900">Karya-AI</span>
           </div>
           <h1 className="text-5xl font-bold text-gray-900 mb-3">
@@ -178,7 +176,7 @@ function WelcomeOnboard() {
               <div className="space-y-4 mb-8">
                 {priorityItems.map((item, index) => (
                   <div key={index} className="flex items-start gap-3">
-                    <div className="text-indigo-500 mt-1">
+                    <div className="text-blue-500 mt-1">
                       {item.icon}
                     </div>
                     <p className="text-gray-600 text-lg">{item.text}</p>
@@ -206,18 +204,18 @@ function WelcomeOnboard() {
               </div>
 
               <div className="flex gap-3 justify-center flex-wrap">
-                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-indigo-600 hover:text-gray-900 hover:bg-gray-50 transition-all flex items-center gap-2">
+                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-blue-600 hover:text-gray-900 hover:bg-gray-50 transition-all flex items-center gap-2">
                   <ArrowRight className="w-4 h-4 rotate-180" />
                   Move Up
                 </button>
-                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-indigo-600 hover:text-gray-900 hover:bg-gray-50 transition-all flex items-center gap-2">
+                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-blue-600 hover:text-gray-900 hover:bg-gray-50 transition-all flex items-center gap-2">
                   Move down
                   <ArrowRight className="w-4 h-4" />
                 </button>
-                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-indigo-600 hover:text-gray-900 hover:bg-gray-50 transition-all">
+                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-blue-600 hover:text-gray-900 hover:bg-gray-50 transition-all">
                   Enter
                 </button>
-                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-indigo-600 hover:text-gray-900 hover:bg-gray-50 transition-all">
+                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-blue-600 hover:text-gray-900 hover:bg-gray-50 transition-all">
                   Confirm
                 </button>
               </div>
@@ -238,7 +236,7 @@ function WelcomeOnboard() {
                 onClick={handleManualOnboarding}
                 className="group bg-gray-50 border border-gray-200 rounded-xl p-8 hover:bg-gray-100 transition-all cursor-pointer hover:scale-105"
               >
-                <div className="w-16 h-16 bg-indigo-600 rounded-xl flex items-center justify-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-orange-500 rounded-xl flex items-center justify-center mb-6">
                   <FileEdit className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">
@@ -261,7 +259,7 @@ function WelcomeOnboard() {
                     <span className="text-sm">7 simple steps</span>
                   </li>
                 </ul>
-                <button className="w-full py-3 bg-indigo-600 rounded-lg text-white font-semibold flex items-center justify-center gap-2 group-hover:bg-indigo-700 transition-all">
+                <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg text-white font-semibold flex items-center justify-center gap-2 group-hover:from-blue-700 group-hover:to-orange-600 transition-all">
                   Start Now
                   <ArrowRight className="w-5 h-5" />
                 </button>
@@ -295,7 +293,7 @@ function WelcomeOnboard() {
                     <span className="text-sm">Flexible timing</span>
                   </li>
                 </ul>
-                <button className="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg text-white font-semibold flex items-center justify-center gap-2 group-hover:from-blue-600 group-hover:to-cyan-600 transition-all">
+                <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg text-white font-semibold flex items-center justify-center gap-2 group-hover:from-blue-700 group-hover:to-orange-600 transition-all">
                   Schedule Now
                   <Calendar className="w-5 h-5" />
                 </button>
@@ -371,8 +369,8 @@ function WelcomeOnboard() {
                               : isDisabled
                               ? 'text-gray-300 cursor-not-allowed'
                               : isSelected
-                              ? 'bg-indigo-500 text-white font-bold'
-                              : 'text-gray-700 hover:bg-indigo-100 cursor-pointer'
+                              ? 'bg-blue-500 text-white font-bold'
+                              : 'text-gray-700 hover:bg-blue-100 cursor-pointer'
                           }`}
                         >
                           {day || ''}
@@ -394,8 +392,8 @@ function WelcomeOnboard() {
                         onClick={() => setSelectedTime(time)}
                         className={`py-3 px-4 rounded-lg text-sm font-medium transition-all ${
                           selectedTime === time
-                            ? 'bg-indigo-500 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-indigo-100'
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
                         }`}
                       >
                         {time}
@@ -408,7 +406,7 @@ function WelcomeOnboard() {
 
             {/* Selected DateTime Display */}
             {selectedDate && selectedTime && (
-              <div className="mt-6 p-4 bg-indigo-50 border border-indigo-300 rounded-lg">
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-300 rounded-lg">
                 <div className="flex items-center gap-3 text-gray-900">
                   <Clock className="w-5 h-5" />
                   <span className="font-medium">
@@ -434,7 +432,7 @@ function WelcomeOnboard() {
               <button
                 onClick={handleConfirmSchedule}
                 disabled={!selectedDate || !selectedTime}
-                className="flex-1 py-3 bg-indigo-600 rounded-lg text-white font-semibold hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-lg text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 Confirm Schedule
                 <CheckCircle className="w-5 h-5" />
@@ -454,7 +452,7 @@ function WelcomeOnboard() {
             </button>
             <button
               onClick={handleStartOnboarding}
-              className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-xl flex items-center justify-center gap-2"
+              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-xl flex items-center justify-center gap-2"
             >
               Let's Go
               <ArrowRight className="w-5 h-5" />

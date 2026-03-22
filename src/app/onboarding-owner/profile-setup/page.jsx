@@ -80,7 +80,7 @@ function ProfileSetup() {
             <span className="text-sm text-gray-500">14% Complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-indigo-500 h-2 rounded-full transition-all duration-300" style={{ width: '14%' }}></div>
+            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '14%' }}></div>
           </div>
         </div>
 
@@ -108,7 +108,7 @@ function ProfileSetup() {
                   <User className="w-16 h-16 text-gray-400" />
                 )}
               </div>
-              <label className="absolute bottom-0 right-0 w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg">
+              <label className="absolute bottom-0 right-0 w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg">
                 <Upload className="w-5 h-5 text-white" />
                 <input
                   type="file"
@@ -138,7 +138,7 @@ function ProfileSetup() {
           {/* Help Text */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-8">
             <p className="text-gray-600 text-sm text-center flex items-center justify-center gap-2">
-              <span className="text-indigo-500">💡</span>
+              <span className="text-blue-500">💡</span>
               Click above on the icon to the right to upload a Profile Photo
             </p>
           </div>
@@ -156,7 +156,7 @@ function ProfileSetup() {
             <button
               onClick={handleNext}
               disabled={isLoading}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
+              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
             >
               {isLoading ? (
                 <>

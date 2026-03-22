@@ -2,15 +2,17 @@
 
 // pages/ExpertMarketplace.jsx
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Search, Filter, Grid, List, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
   Star, MapPin, Clock, Briefcase, Heart, MessageSquare, Shield, Zap, Award,
   TrendingUp, Users, Target, BarChart3, Mail, DollarSign, Calendar, Globe,
-  Check, X, RefreshCw, Sparkles, ArrowUpDown, SlidersHorizontal, BookOpen, Loader2
+  Check, X, RefreshCw, ArrowUpDown, SlidersHorizontal, BookOpen, Loader2
 } from 'lucide-react';
 import NavbarAuth from '@/components/NavbarAuth';
+import { getOnboardingStatus } from '@/services/onboardingApi';
 
 // ============================================
 // INLINE API FUNCTIONS
@@ -152,6 +154,9 @@ function ExpertMarketplace() {
   const [searchQuery, setSearchQuery] = useState('');
   const expertsPerPage = 12;
 
+  // Business user's industry for personalized matching
+  const [businessIndustry, setBusinessIndustry] = useState('');
+
   // Get filter options from API or defaults
   const expertiseCategories = filterOptions?.expertise || defaultExpertiseCategories;
   const industryOptionsList = filterOptions?.industries || defaultIndustryOptions;
@@ -232,11 +237,35 @@ function ExpertMarketplace() {
     }
   }, []);
 
+  // Fetch business user's company industry and pre-apply as filter
+  const fetchBusinessIndustry = useCallback(async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) return;
+      const userData = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      const user = userData ? JSON.parse(userData) : null;
+      if (!user || user.activeRole !== 'owner') return;
+
+      const status = await getOnboardingStatus();
+      const industry = status?.data?.companyDetails?.industry || status?.companyDetails?.industry;
+      if (industry) {
+        setBusinessIndustry(industry);
+        setFilters(prev => ({
+          ...prev,
+          industries: prev.industries.includes(industry) ? prev.industries : [industry]
+        }));
+      }
+    } catch (err) {
+      // Silently fail — user just sees unfiltered results
+    }
+  }, []);
+
   // Initial load
   useEffect(() => {
     fetchFilterOptions();
     fetchFeaturedExpert();
-  }, [fetchFilterOptions, fetchFeaturedExpert]);
+    fetchBusinessIndustry();
+  }, [fetchFilterOptions, fetchFeaturedExpert, fetchBusinessIndustry]);
 
   // Fetch experts when filters/sort/page changes
   useEffect(() => {
@@ -270,6 +299,10 @@ function ExpertMarketplace() {
         ? prev[category].filter(v => v !== value)
         : [...prev[category], value]
     }));
+    // If user removes the business industry filter manually, hide the banner
+    if (category === 'industries' && value === businessIndustry) {
+      setBusinessIndustry('');
+    }
     setCurrentPage(1);
   };
 
@@ -301,6 +334,7 @@ function ExpertMarketplace() {
       expertise: [], industries: [], tools: [], availability: [],
       priceRange: [50, 250], minRating: 0, projectRange: null, timezones: []
     });
+    setBusinessIndustry('');
     setSearchQuery('');
     setCurrentPage(1);
   };
@@ -329,15 +363,13 @@ function ExpertMarketplace() {
     (filters.priceRange[0] !== 50 || filters.priceRange[1] !== 250 ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 page-enter">
+    <div className="min-h-screen bg-white page-enter">
       {/* Navigation */}
       <nav className="bg-white/80 backdrop-blur-xl border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div className="max-w-[1920px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
+              <Image src="/karya-ai-logo.png" alt="Karya AI" width={40} height={40} className="rounded-xl object-contain" />
               <span className="text-xl font-bold text-gray-900">Karya-AI</span>
             </Link>
 
@@ -355,7 +387,7 @@ function ExpertMarketplace() {
       </nav>
 
       {/* Page Header */}
-      <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 border-b border-gray-200">
+      <div className="bg-gradient-to-br from-blue-50 to-violet-50 border border-blue-100 border-b border-gray-200">
         <div className="max-w-[1920px] mx-auto px-6 py-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div>
@@ -371,7 +403,7 @@ function ExpertMarketplace() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search experts, skills, or industries..."
-                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
               />
             </div>
           </div>
@@ -387,12 +419,37 @@ function ExpertMarketplace() {
               <span>Average project satisfaction: 4.8/5</span>
             </div>
             <div className="flex items-center gap-2 text-gray-500">
-              <DollarSign className="w-4 h-4 text-indigo-500" />
+              <DollarSign className="w-4 h-4 text-blue-500" />
               <span>Money-back guarantee on first milestone</span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Personalization Banner */}
+      {businessIndustry && (
+        <div className="bg-gradient-to-r from-blue-50 to-orange-50 border-b border-blue-100">
+          <div className="max-w-[1920px] mx-auto px-6 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <Zap className="w-4 h-4 text-orange-500" />
+              <span className="text-gray-700">
+                Showing experts matched to your industry:
+                <span className="font-semibold text-blue-700 ml-1">{businessIndustry}</span>
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                setBusinessIndustry('');
+                setFilters(prev => ({ ...prev, industries: [] }));
+              }}
+              className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+              Show all
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="max-w-[1920px] mx-auto px-6 py-8">
@@ -403,16 +460,16 @@ function ExpertMarketplace() {
               {/* Filter Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
-                  <SlidersHorizontal className="w-5 h-5 text-indigo-500" />
+                  <SlidersHorizontal className="w-5 h-5 text-blue-500" />
                   <h3 className="font-semibold text-gray-900">Filters</h3>
                   {activeFilterCount > 0 && (
-                    <span className="px-2 py-0.5 bg-indigo-600 rounded-full text-xs text-white">
+                    <span className="px-2 py-0.5 bg-blue-600 rounded-full text-xs text-white">
                       {activeFilterCount}
                     </span>
                   )}
                 </div>
                 {activeFilterCount > 0 && (
-                  <button onClick={clearAllFilters} className="text-sm text-indigo-600 hover:text-indigo-500 transition-colors">
+                  <button onClick={clearAllFilters} className="text-sm text-blue-600 hover:text-blue-500 transition-colors">
                     Clear all
                   </button>
                 )}
@@ -430,7 +487,7 @@ function ExpertMarketplace() {
                       {expertiseCategories.map(category => (
                         <label key={category} onClick={() => toggleFilter('expertise', category)} className="flex items-center gap-2 cursor-pointer group">
                           <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                            filters.expertise.includes(category) ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300 group-hover:border-indigo-400'
+                            filters.expertise.includes(category) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 group-hover:border-blue-400'
                           }`}>
                             {filters.expertise.includes(category) && <Check className="w-3 h-3 text-white" />}
                           </div>
@@ -452,7 +509,7 @@ function ExpertMarketplace() {
                       {industryOptionsList.map(industry => (
                         <label key={industry} onClick={() => toggleFilter('industries', industry)} className="flex items-center gap-2 cursor-pointer group">
                           <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                            filters.industries.includes(industry) ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300 group-hover:border-indigo-400'
+                            filters.industries.includes(industry) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 group-hover:border-blue-400'
                           }`}>
                             {filters.industries.includes(industry) && <Check className="w-3 h-3 text-white" />}
                           </div>
@@ -476,7 +533,7 @@ function ExpertMarketplace() {
                         value={toolSearch}
                         onChange={(e) => setToolSearch(e.target.value)}
                         placeholder="Search tools..."
-                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500"
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500"
                       />
                       {defaultToolOptions.map(group => (
                         <div key={group.category}>
@@ -485,7 +542,7 @@ function ExpertMarketplace() {
                             {group.tools.filter(tool => tool.toLowerCase().includes(toolSearch.toLowerCase())).map(tool => (
                               <label key={tool} onClick={() => toggleFilter('tools', tool)} className="flex items-center gap-2 cursor-pointer group">
                                 <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                                  filters.tools.includes(tool) ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300 group-hover:border-indigo-400'
+                                  filters.tools.includes(tool) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 group-hover:border-blue-400'
                                 }`}>
                                   {filters.tools.includes(tool) && <Check className="w-3 h-3 text-white" />}
                                 </div>
@@ -511,7 +568,7 @@ function ExpertMarketplace() {
                       {availabilityOptions.map(option => (
                         <label key={option} onClick={() => toggleFilter('availability', option)} className="flex items-center gap-2 cursor-pointer group">
                           <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                            filters.availability.includes(option) ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300 group-hover:border-indigo-400'
+                            filters.availability.includes(option) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 group-hover:border-blue-400'
                           }`}>
                             {filters.availability.includes(option) && <Check className="w-3 h-3 text-white" />}
                           </div>
@@ -539,7 +596,7 @@ function ExpertMarketplace() {
                               type="number"
                               value={filters.priceRange[0]}
                               onChange={(e) => handlePriceChange('min', e.target.value)}
-                              className="w-full pl-6 pr-2 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-indigo-500"
+                              className="w-full pl-6 pr-2 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
@@ -552,7 +609,7 @@ function ExpertMarketplace() {
                               type="number"
                               value={filters.priceRange[1]}
                               onChange={(e) => handlePriceChange('max', e.target.value)}
-                              className="w-full pl-6 pr-2 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-indigo-500"
+                              className="w-full pl-6 pr-2 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
@@ -563,7 +620,7 @@ function ExpertMarketplace() {
                         max="250"
                         value={filters.priceRange[1]}
                         onChange={(e) => handlePriceChange('max', e.target.value)}
-                        className="w-full accent-indigo-500"
+                        className="w-full accent-blue-500"
                       />
                       <div className="flex justify-between text-xs text-gray-400">
                         <span>$50/hr</span>
@@ -586,7 +643,7 @@ function ExpertMarketplace() {
                           key={rating}
                           onClick={() => setRatingFilter(filters.minRating === rating ? 0 : rating)}
                           className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg transition-all ${
-                            filters.minRating === rating ? 'bg-indigo-50 border border-indigo-200' : 'hover:bg-gray-50'
+                            filters.minRating === rating ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50'
                           }`}
                         >
                           <div className="flex items-center gap-1">
@@ -614,7 +671,7 @@ function ExpertMarketplace() {
                           key={range.value}
                           onClick={() => setProjectFilter(range.value)}
                           className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm transition-all ${
-                            filters.projectRange === range.value ? 'bg-indigo-50 border border-indigo-200 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
+                            filters.projectRange === range.value ? 'bg-blue-50 border border-blue-200 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
                           }`}
                         >
                           {range.label}
@@ -635,7 +692,7 @@ function ExpertMarketplace() {
                       {timezones.map(tz => (
                         <label key={tz} onClick={() => toggleFilter('timezones', tz)} className="flex items-center gap-2 cursor-pointer group">
                           <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                            filters.timezones.includes(tz) ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300 group-hover:border-indigo-400'
+                            filters.timezones.includes(tz) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 group-hover:border-blue-400'
                           }`}>
                             {filters.timezones.includes(tz) && <Check className="w-3 h-3 text-white" />}
                           </div>
@@ -661,7 +718,7 @@ function ExpertMarketplace() {
                   <Filter className="w-4 h-4" />
                   Filters
                   {activeFilterCount > 0 && (
-                    <span className="px-2 py-0.5 bg-indigo-600 rounded-full text-xs text-white">{activeFilterCount}</span>
+                    <span className="px-2 py-0.5 bg-blue-600 rounded-full text-xs text-white">{activeFilterCount}</span>
                   )}
                 </button>
                 <p className="text-gray-500">
@@ -677,7 +734,7 @@ function ExpertMarketplace() {
                   <select
                     value={sortBy}
                     onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
-                    className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer"
+                    className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
                   >
                     <option value="match">Best Match</option>
                     <option value="rating">Highest Rated</option>
@@ -692,13 +749,13 @@ function ExpertMarketplace() {
                 <div className="flex bg-white border border-gray-200 rounded-lg p-1">
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-900'}`}
+                    className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-900'}`}
                   >
                     <Grid className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-900'}`}
+                    className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-900'}`}
                   >
                     <List className="w-4 h-4" />
                   </button>
@@ -710,7 +767,7 @@ function ExpertMarketplace() {
             {activeFilterCount > 0 && (
               <div className="flex flex-wrap gap-2 mb-6">
                 {filters.expertise.map(exp => (
-                  <button key={exp} onClick={() => toggleFilter('expertise', exp)} className="flex items-center gap-1 px-3 py-1 bg-indigo-50 border border-indigo-200 rounded-full text-sm text-indigo-700 hover:bg-indigo-100 transition-all">
+                  <button key={exp} onClick={() => toggleFilter('expertise', exp)} className="flex items-center gap-1 px-3 py-1 bg-blue-50 border border-blue-200 rounded-full text-sm text-blue-700 hover:bg-blue-100 transition-all">
                     {exp} <X className="w-3 h-3" />
                   </button>
                 ))}
@@ -735,7 +792,7 @@ function ExpertMarketplace() {
             {/* Loading State */}
             {isLoading && (
               <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
+                <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
               </div>
             )}
 
@@ -747,7 +804,7 @@ function ExpertMarketplace() {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Experts</h3>
                 <p className="text-gray-500 mb-6">{error}</p>
-                <button onClick={() => fetchExperts(1)} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-medium transition-all">
+                <button onClick={() => fetchExperts(1)} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl text-white font-medium transition-all">
                   Try Again
                 </button>
               </div>
@@ -777,7 +834,7 @@ function ExpertMarketplace() {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No experts found</h3>
                 <p className="text-gray-500 mb-6">Try adjusting your filters or search query</p>
-                <button onClick={clearAllFilters} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-medium transition-all">
+                <button onClick={clearAllFilters} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl text-white font-medium transition-all">
                   Clear all filters
                 </button>
               </div>
@@ -802,7 +859,7 @@ function ExpertMarketplace() {
                         key={page}
                         onClick={() => setCurrentPage(page)}
                         className={`w-10 h-10 rounded-lg font-medium transition-all ${
-                          currentPage === page ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                          currentPage === page ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
                         }`}
                       >
                         {page}
@@ -841,7 +898,7 @@ function ExpertMarketplace() {
 
           {/* Right Sidebar - Featured Expert */}
           <aside className="hidden 2xl:block w-72 flex-shrink-0">
-            <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 rounded-2xl p-5 sticky top-24">
+            <div className="bg-gradient-to-br from-blue-50 to-violet-50 border border-blue-100 rounded-2xl p-5 sticky top-24">
               <div className="flex items-center gap-2 mb-4">
                 <Award className="w-5 h-5 text-yellow-400" />
                 <h3 className="font-semibold text-gray-900">Featured Expert</h3>
@@ -859,7 +916,7 @@ function ExpertMarketplace() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900">{featuredExpert.name}</h4>
-                      <p className="text-sm text-indigo-600">{featuredExpert.title}</p>
+                      <p className="text-sm text-blue-600">{featuredExpert.title}</p>
                     </div>
                   </div>
 
@@ -881,7 +938,7 @@ function ExpertMarketplace() {
 
                   <button
                     onClick={() => router.push(`/expert-profile/${featuredExpert.id}`)}
-                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium transition-all"
+                    className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition-all"
                   >
                     View Profile
                   </button>
@@ -900,7 +957,7 @@ function ExpertMarketplace() {
                   <span className="text-sm font-medium text-yellow-600">Limited Offer</span>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Get 20% off your first project with featured experts. Use code: <span className="text-indigo-600 font-mono">EXPERT20</span>
+                  Get 20% off your first project with featured experts. Use code: <span className="text-blue-600 font-mono">EXPERT20</span>
                 </p>
               </div>
             </div>
@@ -912,9 +969,7 @@ function ExpertMarketplace() {
       <footer className="bg-white border-t border-gray-200 py-8 px-6 mt-12">
         <div className="max-w-[1920px] mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
+            <Image src="/karya-ai-logo.png" alt="Karya AI" width={40} height={40} className="rounded-xl object-contain" />
             <span className="text-xl font-bold text-gray-900">Karya-AI</span>
           </div>
           <p className="text-gray-500">&copy; 2026 Karya-AI. All rights reserved.</p>
@@ -951,14 +1006,14 @@ function ExpertCard({ expert, viewMode, isSaved, onToggleSave, onViewProfile }) 
       case 'Top Rated': return 'bg-yellow-50 border-yellow-200 text-yellow-700';
       case 'Expert Vetted': return 'bg-green-50 border-green-200 text-green-700';
       case 'Fast Response': return 'bg-blue-50 border-blue-200 text-blue-700';
-      case 'Repeat Hire Rate': return 'bg-indigo-50 border-indigo-200 text-indigo-700';
+      case 'Repeat Hire Rate': return 'bg-blue-50 border-blue-200 text-blue-700';
       default: return 'bg-gray-50 border-gray-200 text-gray-600';
     }
   };
 
   if (viewMode === 'list') {
     return (
-      <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 hover:shadow-lg hover:shadow-indigo-500/10 hover:border-indigo-300 transition-all duration-300 group">
+      <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 hover:shadow-lg hover:shadow-blue-500/10 hover:border-blue-300 transition-all duration-300 group">
         <div className="flex gap-6">
           {/* Avatar */}
           <div className="flex-shrink-0">
@@ -979,14 +1034,14 @@ function ExpertCard({ expert, viewMode, isSaved, onToggleSave, onViewProfile }) 
             <div className="flex items-start justify-between mb-2">
               <div>
                 <div className="flex items-center gap-3">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors cursor-pointer" onClick={onViewProfile}>
+                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors cursor-pointer" onClick={onViewProfile}>
                     {expert.name}
                   </h3>
-                  <span className="px-3 py-1 bg-indigo-50 border border-indigo-200 rounded-full text-sm font-medium text-indigo-700">
+                  <span className="px-3 py-1 bg-blue-50 border border-blue-200 rounded-full text-sm font-medium text-blue-700">
                     {expert.matchScore}% Match
                   </span>
                 </div>
-                <p className="text-indigo-600">{expert.title}</p>
+                <p className="text-blue-600">{expert.title}</p>
                 <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
                   <MapPin className="w-4 h-4" />
                   {expert.location} • {expert.timezone}
@@ -1032,7 +1087,7 @@ function ExpertCard({ expert, viewMode, isSaved, onToggleSave, onViewProfile }) 
             <div className="flex items-center gap-4">
               <div className="flex flex-wrap gap-1">
                 {expert.expertise?.slice(0, 4).map(skill => (
-                  <span key={skill} className="px-2 py-1 bg-indigo-50 border border-indigo-200 rounded text-xs text-indigo-700">{skill}</span>
+                  <span key={skill} className="px-2 py-1 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">{skill}</span>
                 ))}
                 {expert.expertise?.length > 4 && <span className="px-2 py-1 text-xs text-gray-500">+{expert.expertise.length - 4} more</span>}
               </div>
@@ -1046,7 +1101,7 @@ function ExpertCard({ expert, viewMode, isSaved, onToggleSave, onViewProfile }) 
 
           {/* Actions */}
           <div className="flex flex-col gap-2 flex-shrink-0">
-            <button onClick={onViewProfile} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium transition-all">
+            <button onClick={onViewProfile} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition-all">
               View Profile
             </button>
             <button
@@ -1066,7 +1121,7 @@ function ExpertCard({ expert, viewMode, isSaved, onToggleSave, onViewProfile }) 
 
   // Grid View Card
   return (
-    <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 hover:shadow-md hover:border-indigo-300 hover:scale-[1.02] transition-all group">
+    <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 hover:shadow-md hover:border-blue-300 hover:scale-[1.02] transition-all group">
       {/* Top Section */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex gap-2">
@@ -1079,7 +1134,7 @@ function ExpertCard({ expert, viewMode, isSaved, onToggleSave, onViewProfile }) 
         </div>
 
         {/* Match Score */}
-        <span className="px-3 py-1 bg-indigo-50 border border-indigo-200 rounded-full text-sm font-medium text-indigo-700">
+        <span className="px-3 py-1 bg-blue-50 border border-blue-200 rounded-full text-sm font-medium text-blue-700">
           {expert.matchScore}% Match
         </span>
       </div>
@@ -1097,10 +1152,10 @@ function ExpertCard({ expert, viewMode, isSaved, onToggleSave, onViewProfile }) 
           {expert.online && <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>}
         </div>
         <div className="min-w-0">
-          <h3 className="text-lg font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors cursor-pointer" onClick={onViewProfile}>
+          <h3 className="text-lg font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors cursor-pointer" onClick={onViewProfile}>
             {expert.name}
           </h3>
-          <p className="text-indigo-600 text-sm truncate">{expert.title}</p>
+          <p className="text-blue-600 text-sm truncate">{expert.title}</p>
           <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
             <MapPin className="w-3 h-3" />
             {expert.location}
@@ -1132,7 +1187,7 @@ function ExpertCard({ expert, viewMode, isSaved, onToggleSave, onViewProfile }) 
       {/* Expertise Tags */}
       <div className="flex flex-wrap gap-1 mb-3">
         {expert.expertise?.slice(0, 3).map(skill => (
-          <span key={skill} className="px-2 py-1 bg-indigo-50 border border-indigo-200 rounded text-xs text-indigo-700">{skill}</span>
+          <span key={skill} className="px-2 py-1 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">{skill}</span>
         ))}
         {expert.expertise?.length > 3 && <span className="px-2 py-1 text-xs text-gray-500">+{expert.expertise.length - 3}</span>}
       </div>
@@ -1161,7 +1216,7 @@ function ExpertCard({ expert, viewMode, isSaved, onToggleSave, onViewProfile }) 
 
       {/* CTA Buttons */}
       <div className="flex gap-2">
-        <button onClick={onViewProfile} className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium transition-all">
+        <button onClick={onViewProfile} className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition-all">
           View Profile
         </button>
         <button

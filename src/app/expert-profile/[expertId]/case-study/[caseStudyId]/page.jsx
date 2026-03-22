@@ -125,7 +125,7 @@ const mockCaseStudies = {
     relatedIds: [2, 3],
     expert: {
       id: 1, name: "Sarah Mitchell", title: "B2B SaaS Growth Marketer",
-      avatar: "SM", avatarColor: "from-blue-500 to-purple-600",
+      avatar: "SM", avatarColor: "from-blue-600 to-orange-500",
       rating: 4.9, reviews: 48
     }
   },
@@ -200,7 +200,7 @@ const mockCaseStudies = {
     relatedIds: [1, 3],
     expert: {
       id: 1, name: "Sarah Mitchell", title: "B2B SaaS Growth Marketer",
-      avatar: "SM", avatarColor: "from-blue-500 to-purple-600", rating: 4.9, reviews: 48
+      avatar: "SM", avatarColor: "from-blue-600 to-orange-500", rating: 4.9, reviews: 48
     }
   },
   3: {
@@ -264,7 +264,7 @@ const mockCaseStudies = {
     relatedIds: [1, 2],
     expert: {
       id: 1, name: "Sarah Mitchell", title: "B2B SaaS Growth Marketer",
-      avatar: "SM", avatarColor: "from-blue-500 to-purple-600", rating: 4.9, reviews: 48
+      avatar: "SM", avatarColor: "from-blue-600 to-orange-500", rating: 4.9, reviews: 48
     }
   }
 };
@@ -280,21 +280,21 @@ function CaseStudyDetail() {
   const handleShare = () => navigator.clipboard.writeText(window.location.href);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="bg-slate-900/80 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
+      <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 lg:px-6 py-3">
           <div className="flex items-center justify-between">
             <button onClick={() => router.push(`/expert-profile/${expertId}`)}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white flex items-center gap-2">
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-900 flex items-center gap-2">
               <ArrowLeft className="w-5 h-5" />
               <span className="hidden sm:inline">Back to Profile</span>
             </button>
             <div className="flex items-center gap-2">
-              <button onClick={handleShare} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white">
+              <button onClick={handleShare} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-900">
                 <Share2 className="w-5 h-5" />
               </button>
-              <button className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white">
+              <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-900">
                 <Download className="w-5 h-5" />
               </button>
             </div>
@@ -309,38 +309,38 @@ function CaseStudyDetail() {
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
           <div className="max-w-5xl mx-auto">
             {caseStudy.featured && (
-              <div className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-sm font-medium text-white mb-4">
+              <div className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-blue-600 to-orange-500 rounded-full text-sm font-medium text-white mb-4">
                 <Star className="w-4 h-4 fill-current" /> Featured
               </div>
             )}
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{caseStudy.title}</h1>
-            <p className="text-xl text-gray-300">{caseStudy.subtitle}</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{caseStudy.title}</h1>
+            <p className="text-xl text-gray-600">{caseStudy.subtitle}</p>
           </div>
         </div>
       </div>
 
       {/* Meta Bar */}
-      <div className="bg-white/5 border-b border-white/10">
+      <div className="bg-gray-50 border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 lg:px-6 py-4 flex flex-wrap gap-6 text-sm">
           <div className="flex items-center gap-2">
             <Briefcase className="w-4 h-4 text-gray-500" />
-            <span className="text-white font-medium">{caseStudy.clientName}</span>
+            <span className="text-gray-900 font-medium">{caseStudy.clientName}</span>
           </div>
           <div className="flex items-center gap-2">
             <Target className="w-4 h-4 text-gray-500" />
-            <span className="text-white">{caseStudy.clientIndustry}</span>
+            <span className="text-gray-900">{caseStudy.clientIndustry}</span>
           </div>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-gray-500" />
-            <span className="text-white">{caseStudy.projectDuration}</span>
+            <span className="text-gray-900">{caseStudy.projectDuration}</span>
           </div>
           <div className="flex items-center gap-2">
             <DollarSign className="w-4 h-4 text-gray-500" />
-            <span className="text-white">{caseStudy.budgetRange}</span>
+            <span className="text-gray-900">{caseStudy.budgetRange}</span>
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-gray-500" />
-            <span className="text-white">{caseStudy.completedDate}</span>
+            <span className="text-gray-900">{caseStudy.completedDate}</span>
           </div>
         </div>
       </div>
@@ -351,30 +351,30 @@ function CaseStudyDetail() {
           {/* Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Challenge */}
-            <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+            <section className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center">
                   <Target className="w-5 h-5 text-red-400" />
                 </div>
                 The Challenge
               </h2>
-              <p className="text-gray-300 mb-6 leading-relaxed">{caseStudy.challenge.summary}</p>
+              <p className="text-gray-600 mb-6 leading-relaxed">{caseStudy.challenge.summary}</p>
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-400 uppercase mb-3">Pain Points</h3>
+                  <h3 className="text-sm font-medium text-gray-500 uppercase mb-3">Pain Points</h3>
                   <ul className="space-y-2">
                     {caseStudy.challenge.painPoints.map((p, i) => (
-                      <li key={i} className="flex items-start gap-2 text-gray-300">
+                      <li key={i} className="flex items-start gap-2 text-gray-600">
                         <span className="text-red-400 mt-1">✕</span>{p}
                       </li>
                     ))}
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-400 uppercase mb-3">Goals</h3>
+                  <h3 className="text-sm font-medium text-gray-500 uppercase mb-3">Goals</h3>
                   <ul className="space-y-2">
                     {caseStudy.challenge.goals.map((g, i) => (
-                      <li key={i} className="flex items-start gap-2 text-gray-300">
+                      <li key={i} className="flex items-start gap-2 text-gray-600">
                         <span className="text-green-400 mt-1">◎</span>{g}
                       </li>
                     ))}
@@ -384,24 +384,24 @@ function CaseStudyDetail() {
             </section>
 
             {/* Approach */}
-            <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+            <section className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
                   <Zap className="w-5 h-5 text-blue-400" />
                 </div>
                 The Approach
               </h2>
-              <p className="text-gray-300 mb-6">{caseStudy.approach.summary}</p>
+              <p className="text-gray-600 mb-6">{caseStudy.approach.summary}</p>
               <div className="space-y-4 mb-6">
                 {caseStudy.approach.phases.map((phase, idx) => (
-                  <div key={idx} className="bg-white/5 rounded-xl p-4">
+                  <div key={idx} className="bg-gray-50 rounded-xl p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-bold text-white">{phase.title}</h3>
+                      <h3 className="font-bold text-gray-900">{phase.title}</h3>
                       <span className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">{phase.duration}</span>
                     </div>
                     <ul className="space-y-2">
                       {phase.activities.map((act, i) => (
-                        <li key={i} className="flex items-start gap-2 text-gray-300 text-sm">
+                        <li key={i} className="flex items-start gap-2 text-gray-600 text-sm">
                           <CheckCircle className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />{act}
                         </li>
                       ))}
@@ -411,18 +411,18 @@ function CaseStudyDetail() {
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-400 uppercase mb-2">Methodologies</h3>
+                  <h3 className="text-sm font-medium text-gray-500 uppercase mb-2">Methodologies</h3>
                   <div className="flex flex-wrap gap-2">
                     {caseStudy.approach.methodologies.map((m, i) => (
-                      <span key={i} className="px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-300 text-sm">{m}</span>
+                      <span key={i} className="px-3 py-1 bg-blue-100 border border-purple-500/30 rounded-lg text-purple-300 text-sm">{m}</span>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-400 uppercase mb-2">Tools</h3>
+                  <h3 className="text-sm font-medium text-gray-500 uppercase mb-2">Tools</h3>
                   <div className="flex flex-wrap gap-2">
                     {caseStudy.approach.toolsUsed.map((t, i) => (
-                      <span key={i} className="flex items-center gap-1 px-3 py-1 bg-white/10 rounded-lg text-gray-300 text-sm">
+                      <span key={i} className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-lg text-gray-600 text-sm">
                         <span>{toolIcons[t] || '🔧'}</span>{t}
                       </span>
                     ))}
@@ -432,32 +432,32 @@ function CaseStudyDetail() {
             </section>
 
             {/* Results */}
-            <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+            <section className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
                 <div className="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center">
                   <TrendingUp className="w-5 h-5 text-green-400" />
                 </div>
                 The Results
               </h2>
-              <p className="text-gray-300 mb-6">{caseStudy.results.summary}</p>
+              <p className="text-gray-600 mb-6">{caseStudy.results.summary}</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                 {caseStudy.results.metrics.map((r, i) => (
                   <div key={i} className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-4 text-center">
                     <div className="text-2xl mb-1">{r.icon}</div>
-                    <div className="text-3xl font-bold text-white mb-1">{r.metric}</div>
-                    <div className="text-sm text-gray-300">{r.label}</div>
+                    <div className="text-3xl font-bold text-gray-900 mb-1">{r.metric}</div>
+                    <div className="text-sm text-gray-600">{r.label}</div>
                     <div className="text-xs text-gray-500">{r.description}</div>
                     {r.change && (
                       <div className={`text-xs mt-2 px-2 py-0.5 rounded-full inline-block ${
                         r.change.startsWith('+') ? 'bg-green-500/20 text-green-400' :
-                        r.change.startsWith('-') ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
+                        r.change.startsWith('-') ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                       }`}>{r.change}</div>
                     )}
                   </div>
                 ))}
               </div>
               <div>
-                <h3 className="text-sm font-medium text-gray-400 uppercase mb-3">Timeline</h3>
+                <h3 className="text-sm font-medium text-gray-500 uppercase mb-3">Timeline</h3>
                 <div className="relative">
                   <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-green-500 to-purple-500"></div>
                   <div className="space-y-4">
@@ -465,7 +465,7 @@ function CaseStudyDetail() {
                       <div key={i} className="flex items-start gap-4 pl-8 relative">
                         <div className="absolute left-2.5 w-3 h-3 bg-white rounded-full border-2 border-green-500"></div>
                         <div className="text-sm font-medium text-green-400 w-16">{t.week}</div>
-                        <div className="text-gray-300">{t.event}</div>
+                        <div className="text-gray-600">{t.event}</div>
                       </div>
                     ))}
                   </div>
@@ -474,24 +474,24 @@ function CaseStudyDetail() {
             </section>
 
             {/* Deliverables */}
-            <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-purple-400" />
+            <section className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-blue-600" />
                 </div>
                 Deliverables
               </h2>
               <div className="grid md:grid-cols-2 gap-4">
                 {caseStudy.deliverables.map((d, i) => (
-                  <div key={i} className="bg-white/5 rounded-xl p-4">
+                  <div key={i} className="bg-gray-50 rounded-xl p-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-5 h-5 text-purple-400" />
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-blue-600" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-white mb-1">{d.title}</h4>
-                        <p className="text-sm text-gray-400">{d.description}</p>
-                        <span className="inline-block mt-2 px-2 py-0.5 bg-white/10 rounded text-xs text-gray-400">{d.type}</span>
+                        <h4 className="font-medium text-gray-900 mb-1">{d.title}</h4>
+                        <p className="text-sm text-gray-500">{d.description}</p>
+                        <span className="inline-block mt-2 px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-500">{d.type}</span>
                       </div>
                     </div>
                   </div>
@@ -501,8 +501,8 @@ function CaseStudyDetail() {
 
             {/* Gallery */}
             {caseStudy.gallery?.length > 0 && (
-              <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+              <section className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
                   <div className="w-10 h-10 bg-pink-500/20 rounded-xl flex items-center justify-center">
                     <Image className="w-5 h-5 text-pink-400" />
                   </div>
@@ -530,18 +530,18 @@ function CaseStudyDetail() {
             )}
 
             {/* Testimonial */}
-            <section className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-white/20 rounded-2xl p-6">
+            <section className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-gray-200 rounded-2xl p-6">
               <div className="flex items-start gap-4">
-                <div className="text-4xl text-purple-400 opacity-50">"</div>
+                <div className="text-4xl text-blue-600 opacity-50">"</div>
                 <div className="flex-1">
-                  <p className="text-xl text-white italic mb-6 leading-relaxed">{caseStudy.testimonial.quote}</p>
+                  <p className="text-xl text-gray-700 italic mb-6 leading-relaxed">{caseStudy.testimonial.quote}</p>
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-orange-500 rounded-full flex items-center justify-center">
                       <span className="text-white font-bold">{caseStudy.testimonial.avatar}</span>
                     </div>
                     <div>
-                      <div className="font-medium text-white">{caseStudy.testimonial.author}</div>
-                      <div className="text-sm text-gray-400">{caseStudy.testimonial.title}, {caseStudy.testimonial.company}</div>
+                      <div className="font-medium text-gray-900">{caseStudy.testimonial.author}</div>
+                      <div className="text-sm text-gray-500">{caseStudy.testimonial.title}, {caseStudy.testimonial.company}</div>
                     </div>
                     <div className="ml-auto flex items-center gap-1">
                       {[...Array(5)].map((_, i) => (
@@ -554,11 +554,11 @@ function CaseStudyDetail() {
             </section>
 
             {/* Skills */}
-            <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <section className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
               <h2 className="text-xl font-bold text-white mb-4">Skills Demonstrated</h2>
               <div className="flex flex-wrap gap-2">
                 {caseStudy.skills.map((s, i) => (
-                  <span key={i} className="px-4 py-2 bg-purple-500/20 border border-purple-500/30 rounded-full text-purple-300">{s}</span>
+                  <span key={i} className="px-4 py-2 bg-blue-100 border border-purple-500/30 rounded-full text-purple-300">{s}</span>
                 ))}
               </div>
             </section>
@@ -567,14 +567,14 @@ function CaseStudyDetail() {
             <div className="flex items-center justify-between">
               {caseStudy.relatedIds[1] && (
                 <button onClick={() => router.push(`/expert-profile/${expertId}/case-study/${caseStudy.relatedIds[1]}`)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white">
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-white/20 border border-gray-200 rounded-lg text-white">
                   <ChevronLeft className="w-5 h-5" />Previous
                 </button>
               )}
               <div className="flex-1" />
               {caseStudy.relatedIds[0] && (
                 <button onClick={() => router.push(`/expert-profile/${expertId}/case-study/${caseStudy.relatedIds[0]}`)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white">
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-white/20 border border-gray-200 rounded-lg text-white">
                   Next<ChevronRight className="w-5 h-5" />
                 </button>
               )}
@@ -584,8 +584,8 @@ function CaseStudyDetail() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Expert Card */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 sticky top-20">
-              <h3 className="text-sm font-medium text-gray-400 uppercase mb-4">Project By</h3>
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 sticky top-20">
+              <h3 className="text-sm font-medium text-gray-500 uppercase mb-4">Project By</h3>
               <div className="flex items-center gap-3 mb-4">
                 <div className={`w-14 h-14 bg-gradient-to-br ${expert.avatarColor} rounded-xl flex items-center justify-center`}>
                   <span className="text-white font-bold text-lg">{expert.avatar}</span>
@@ -598,32 +598,32 @@ function CaseStudyDetail() {
               <div className="flex items-center gap-2 mb-4">
                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
                 <span className="text-white font-medium">{expert.rating}</span>
-                <span className="text-gray-400 text-sm">({expert.reviews} reviews)</span>
+                <span className="text-gray-500 text-sm">({expert.reviews} reviews)</span>
               </div>
               <button onClick={() => router.push(`/expert-profile/${expertId}`)}
-                className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl text-white font-medium mb-2">
+                className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-purple-600 hover:to-pink-600 rounded-xl text-white font-medium mb-2">
                 View Full Profile
               </button>
-              <button className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white font-medium">
+              <button className="w-full py-3 bg-gray-100 hover:bg-white/20 border border-gray-200 rounded-xl text-white font-medium">
                 Contact Expert
               </button>
             </div>
 
             {/* Summary */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-              <h3 className="text-sm font-medium text-gray-400 uppercase mb-4">Summary</h3>
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
+              <h3 className="text-sm font-medium text-gray-500 uppercase mb-4">Summary</h3>
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between"><span className="text-gray-400">Client</span><span className="text-white">{caseStudy.clientName}</span></div>
-                <div className="flex justify-between"><span className="text-gray-400">Industry</span><span className="text-white">{caseStudy.clientIndustry}</span></div>
-                <div className="flex justify-between"><span className="text-gray-400">Duration</span><span className="text-white">{caseStudy.projectDuration}</span></div>
-                <div className="flex justify-between"><span className="text-gray-400">Budget</span><span className="text-white">{caseStudy.budgetRange}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Client</span><span className="text-white">{caseStudy.clientName}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Industry</span><span className="text-gray-900">{caseStudy.clientIndustry}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Duration</span><span className="text-gray-900">{caseStudy.projectDuration}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Budget</span><span className="text-gray-900">{caseStudy.budgetRange}</span></div>
               </div>
             </div>
 
             {/* Download */}
-            <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-white/20 rounded-2xl p-5">
+            <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-gray-200 rounded-2xl p-5">
               <h3 className="font-bold text-white mb-2">Download Case Study</h3>
-              <p className="text-sm text-gray-400 mb-4">Get the full PDF to share with your team.</p>
+              <p className="text-sm text-gray-500 mb-4">Get the full PDF to share with your team.</p>
               <button className="w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white font-medium flex items-center justify-center gap-2">
                 <Download className="w-4 h-4" />Download PDF
               </button>
@@ -631,17 +631,17 @@ function CaseStudyDetail() {
 
             {/* Related */}
             {caseStudy.relatedIds.length > 0 && (
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-                <h3 className="text-sm font-medium text-gray-400 uppercase mb-4">Related Work</h3>
+              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
+                <h3 className="text-sm font-medium text-gray-500 uppercase mb-4">Related Work</h3>
                 <div className="space-y-3">
                   {caseStudy.relatedIds.map(id => {
                     const r = mockCaseStudies[id];
                     if (!r) return null;
                     return (
                       <button key={id} onClick={() => router.push(`/expert-profile/${expertId}/case-study/${id}`)}
-                        className="w-full text-left bg-white/5 hover:bg-white/10 rounded-xl p-3 group">
+                        className="w-full text-left bg-gray-50 hover:bg-gray-100 rounded-xl p-3 group">
                         <h4 className="font-medium text-white text-sm group-hover:text-purple-300">{r.title}</h4>
-                        <p className="text-xs text-gray-400">{r.clientIndustry}</p>
+                        <p className="text-xs text-gray-500">{r.clientIndustry}</p>
                       </button>
                     );
                   })}
@@ -653,15 +653,15 @@ function CaseStudyDetail() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-slate-900/50 border-t border-white/10 py-6 px-4 mt-8">
+      <footer className="bg-gray-50 border-t border-gray-200 py-6 px-4 mt-8">
         <div className="max-w-5xl mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-xl flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <span className="text-lg font-bold text-white">Karya-AI</span>
           </div>
-          <p className="text-gray-400 text-sm">© 2026 Karya-AI. All rights reserved.</p>
+          <p className="text-gray-500 text-sm">© 2026 Karya-AI. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -192,7 +192,7 @@ function ExpertPortfolio() {
             <span className="text-sm text-gray-500">100% Complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-indigo-500 h-2 rounded-full transition-all duration-300" style={{ width: '100%' }}></div>
+            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '100%' }}></div>
           </div>
         </div>
 
@@ -231,7 +231,7 @@ function ExpertPortfolio() {
                     onChange={(e) => handleLinkChange('website', e.target.value)}
                     placeholder="https://yourwebsite.com"
                     disabled={isLoading}
-                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all disabled:opacity-50"
+                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -250,7 +250,7 @@ function ExpertPortfolio() {
                     onChange={(e) => handleLinkChange('linkedin', e.target.value)}
                     placeholder="https://linkedin.com/in/yourname"
                     disabled={isLoading}
-                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all disabled:opacity-50"
+                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -269,7 +269,7 @@ function ExpertPortfolio() {
                     onChange={(e) => handleLinkChange('portfolio', e.target.value)}
                     placeholder="https://behance.net/yourname"
                     disabled={isLoading}
-                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all disabled:opacity-50"
+                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -288,7 +288,7 @@ function ExpertPortfolio() {
                     onChange={(e) => handleLinkChange('other', e.target.value)}
                     placeholder="https://..."
                     disabled={isLoading}
-                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all disabled:opacity-50"
+                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -331,7 +331,7 @@ function ExpertPortfolio() {
                         onChange={(e) => handleCaseStudyChange(caseStudy.id, 'title', e.target.value)}
                         placeholder="e.g., E-commerce CRM Migration & Optimization"
                         disabled={isLoading}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all disabled:opacity-50"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                       />
                     </div>
 
@@ -346,7 +346,7 @@ function ExpertPortfolio() {
                         onChange={(e) => handleCaseStudyChange(caseStudy.id, 'client', e.target.value)}
                         placeholder="e.g., Fortune 500 Retail Company or Confidential"
                         disabled={isLoading}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all disabled:opacity-50"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                       />
                     </div>
 
@@ -361,7 +361,7 @@ function ExpertPortfolio() {
                         placeholder="Describe the challenge, your approach, and the solution..."
                         rows={3}
                         disabled={isLoading}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none disabled:opacity-50"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all resize-none disabled:opacity-50"
                       />
                     </div>
 
@@ -376,7 +376,7 @@ function ExpertPortfolio() {
                         placeholder="Quantify your impact: metrics, improvements, ROI..."
                         rows={2}
                         disabled={isLoading}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none disabled:opacity-50"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all resize-none disabled:opacity-50"
                       />
                     </div>
 
@@ -395,7 +395,7 @@ function ExpertPortfolio() {
                           onChange={(e) => handleCaseStudyChange(caseStudy.id, 'link', e.target.value)}
                           placeholder="https://..."
                           disabled={isLoading}
-                          className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all disabled:opacity-50"
+                          className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                         />
                       </div>
                     </div>
@@ -492,7 +492,7 @@ function ExpertPortfolio() {
             <button
               onClick={handleComplete}
               disabled={isLoading}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
+              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
             >
               {isLoading ? (
                 <>

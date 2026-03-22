@@ -190,7 +190,7 @@ function SettingsContent() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -262,7 +262,7 @@ function SettingsContent() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Profile Photo</h3>
           <div className="flex items-center space-x-6">
-            <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center">
+            <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
               <span className="text-2xl font-semibold text-white">
                 {getUserInitials(formData.fullName)}
               </span>
@@ -294,7 +294,7 @@ function SettingsContent() {
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleInputChange}
-                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter your full name"
                   required
                 />
@@ -312,7 +312,7 @@ function SettingsContent() {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50"
+                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
                   placeholder="Enter your email"
                   disabled
                 />
@@ -331,7 +331,7 @@ function SettingsContent() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter your phone number"
                 />
               </div>
@@ -354,7 +354,7 @@ function SettingsContent() {
                   name="companyName"
                   value={formData.companyName}
                   onChange={handleInputChange}
-                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter your company name"
                 />
               </div>
@@ -371,7 +371,7 @@ function SettingsContent() {
                   name="companyWebsite"
                   value={formData.companyWebsite}
                   onChange={handleInputChange}
-                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="https://yourcompany.com"
                 />
               </div>
@@ -386,7 +386,7 @@ function SettingsContent() {
                 name="industry"
                 value={formData.industry}
                 onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="e.g., Technology, Healthcare"
               />
             </div>
@@ -399,7 +399,7 @@ function SettingsContent() {
                 name="companySize"
                 value={formData.companySize}
                 onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Select company size</option>
                 <option value="1-10">1-10 employees</option>
@@ -419,7 +419,7 @@ function SettingsContent() {
                 name="businessType"
                 value={formData.businessType}
                 onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Select business type</option>
                 <option value="b2b">B2B (Business to Business)</option>
@@ -441,7 +441,7 @@ function SettingsContent() {
                 value={formData.companyDescription}
                 onChange={handleInputChange}
                 rows={4}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Describe your company and what it does..."
               />
             </div>
@@ -461,7 +461,7 @@ function SettingsContent() {
                 name="address"
                 value={formData.address}
                 onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Street address"
               />
             </div>
@@ -475,7 +475,7 @@ function SettingsContent() {
                 name="city"
                 value={formData.city}
                 onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="City"
               />
             </div>
@@ -489,7 +489,7 @@ function SettingsContent() {
                 name="state"
                 value={formData.state}
                 onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="State"
               />
             </div>
@@ -503,7 +503,7 @@ function SettingsContent() {
                 name="country"
                 value={formData.country}
                 onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Country"
               />
             </div>
@@ -517,7 +517,7 @@ function SettingsContent() {
                 name="pincode"
                 value={formData.pincode}
                 onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="PIN code"
               />
             </div>
@@ -534,7 +534,7 @@ function SettingsContent() {
                 name="emailNotifications"
                 checked={formData.emailNotifications}
                 onChange={handleInputChange}
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label className="ml-3 text-sm text-gray-700">
                 Email notifications about account activity
@@ -547,7 +547,7 @@ function SettingsContent() {
                 name="smsNotifications"
                 checked={formData.smsNotifications}
                 onChange={handleInputChange}
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label className="ml-3 text-sm text-gray-700">
                 SMS notifications for important updates
@@ -560,7 +560,7 @@ function SettingsContent() {
                 name="marketingEmails"
                 checked={formData.marketingEmails}
                 onChange={handleInputChange}
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label className="ml-3 text-sm text-gray-700">
                 Marketing emails about new features and tips
@@ -574,7 +574,7 @@ function SettingsContent() {
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center space-x-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-blue-600 to-orange-500 text-white rounded-lg hover:from-blue-700 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -670,7 +670,7 @@ function SettingsContent() {
                             onClick={() => handleSectionChange(item.id)}
                             className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                               activeSection === item.id
-                                ? 'bg-indigo-50 text-indigo-600 border border-indigo-200'
+                                ? 'bg-blue-50 text-blue-600 border border-blue-200'
                                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                           >
@@ -703,7 +703,7 @@ function SettingsContent() {
 function SettingsLoading() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
     </div>
   );
 }

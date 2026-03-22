@@ -103,7 +103,7 @@ export default function CompanyDetails() {
             <span className="text-sm text-gray-500">43% Complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-indigo-500 h-2 rounded-full transition-all duration-300" style={{ width: '43%' }}></div>
+            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '43%' }}></div>
           </div>
         </div>
 
@@ -145,7 +145,7 @@ export default function CompanyDetails() {
                   className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.companyName && errors.companyName
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
-                      : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="Enter your company name"
                 />
@@ -173,7 +173,7 @@ export default function CompanyDetails() {
                   className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl text-gray-900 focus:outline-none focus:ring-2 transition-all appearance-none cursor-pointer disabled:opacity-50 ${
                     touched.companySize && errors.companySize
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
-                      : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                 >
                   <option value="" className="bg-white">Select company size</option>
@@ -212,12 +212,12 @@ export default function CompanyDetails() {
                   className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl text-gray-900 focus:outline-none focus:ring-2 transition-all appearance-none cursor-pointer disabled:opacity-50 ${
                     touched.industry && errors.industry
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
-                      : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                 >
                   <option value="" className="bg-white">Select your industry</option>
                   {industries.map((industry) => (
-                    <option key={industry.value} value={industry.value} className="bg-white">
+                    <option key={industry.value} value={industry.label} className="bg-white">
                       {industry.label}
                     </option>
                   ))}
@@ -248,7 +248,7 @@ export default function CompanyDetails() {
                   value={formData.website}
                   onChange={handleChange}
                   disabled={isLoading}
-                  className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all disabled:opacity-50"
+                  className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                   placeholder="https://www.example.com"
                 />
               </div>
@@ -256,8 +256,8 @@ export default function CompanyDetails() {
           </div>
 
           {/* Helper Text */}
-          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-8">
-            <p className="text-indigo-700 text-sm flex items-start gap-2">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+            <p className="text-blue-700 text-sm flex items-start gap-2">
               <span className="text-lg">💡</span>
               <span>
                 This information helps us personalize your experience and provide relevant insights for your industry.
@@ -278,7 +278,7 @@ export default function CompanyDetails() {
             <button
               onClick={handleNext}
               disabled={isLoading}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
+              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
             >
               {isLoading ? (
                 <>

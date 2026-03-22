@@ -169,7 +169,7 @@ export default function ProjectSelection() {
                 onClick={() => setSelectedFilter(tab.id)}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   selectedFilter === tab.id
-                    ? 'border-indigo-500 text-indigo-600'
+                    ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -198,7 +198,7 @@ export default function ProjectSelection() {
             <div className="text-gray-500 mb-4">{emptyMessage}</div>
             <button
               onClick={emptyActionHandler}
-              className="text-indigo-600 hover:text-indigo-500 font-medium"
+              className="text-blue-600 hover:text-blue-500 font-medium"
             >
               {emptyAction}
             </button>
@@ -246,11 +246,11 @@ export default function ProjectSelection() {
                   <div className="mb-3">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-xs font-medium text-gray-600">Progress</span>
-                      <span className="text-xs font-medium text-indigo-600">{project.progress.percentage}%</span>
+                      <span className="text-xs font-medium text-blue-600">{project.progress.percentage}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${project.progress.percentage}%` }}
                       ></div>
                     </div>
@@ -274,7 +274,7 @@ export default function ProjectSelection() {
                   disabled={project.status !== 'active'}
                   className={`w-full px-4 py-2 rounded-md transition-colors duration-200 flex items-center justify-center font-medium cursor-pointer ${
                     project.status === 'active'
-                      ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >

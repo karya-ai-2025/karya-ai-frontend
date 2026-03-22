@@ -309,13 +309,13 @@ const mockDocuments = [
 // Mock tags
 const mockTags = [
   { name: "B2B SaaS", count: 15, color: "bg-blue-500" },
-  { name: "Enterprise", count: 8, color: "bg-purple-500" },
+  { name: "Enterprise", count: 8, color: "bg-blue-500" },
   { name: "Outbound", count: 12, color: "bg-emerald-500" },
-  { name: "Content", count: 10, color: "bg-pink-500" },
+  { name: "Content", count: 10, color: "bg-orange-500" },
   { name: "SEO", count: 5, color: "bg-amber-500" },
   { name: "Competitive", count: 4, color: "bg-red-500" },
   { name: "Templates", count: 20, color: "bg-cyan-500" },
-  { name: "Case Studies", count: 6, color: "bg-indigo-500" }
+  { name: "Case Studies", count: 6, color: "bg-blue-500" }
 ];
 
 // Mock activity for document detail
@@ -362,9 +362,9 @@ function getFileIcon(type) {
     case 'pdf': return <FileText className="w-5 h-5 text-red-400" />;
     case 'docx': case 'doc': return <FileText className="w-5 h-5 text-blue-400" />;
     case 'xlsx': case 'xls': return <FileSpreadsheet className="w-5 h-5 text-emerald-400" />;
-    case 'png': case 'jpg': case 'jpeg': case 'gif': return <Image className="w-5 h-5 text-purple-400" />;
-    case 'mp4': case 'mov': return <Video className="w-5 h-5 text-pink-400" />;
-    default: return <File className="w-5 h-5 text-slate-400" />;
+    case 'png': case 'jpg': case 'jpeg': case 'gif': return <Image className="w-5 h-5 text-blue-600" />;
+    case 'mp4': case 'mov': return <Video className="w-5 h-5 text-orange-500" />;
+    default: return <File className="w-5 h-5 text-gray-500" />;
   }
 }
 
@@ -373,8 +373,8 @@ function getFileColor(type) {
     case 'pdf': return 'bg-red-500/20 border-red-500/40';
     case 'docx': case 'doc': return 'bg-blue-500/20 border-blue-500/40';
     case 'xlsx': case 'xls': return 'bg-emerald-500/20 border-emerald-500/40';
-    case 'png': case 'jpg': case 'jpeg': case 'gif': return 'bg-purple-500/20 border-purple-500/40';
-    case 'mp4': case 'mov': return 'bg-pink-500/20 border-pink-500/40';
+    case 'png': case 'jpg': case 'jpeg': case 'gif': return 'bg-blue-100 border-purple-500/40';
+    case 'mp4': case 'mov': return 'bg-orange-100 border-orange-300';
     default: return 'bg-slate-500/20 border-slate-500/40';
   }
 }
@@ -391,7 +391,7 @@ function FolderTreeItem({ item, level = 0, selectedFolder, onSelect, onToggle, e
       <button
         onClick={() => isFolder ? onToggle(item.id) : onSelect(item)}
         className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-sm transition-all ${
-          isSelected ? 'bg-purple-600 text-white' : 'text-slate-300 hover:bg-slate-700'
+          isSelected ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
         }`}
         style={{ paddingLeft: `${8 + level * 16}px` }}
       >
@@ -405,7 +405,7 @@ function FolderTreeItem({ item, level = 0, selectedFolder, onSelect, onToggle, e
         )}
         <span className="flex-1 truncate">{item.name}</span>
         {isFolder && item.count && (
-          <span className="text-xs text-slate-500">{item.count}</span>
+          <span className="text-xs text-gray-400">{item.count}</span>
         )}
       </button>
       {isFolder && isExpanded && hasChildren && (
@@ -433,7 +433,7 @@ function DocumentCard({ doc, onSelect, onToggleFavorite }) {
 
   return (
     <div
-      className="bg-slate-700 border border-slate-600 rounded-xl p-4 hover:border-purple-500/50 hover:shadow-lg transition-all cursor-pointer group relative"
+      className="bg-gray-100 border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-lg transition-all cursor-pointer group relative"
       onClick={() => onSelect(doc)}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -447,7 +447,7 @@ function DocumentCard({ doc, onSelect, onToggleFavorite }) {
 
       {/* File Info */}
       <div className="mb-2">
-        <h4 className="font-medium text-white text-sm truncate group-hover:text-purple-300 transition-colors">
+        <h4 className="font-medium text-gray-900 text-sm truncate group-hover:text-blue-600 transition-colors">
           {doc.name}
         </h4>
         <div className="flex items-center gap-2 mt-1">
@@ -455,33 +455,33 @@ function DocumentCard({ doc, onSelect, onToggleFavorite }) {
             style={{ color: doc.type === 'pdf' ? '#f87171' : doc.type.includes('doc') ? '#60a5fa' : doc.type.includes('xls') ? '#34d399' : '#a78bfa' }}>
             {doc.type}
           </span>
-          <span className="text-xs text-slate-500">{doc.size}</span>
+          <span className="text-xs text-gray-400">{doc.size}</span>
         </div>
       </div>
 
       {/* Modified Info */}
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-5 h-5 bg-slate-600 rounded-full flex items-center justify-center">
-          <span className="text-white text-xs">{doc.modifiedBy.avatar.charAt(0)}</span>
+        <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
+          <span className="text-gray-900 text-xs">{doc.modifiedBy.avatar.charAt(0)}</span>
         </div>
-        <span className="text-xs text-slate-400">{doc.modified}</span>
+        <span className="text-xs text-gray-500">{doc.modified}</span>
       </div>
 
       {/* Tags */}
       {doc.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
           {doc.tags.slice(0, 2).map(tag => (
-            <span key={tag} className="px-1.5 py-0.5 bg-slate-600 rounded text-xs text-slate-300">{tag}</span>
+            <span key={tag} className="px-1.5 py-0.5 bg-gray-200 rounded text-xs text-gray-600">{tag}</span>
           ))}
           {doc.tags.length > 2 && (
-            <span className="px-1.5 py-0.5 bg-slate-600 rounded text-xs text-slate-400">+{doc.tags.length - 2}</span>
+            <span className="px-1.5 py-0.5 bg-gray-200 rounded text-xs text-gray-500">+{doc.tags.length - 2}</span>
           )}
         </div>
       )}
 
       {/* Shared indicator */}
       {doc.sharedWith.length > 0 && (
-        <div className="flex items-center gap-1 text-xs text-slate-500">
+        <div className="flex items-center gap-1 text-xs text-gray-400">
           <Users className="w-3 h-3" />
           Shared with {doc.sharedWith.length}
         </div>
@@ -491,7 +491,7 @@ function DocumentCard({ doc, onSelect, onToggleFavorite }) {
       <button
         onClick={(e) => { e.stopPropagation(); onToggleFavorite(doc.id); }}
         className={`absolute top-3 right-3 p-1 rounded transition-all ${
-          doc.isFavorite ? 'text-amber-400' : 'text-slate-500 opacity-0 group-hover:opacity-100'
+          doc.isFavorite ? 'text-amber-400' : 'text-gray-400 opacity-0 group-hover:opacity-100'
         }`}
       >
         <Star className={`w-4 h-4 ${doc.isFavorite ? 'fill-current' : ''}`} />
@@ -500,14 +500,14 @@ function DocumentCard({ doc, onSelect, onToggleFavorite }) {
       {/* Quick Actions */}
       {showActions && (
         <div className="absolute bottom-3 right-3 flex gap-1">
-          <button className="p-1.5 bg-slate-600 hover:bg-slate-500 rounded-lg transition-all" title="Preview">
-            <Eye className="w-3.5 h-3.5 text-slate-300" />
+          <button className="p-1.5 bg-gray-200 hover:bg-slate-500 rounded-lg transition-all" title="Preview">
+            <Eye className="w-3.5 h-3.5 text-gray-600" />
           </button>
-          <button className="p-1.5 bg-slate-600 hover:bg-slate-500 rounded-lg transition-all" title="Download">
-            <Download className="w-3.5 h-3.5 text-slate-300" />
+          <button className="p-1.5 bg-gray-200 hover:bg-slate-500 rounded-lg transition-all" title="Download">
+            <Download className="w-3.5 h-3.5 text-gray-600" />
           </button>
-          <button className="p-1.5 bg-slate-600 hover:bg-slate-500 rounded-lg transition-all" title="Share">
-            <Share2 className="w-3.5 h-3.5 text-slate-300" />
+          <button className="p-1.5 bg-gray-200 hover:bg-slate-500 rounded-lg transition-all" title="Share">
+            <Share2 className="w-3.5 h-3.5 text-gray-600" />
           </button>
         </div>
       )}
@@ -520,18 +520,18 @@ function DocumentListRow({ doc, onSelect, onToggleFavorite }) {
   return (
     <tr
       onClick={() => onSelect(doc)}
-      className="hover:bg-slate-700/50 cursor-pointer border-b border-slate-700/50 transition-all group"
+      className="hover:bg-gray-50 cursor-pointer border-b border-gray-200/50 transition-all group"
     >
       <td className="py-3 px-4">
         <div className="flex items-center gap-3">
           <button
             onClick={(e) => { e.stopPropagation(); onToggleFavorite(doc.id); }}
-            className={doc.isFavorite ? 'text-amber-400' : 'text-slate-600 hover:text-slate-400'}
+            className={doc.isFavorite ? 'text-amber-400' : 'text-slate-600 hover:text-gray-500'}
           >
             <Star className={`w-4 h-4 ${doc.isFavorite ? 'fill-current' : ''}`} />
           </button>
           {getFileIcon(doc.type)}
-          <span className="text-white font-medium">{doc.name}</span>
+          <span className="text-gray-900 font-medium">{doc.name}</span>
         </div>
       </td>
       <td className="py-3 px-4">
@@ -540,35 +540,35 @@ function DocumentListRow({ doc, onSelect, onToggleFavorite }) {
           {doc.type}
         </span>
       </td>
-      <td className="py-3 px-4 text-sm text-slate-400">{doc.size}</td>
-      <td className="py-3 px-4 text-sm text-slate-400">{doc.modified}</td>
+      <td className="py-3 px-4 text-sm text-gray-500">{doc.size}</td>
+      <td className="py-3 px-4 text-sm text-gray-500">{doc.modified}</td>
       <td className="py-3 px-4">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-slate-600 rounded-full flex items-center justify-center">
-            <span className="text-white text-xs">{doc.modifiedBy.avatar}</span>
+          <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+            <span className="text-gray-900 text-xs">{doc.modifiedBy.avatar}</span>
           </div>
-          <span className="text-sm text-slate-300">{doc.modifiedBy.name}</span>
+          <span className="text-sm text-gray-600">{doc.modifiedBy.name}</span>
         </div>
       </td>
       <td className="py-3 px-4">
         {doc.sharedWith.length > 0 ? (
           <div className="flex items-center -space-x-1">
             {doc.sharedWith.slice(0, 3).map((user, idx) => (
-              <div key={idx} className="w-6 h-6 bg-slate-600 rounded-full flex items-center justify-center border border-slate-800">
+              <div key={idx} className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center border border-gray-200">
                 <span className="text-white text-xs">{user.avatar}</span>
               </div>
             ))}
             {doc.sharedWith.length > 3 && (
-              <span className="text-xs text-slate-500 ml-2">+{doc.sharedWith.length - 3}</span>
+              <span className="text-xs text-gray-400 ml-2">+{doc.sharedWith.length - 3}</span>
             )}
           </div>
         ) : (
-          <span className="text-slate-500 text-sm">—</span>
+          <span className="text-gray-400 text-sm">—</span>
         )}
       </td>
       <td className="py-3 px-4">
-        <button className="p-1 hover:bg-slate-600 rounded opacity-0 group-hover:opacity-100 transition-all">
-          <MoreHorizontal className="w-4 h-4 text-slate-400" />
+        <button className="p-1 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition-all">
+          <MoreHorizontal className="w-4 h-4 text-gray-500" />
         </button>
       </td>
     </tr>
@@ -584,34 +584,34 @@ function DocumentDetailModal({ doc, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex">
       {/* Preview Pane - 70% */}
-      <div className="flex-7 bg-slate-900 flex flex-col">
+      <div className="flex-7 bg-white flex flex-col">
         {/* Preview Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
             {getFileIcon(doc.type)}
-            <h2 className="font-semibold text-white">{doc.name}</h2>
+            <h2 className="font-semibold text-gray-900">{doc.name}</h2>
             <span className={`px-2 py-0.5 rounded text-xs font-medium uppercase ${getFileColor(doc.type)}`}
               style={{ color: doc.type === 'pdf' ? '#f87171' : doc.type.includes('doc') ? '#60a5fa' : doc.type.includes('xls') ? '#34d399' : '#a78bfa' }}>
               {doc.type}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => setZoom(z => Math.max(50, z - 10))} className="p-2 hover:bg-slate-700 rounded-lg">
-              <ZoomOut className="w-4 h-4 text-slate-400" />
+            <button onClick={() => setZoom(z => Math.max(50, z - 10))} className="p-2 hover:bg-gray-100 rounded-lg">
+              <ZoomOut className="w-4 h-4 text-gray-500" />
             </button>
-            <span className="text-sm text-slate-400 w-12 text-center">{zoom}%</span>
-            <button onClick={() => setZoom(z => Math.min(200, z + 10))} className="p-2 hover:bg-slate-700 rounded-lg">
-              <ZoomIn className="w-4 h-4 text-slate-400" />
+            <span className="text-sm text-gray-500 w-12 text-center">{zoom}%</span>
+            <button onClick={() => setZoom(z => Math.min(200, z + 10))} className="p-2 hover:bg-gray-100 rounded-lg">
+              <ZoomIn className="w-4 h-4 text-gray-500" />
             </button>
-            <div className="w-px h-6 bg-slate-700 mx-2" />
-            <button className="p-2 hover:bg-slate-700 rounded-lg" title="Print">
-              <Printer className="w-4 h-4 text-slate-400" />
+            <div className="w-px h-6 bg-gray-100 mx-2" />
+            <button className="p-2 hover:bg-gray-100 rounded-lg" title="Print">
+              <Printer className="w-4 h-4 text-gray-500" />
             </button>
-            <button className="p-2 hover:bg-slate-700 rounded-lg" title="Download">
-              <Download className="w-4 h-4 text-slate-400" />
+            <button className="p-2 hover:bg-gray-100 rounded-lg" title="Download">
+              <Download className="w-4 h-4 text-gray-500" />
             </button>
-            <button className="p-2 hover:bg-slate-700 rounded-lg" title="Full Screen">
-              <Maximize2 className="w-4 h-4 text-slate-400" />
+            <button className="p-2 hover:bg-gray-100 rounded-lg" title="Full Screen">
+              <Maximize2 className="w-4 h-4 text-gray-500" />
             </button>
           </div>
         </div>
@@ -624,31 +624,31 @@ function DocumentDetailModal({ doc, onClose }) {
                 {getFileIcon(doc.type)}
               </div>
               <h3 className="text-xl font-semibold text-slate-800 mb-2">{doc.name}</h3>
-              <p className="text-slate-500">Document preview would render here</p>
-              <p className="text-sm text-slate-400 mt-2">{doc.type.toUpperCase()} • {doc.size}</p>
+              <p className="text-gray-400">Document preview would render here</p>
+              <p className="text-sm text-gray-500 mt-2">{doc.type.toUpperCase()} • {doc.size}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Info Panel - 30% */}
-      <div className="flex-3 bg-slate-800 border-l border-slate-700 flex flex-col max-w-md">
+      <div className="flex-3 bg-white border-l border-gray-200 flex flex-col max-w-md">
         {/* Panel Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
-          <h3 className="font-semibold text-white">Document Details</h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-lg">
-            <X className="w-5 h-5 text-slate-400" />
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <h3 className="font-semibold text-gray-900">Document Details</h3>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-slate-700">
+        <div className="flex border-b border-gray-200">
           {['info', 'sharing', 'activity', 'comments', 'versions'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`flex-1 py-2 text-xs font-medium capitalize transition-all ${
-                activeTab === tab ? 'text-purple-400 border-b-2 border-purple-400' : 'text-slate-400 hover:text-white'
+                activeTab === tab ? 'text-blue-600 border-b-2 border-blue-400' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
               {tab}
@@ -662,78 +662,78 @@ function DocumentDetailModal({ doc, onClose }) {
           {activeTab === 'info' && (
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-slate-500 block mb-1">File Name</label>
+                <label className="text-xs text-gray-400 block mb-1">File Name</label>
                 <input
                   type="text"
                   defaultValue={doc.name}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500"
+                  className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs text-slate-500 block mb-1">Type</label>
-                  <p className="text-white text-sm">{doc.type.toUpperCase()}</p>
+                  <label className="text-xs text-gray-400 block mb-1">Type</label>
+                  <p className="text-gray-700 text-sm">{doc.type.toUpperCase()}</p>
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500 block mb-1">Size</label>
-                  <p className="text-white text-sm">{doc.size}</p>
+                  <label className="text-xs text-gray-400 block mb-1">Size</label>
+                  <p className="text-gray-700 text-sm">{doc.size}</p>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-slate-500 block mb-1">Created</label>
-                <p className="text-white text-sm">{doc.created} by {doc.createdBy.name}</p>
+                <label className="text-xs text-gray-400 block mb-1">Created</label>
+                <p className="text-gray-700 text-sm">{doc.created} by {doc.createdBy.name}</p>
               </div>
 
               <div>
-                <label className="text-xs text-slate-500 block mb-1">Last Modified</label>
-                <p className="text-white text-sm">{doc.modified} by {doc.modifiedBy.name}</p>
+                <label className="text-xs text-gray-400 block mb-1">Last Modified</label>
+                <p className="text-gray-700 text-sm">{doc.modified} by {doc.modifiedBy.name}</p>
               </div>
 
               <div>
-                <label className="text-xs text-slate-500 block mb-1">Version</label>
-                <p className="text-white text-sm">Version {doc.version}</p>
+                <label className="text-xs text-gray-400 block mb-1">Version</label>
+                <p className="text-gray-700 text-sm">Version {doc.version}</p>
               </div>
 
               <div>
-                <label className="text-xs text-slate-500 block mb-1">Location</label>
-                <p className="text-white text-sm flex items-center gap-1">
+                <label className="text-xs text-gray-400 block mb-1">Location</label>
+                <p className="text-gray-700 text-sm flex items-center gap-1">
                   <Folder className="w-4 h-4 text-amber-400" /> {doc.folder}
                 </p>
               </div>
 
               <div>
-                <label className="text-xs text-slate-500 block mb-1">Description</label>
+                <label className="text-xs text-gray-400 block mb-1">Description</label>
                 <textarea
                   defaultValue={doc.description}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500 resize-none"
+                  className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-blue-500 resize-none"
                   rows={3}
                 />
               </div>
 
               <div>
-                <label className="text-xs text-slate-500 block mb-2">Tags</label>
+                <label className="text-xs text-gray-400 block mb-2">Tags</label>
                 <div className="flex flex-wrap gap-2">
                   {doc.tags.map(tag => (
-                    <span key={tag} className="px-2 py-1 bg-slate-700 rounded-lg text-xs text-slate-300 flex items-center gap-1">
+                    <span key={tag} className="px-2 py-1 bg-gray-100 rounded-lg text-xs text-gray-600 flex items-center gap-1">
                       {tag}
                       <X className="w-3 h-3 cursor-pointer hover:text-red-400" />
                     </span>
                   ))}
-                  <button className="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs text-purple-400">
+                  <button className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs text-blue-600">
                     + Add tag
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-slate-500 block mb-2">Related Documents</label>
+                <label className="text-xs text-gray-400 block mb-2">Related Documents</label>
                 <div className="space-y-2">
                   {mockRelatedDocs.map(related => (
-                    <div key={related.id} className="flex items-center gap-2 p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 cursor-pointer">
+                    <div key={related.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
                       {getFileIcon(related.type)}
-                      <span className="text-sm text-slate-300">{related.name}</span>
+                      <span className="text-sm text-gray-600">{related.name}</span>
                     </div>
                   ))}
                 </div>
@@ -745,17 +745,17 @@ function DocumentDetailModal({ doc, onClose }) {
           {activeTab === 'sharing' && (
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-slate-500 block mb-2">Shared With</label>
+                <label className="text-xs text-gray-400 block mb-2">Shared With</label>
                 <div className="space-y-2">
                   {doc.sharedWith.map((user, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2 bg-slate-700/50 rounded-lg">
+                    <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-bold">{user.avatar}</span>
+                          <span className="text-white text-xs font-bold">{user.avatar}</span>
                         </div>
-                        <span className="text-sm text-white">{user.name}</span>
+                        <span className="text-sm text-gray-700">{user.name}</span>
                       </div>
-                      <select className="bg-slate-600 border border-slate-500 rounded px-2 py-1 text-xs text-white">
+                      <select className="bg-gray-200 border border-gray-300 rounded px-2 py-1 text-xs text-gray-900">
                         <option value="view" selected={user.permission === 'view'}>View</option>
                         <option value="comment" selected={user.permission === 'comment'}>Comment</option>
                         <option value="edit" selected={user.permission === 'edit'}>Edit</option>
@@ -763,20 +763,20 @@ function DocumentDetailModal({ doc, onClose }) {
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-2 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm text-purple-400 flex items-center justify-center gap-2">
+                <button className="w-full mt-2 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-blue-600 flex items-center justify-center gap-2">
                   <Plus className="w-4 h-4" /> Add People
                 </button>
               </div>
 
-              <div className="pt-4 border-t border-slate-700">
+              <div className="pt-4 border-t border-gray-200">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm text-white">Link Sharing</label>
-                  <button className="w-10 h-5 bg-slate-600 rounded-full relative">
+                  <label className="text-sm text-gray-700">Link Sharing</label>
+                  <button className="w-10 h-5 bg-gray-200 rounded-full relative">
                     <div className="w-4 h-4 bg-slate-400 rounded-full absolute left-0.5 top-0.5" />
                   </button>
                 </div>
-                <p className="text-xs text-slate-500">Anyone with the link can view</p>
-                <button className="w-full mt-2 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm text-slate-300 flex items-center justify-center gap-2">
+                <p className="text-xs text-gray-400">Anyone with the link can view</p>
+                <button className="w-full mt-2 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-600 flex items-center justify-center gap-2">
                   <Link2 className="w-4 h-4" /> Copy Link
                 </button>
               </div>
@@ -788,14 +788,14 @@ function DocumentDetailModal({ doc, onClose }) {
             <div className="space-y-3">
               {mockDocActivity.map(activity => (
                 <div key={activity.id} className="flex items-start gap-3 p-2">
-                  <div className="w-6 h-6 bg-slate-600 rounded-full flex items-center justify-center shrink-0">
+                  <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center shrink-0">
                     <span className="text-white text-xs">{activity.user.charAt(0)}</span>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-300">
-                      <span className="text-white font-medium">{activity.user}</span> {activity.action}
+                    <p className="text-sm text-gray-600">
+                      <span className="text-gray-900 font-medium">{activity.user}</span> {activity.action}
                     </p>
-                    <p className="text-xs text-slate-500">{activity.timestamp}</p>
+                    <p className="text-xs text-gray-400">{activity.timestamp}</p>
                   </div>
                 </div>
               ))}
@@ -808,16 +808,16 @@ function DocumentDetailModal({ doc, onClose }) {
               {mockDocComments.map(comment => (
                 <div key={comment.id} className="space-y-2">
                   <div className="flex items-start gap-2">
-                    <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center shrink-0">
                       <span className="text-white text-xs">{comment.avatar}</span>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-white">{comment.user}</span>
-                        <span className="text-xs text-slate-500">{comment.timestamp}</span>
+                        <span className="text-sm font-medium text-gray-900">{comment.user}</span>
+                        <span className="text-xs text-gray-400">{comment.timestamp}</span>
                       </div>
-                      <p className="text-sm text-slate-300 mt-1">{comment.content}</p>
-                      <button className="text-xs text-purple-400 mt-1 flex items-center gap-1">
+                      <p className="text-sm text-gray-600 mt-1">{comment.content}</p>
+                      <button className="text-xs text-blue-600 mt-1 flex items-center gap-1">
                         <Reply className="w-3 h-3" /> Reply
                       </button>
                     </div>
@@ -829,25 +829,25 @@ function DocumentDetailModal({ doc, onClose }) {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-white">{reply.user}</span>
-                          <span className="text-xs text-slate-500">{reply.timestamp}</span>
+                          <span className="text-sm font-medium text-gray-900">{reply.user}</span>
+                          <span className="text-xs text-gray-400">{reply.timestamp}</span>
                         </div>
-                        <p className="text-sm text-slate-300 mt-1">{reply.content}</p>
+                        <p className="text-sm text-gray-600 mt-1">{reply.content}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               ))}
 
-              <div className="pt-4 border-t border-slate-700">
+              <div className="pt-4 border-t border-gray-200">
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add a comment..."
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-purple-500 resize-none"
+                  className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-blue-500 resize-none"
                   rows={2}
                 />
-                <button className="mt-2 px-4 py-1.5 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-sm font-medium">
+                <button className="mt-2 px-4 py-1.5 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-lg text-gray-900 text-sm font-medium">
                   Comment
                 </button>
               </div>
@@ -858,19 +858,19 @@ function DocumentDetailModal({ doc, onClose }) {
           {activeTab === 'versions' && (
             <div className="space-y-3">
               {mockVersionHistory.map(version => (
-                <div key={version.id} className={`p-3 rounded-lg border ${version.isCurrent ? 'bg-purple-500/10 border-purple-500/30' : 'bg-slate-700/50 border-slate-600'}`}>
+                <div key={version.id} className={`p-3 rounded-lg border ${version.isCurrent ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'}`}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-white">{version.label}</span>
+                    <span className="text-sm font-medium text-gray-900">{version.label}</span>
                     {version.isCurrent && (
-                      <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded text-xs">Current</span>
+                      <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded text-xs">Current</span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-400">{version.date} by {version.author}</p>
-                  <p className="text-sm text-slate-300 mt-2">{version.notes}</p>
+                  <p className="text-xs text-gray-500">{version.date} by {version.author}</p>
+                  <p className="text-sm text-gray-600 mt-2">{version.notes}</p>
                   {!version.isCurrent && (
                     <div className="flex gap-2 mt-2">
-                      <button className="text-xs text-purple-400 hover:text-purple-300">Restore</button>
-                      <button className="text-xs text-slate-400 hover:text-slate-300">Compare</button>
+                      <button className="text-xs text-blue-600 hover:text-blue-600">Restore</button>
+                      <button className="text-xs text-gray-500 hover:text-gray-600">Compare</button>
                     </div>
                   )}
                 </div>
@@ -880,23 +880,23 @@ function DocumentDetailModal({ doc, onClose }) {
         </div>
 
         {/* Panel Actions */}
-        <div className="p-4 border-t border-slate-700 space-y-2">
+        <div className="p-4 border-t border-gray-200 space-y-2">
           <div className="grid grid-cols-2 gap-2">
-            <button className="py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white text-sm font-medium flex items-center justify-center gap-2">
+            <button className="py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900 text-sm font-medium flex items-center justify-center gap-2">
               <Edit3 className="w-4 h-4" /> Edit
             </button>
-            <button className="py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-sm font-medium flex items-center justify-center gap-2">
+            <button className="py-2 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-lg text-gray-900 text-sm font-medium flex items-center justify-center gap-2">
               <Download className="w-4 h-4" /> Download
             </button>
           </div>
           <div className="flex gap-2">
-            <button className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 text-xs flex items-center justify-center gap-1">
+            <button className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 text-xs flex items-center justify-center gap-1">
               <Move className="w-3 h-3" /> Move
             </button>
-            <button className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 text-xs flex items-center justify-center gap-1">
+            <button className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 text-xs flex items-center justify-center gap-1">
               <Copy className="w-3 h-3" /> Copy
             </button>
-            <button className="flex-1 py-2 bg-slate-700 hover:bg-red-500/20 hover:text-red-400 rounded-lg text-slate-300 text-xs flex items-center justify-center gap-1">
+            <button className="flex-1 py-2 bg-gray-100 hover:bg-red-500/20 hover:text-red-400 rounded-lg text-gray-600 text-xs flex items-center justify-center gap-1">
               <Trash2 className="w-3 h-3" /> Delete
             </button>
           </div>
@@ -913,11 +913,11 @@ function UploadModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-lg">
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
-          <h3 className="font-semibold text-white">Upload Files</h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-lg">
-            <X className="w-5 h-5 text-slate-400" />
+      <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-lg">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <h3 className="font-semibold text-gray-900">Upload Files</h3>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
@@ -925,24 +925,24 @@ function UploadModal({ onClose }) {
           {/* Drop Zone */}
           <div
             className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
-              isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-slate-600 hover:border-slate-500'
+              isDragging ? 'border-purple-500 bg-blue-50' : 'border-gray-200 hover:border-slate-500'
             }`}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={(e) => { e.preventDefault(); setIsDragging(false); }}
             onClick={() => fileInputRef.current?.click()}
           >
-            <Upload className="w-10 h-10 text-slate-500 mx-auto mb-3" />
-            <p className="text-white font-medium mb-1">Drag files here or click to browse</p>
-            <p className="text-sm text-slate-500">PDF, DOCX, XLSX, PNG, JPG up to 50MB</p>
+            <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-900 font-medium mb-1">Drag files here or click to browse</p>
+            <p className="text-sm text-gray-400">PDF, DOCX, XLSX, PNG, JPG up to 50MB</p>
             <input ref={fileInputRef} type="file" multiple className="hidden" />
           </div>
 
           {/* Options */}
           <div className="mt-6 space-y-4">
             <div>
-              <label className="text-sm text-slate-400 block mb-2">Destination Folder</label>
-              <select className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500">
+              <label className="text-sm text-gray-500 block mb-2">Destination Folder</label>
+              <select className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-blue-500">
                 <option>ICPs</option>
                 <option>Marketing Plans</option>
                 <option>Templates</option>
@@ -951,30 +951,30 @@ function UploadModal({ onClose }) {
             </div>
 
             <div>
-              <label className="text-sm text-slate-400 block mb-2">Tags</label>
+              <label className="text-sm text-gray-500 block mb-2">Tags</label>
               <input
                 type="text"
                 placeholder="Add tags (comma separated)"
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="text-sm text-slate-400 block mb-2">Description (optional)</label>
+              <label className="text-sm text-gray-500 block mb-2">Description (optional)</label>
               <textarea
                 placeholder="Add a description..."
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-purple-500 resize-none"
+                className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-blue-500 resize-none"
                 rows={2}
               />
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 p-4 border-t border-slate-700">
-          <button onClick={onClose} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white text-sm font-medium">
+        <div className="flex justify-end gap-2 p-4 border-t border-gray-200">
+          <button onClick={onClose} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900 text-sm font-medium">
             Cancel
           </button>
-          <button className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-sm font-medium">
+          <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-lg text-gray-900 text-sm font-medium">
             Upload
           </button>
         </div>
@@ -1033,27 +1033,27 @@ function KnowledgeBase() {
   });
 
   return (
-    <div className="flex h-full min-h-screen bg-slate-900">
+    <div className="flex h-full min-h-screen bg-white">
       {/* Left Sidebar */}
-      <div className="w-64 shrink-0 border-r border-slate-700 flex flex-col">
+      <div className="w-64 shrink-0 border-r border-gray-200 flex flex-col">
         {/* Folder Tree */}
         <div className="flex-1 overflow-y-auto p-3">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Folders</h3>
-            <button className="p-1 hover:bg-slate-700 rounded transition-colors" title="New Folder">
-              <FolderPlus className="w-4 h-4 text-slate-400" />
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Folders</h3>
+            <button className="p-1 hover:bg-gray-100 rounded transition-colors" title="New Folder">
+              <FolderPlus className="w-4 h-4 text-gray-500" />
             </button>
           </div>
 
           <button
             onClick={() => setSelectedFolder(null)}
             className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-sm mb-1 ${
-              selectedFolder === null ? 'bg-purple-600 text-white' : 'text-slate-300 hover:bg-slate-700'
+              selectedFolder === null ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
             <Folder className="w-4 h-4" />
             <span>All Files</span>
-            <span className="ml-auto text-xs text-slate-500">{documents.length}</span>
+            <span className="ml-auto text-xs text-gray-400">{documents.length}</span>
           </button>
 
           {mockFolderTree.map(folder => (
@@ -1069,8 +1069,8 @@ function KnowledgeBase() {
         </div>
 
         {/* Quick Filters */}
-        <div className="border-t border-slate-700 p-3">
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Quick Filters</h3>
+        <div className="border-t border-gray-200 p-3">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Quick Filters</h3>
           <div className="space-y-1">
             {quickFilters.map(filter => {
               const Icon = filter.icon;
@@ -1079,7 +1079,7 @@ function KnowledgeBase() {
                   key={filter.id}
                   onClick={() => setActiveQuickFilter(activeQuickFilter === filter.id ? null : filter.id)}
                   className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-sm transition-all ${
-                    activeQuickFilter === filter.id ? 'bg-purple-600 text-white' : 'text-slate-400 hover:bg-slate-700 hover:text-white'
+                    activeQuickFilter === filter.id ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -1091,8 +1091,8 @@ function KnowledgeBase() {
         </div>
 
         {/* Tags Cloud */}
-        <div className="border-t border-slate-700 p-3">
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Tags</h3>
+        <div className="border-t border-gray-200 p-3">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Tags</h3>
           <div className="flex flex-wrap gap-1">
             {mockTags.map(tag => (
               <button
@@ -1100,8 +1100,8 @@ function KnowledgeBase() {
                 onClick={() => toggleTag(tag.name)}
                 className={`px-2 py-0.5 rounded text-xs transition-all ${
                   selectedTags.includes(tag.name)
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 {tag.name}
@@ -1111,13 +1111,13 @@ function KnowledgeBase() {
         </div>
 
         {/* Storage Info */}
-        <div className="border-t border-slate-700 p-3">
+        <div className="border-t border-gray-200 p-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500">Storage</span>
-            <span className="text-xs text-slate-400">4.2 GB / 25 GB</span>
+            <span className="text-xs text-gray-400">Storage</span>
+            <span className="text-xs text-gray-500">4.2 GB / 25 GB</span>
           </div>
-          <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
-            <div className="h-full bg-purple-500 rounded-full" style={{ width: '17%' }} />
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full bg-blue-500 rounded-full" style={{ width: '17%' }} />
           </div>
         </div>
       </div>
@@ -1125,40 +1125,40 @@ function KnowledgeBase() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4 p-4 border-b border-slate-700">
+        <div className="flex flex-wrap items-center justify-between gap-4 p-4 border-b border-gray-200">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search all documents..."
-              className="w-full pl-9 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-purple-500"
+              className="w-full pl-9 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-blue-500"
             />
           </div>
 
           {/* View & Actions */}
           <div className="flex items-center gap-2">
             {/* View Toggle */}
-            <div className="flex bg-slate-700 rounded-lg p-1">
+            <div className="flex bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-900'}`}
                 title="Grid View"
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-900'}`}
                 title="List View"
               >
                 <List className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('tree')}
-                className={`p-1.5 rounded-md transition-all ${viewMode === 'tree' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                className={`p-1.5 rounded-md transition-all ${viewMode === 'tree' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-900'}`}
                 title="Tree View"
               >
                 <GitBranch className="w-4 h-4" />
@@ -1169,7 +1169,7 @@ function KnowledgeBase() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500"
+              className="bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:border-blue-500"
             >
               <option value="modified">Date Modified</option>
               <option value="name">Name</option>
@@ -1180,7 +1180,7 @@ function KnowledgeBase() {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all ${
-                showFilters ? 'bg-purple-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                showFilters ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               <Filter className="w-4 h-4" /> Filter
@@ -1188,21 +1188,21 @@ function KnowledgeBase() {
 
             {/* Create New Dropdown */}
             <div className="relative group">
-              <button className="flex items-center gap-2 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-white text-sm">
+              <button className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900 text-sm">
                 <Plus className="w-4 h-4" /> New <ChevronDown className="w-3 h-3" />
               </button>
-              <div className="absolute right-0 top-full mt-1 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-xl hidden group-hover:block z-10">
-                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 text-sm text-slate-300">
+              <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-xl shadow-xl hidden group-hover:block z-10">
+                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-sm text-gray-600">
                   <FileText className="w-4 h-4 text-blue-400" /> Google Doc
                 </button>
-                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 text-sm text-slate-300">
+                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-sm text-gray-600">
                   <FileSpreadsheet className="w-4 h-4 text-emerald-400" /> Google Sheet
                 </button>
-                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 text-sm text-slate-300">
+                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-sm text-gray-600">
                   <FolderPlus className="w-4 h-4 text-amber-400" /> New Folder
                 </button>
-                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 text-sm text-slate-300">
-                  <Link2 className="w-4 h-4 text-purple-400" /> Link to External
+                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-sm text-gray-600">
+                  <Link2 className="w-4 h-4 text-blue-600" /> Link to External
                 </button>
               </div>
             </div>
@@ -1210,7 +1210,7 @@ function KnowledgeBase() {
             {/* Upload */}
             <button
               onClick={() => setShowUploadModal(true)}
-              className="flex items-center gap-2 px-4 py-1.5 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-lg text-gray-900 text-sm font-medium"
             >
               <Upload className="w-4 h-4" /> Upload
             </button>
@@ -1219,29 +1219,29 @@ function KnowledgeBase() {
 
         {/* Active Filters Display */}
         {(selectedTags.length > 0 || activeQuickFilter || selectedFolder) && (
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-700 bg-slate-800/50">
-            <span className="text-xs text-slate-500">Filters:</span>
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-200 bg-white/50">
+            <span className="text-xs text-gray-400">Filters:</span>
             {selectedFolder && (
-              <span className="flex items-center gap-1 px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-300">
+              <span className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">
                 <Folder className="w-3 h-3" /> {mockFolderTree.find(f => f.id === selectedFolder)?.name}
                 <X className="w-3 h-3 cursor-pointer hover:text-red-400" onClick={() => setSelectedFolder(null)} />
               </span>
             )}
             {activeQuickFilter && (
-              <span className="flex items-center gap-1 px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-300">
+              <span className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">
                 {quickFilters.find(f => f.id === activeQuickFilter)?.label}
                 <X className="w-3 h-3 cursor-pointer hover:text-red-400" onClick={() => setActiveQuickFilter(null)} />
               </span>
             )}
             {selectedTags.map(tag => (
-              <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded text-xs">
+              <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-500 rounded text-xs">
                 {tag}
                 <X className="w-3 h-3 cursor-pointer hover:text-red-400" onClick={() => toggleTag(tag)} />
               </span>
             ))}
             <button
               onClick={() => { setSelectedTags([]); setActiveQuickFilter(null); setSelectedFolder(null); }}
-              className="text-xs text-purple-400 hover:text-purple-300 ml-2"
+              className="text-xs text-blue-600 hover:text-blue-600 ml-2"
             >
               Clear all
             </button>
@@ -1251,7 +1251,7 @@ function KnowledgeBase() {
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-4">
           {/* Results Count */}
-          <p className="text-sm text-slate-500 mb-4">{sortedDocuments.length} documents</p>
+          <p className="text-sm text-gray-400 mb-4">{sortedDocuments.length} documents</p>
 
           {/* Grid View */}
           {viewMode === 'grid' && (
@@ -1269,17 +1269,17 @@ function KnowledgeBase() {
 
           {/* List View */}
           {viewMode === 'list' && (
-            <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-700">
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Size</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Modified</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Modified By</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Shared</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider"></th>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Name</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Type</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Size</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Modified</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Modified By</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Shared</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1298,10 +1298,10 @@ function KnowledgeBase() {
 
           {/* Tree View Placeholder */}
           {viewMode === 'tree' && (
-            <div className="flex items-center justify-center h-64 bg-slate-800 border border-slate-700 rounded-xl">
+            <div className="flex items-center justify-center h-64 bg-white border border-gray-200 rounded-xl">
               <div className="text-center">
                 <GitBranch className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-400">Tree view coming soon</p>
+                <p className="text-gray-500">Tree view coming soon</p>
               </div>
             </div>
           )}
@@ -1311,10 +1311,10 @@ function KnowledgeBase() {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-400">No documents found</p>
+                <p className="text-gray-500">No documents found</p>
                 <button
                   onClick={() => setShowUploadModal(true)}
-                  className="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-sm font-medium"
+                  className="mt-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-lg text-gray-900 text-sm font-medium"
                 >
                   Upload Files
                 </button>

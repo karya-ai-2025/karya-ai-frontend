@@ -126,7 +126,7 @@ function BrandSetup() {
             <span className="text-sm text-gray-500">57% Complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-indigo-500 h-2 rounded-full transition-all duration-300" style={{ width: '57%' }}></div>
+            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '57%' }}></div>
           </div>
         </div>
 
@@ -165,7 +165,7 @@ function BrandSetup() {
                 onDrop={handleDrop}
                 className={`relative border-2 border-dashed rounded-xl p-12 transition-all ${
                   dragActive
-                    ? 'border-indigo-500 bg-indigo-50'
+                    ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-200 bg-gray-50'
                 }`}
               >
@@ -258,7 +258,7 @@ function BrandSetup() {
             <button
               onClick={handleConfirm}
               disabled={isLoading}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
+              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
             >
               {isLoading ? (
                 <>

@@ -74,7 +74,7 @@ function MarketingActivities() {
             <span className="text-sm text-gray-500">86% Complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-indigo-500 h-2 rounded-full transition-all duration-300" style={{ width: '86%' }}></div>
+            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '86%' }}></div>
           </div>
         </div>
 
@@ -112,7 +112,7 @@ function MarketingActivities() {
                 placeholder="Describe what you're currently doing on the marketing front... (e.g., social media posts, email newsletters, paid ads)"
                 rows={4}
                 disabled={isLoading}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none disabled:opacity-50"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all resize-none disabled:opacity-50"
               />
             </div>
 
@@ -128,7 +128,7 @@ function MarketingActivities() {
                 placeholder="Describe your ideal marketing strategy... (e.g., expand to new channels, increase content production)"
                 rows={3}
                 disabled={isLoading}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none disabled:opacity-50"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all resize-none disabled:opacity-50"
               />
             </div>
 
@@ -144,7 +144,7 @@ function MarketingActivities() {
                 placeholder="What are your main marketing goals and objectives? (e.g., increase leads by 50%, grow social following)"
                 rows={3}
                 disabled={isLoading}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none disabled:opacity-50"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all resize-none disabled:opacity-50"
               />
             </div>
 
@@ -159,7 +159,7 @@ function MarketingActivities() {
                   value={formData.monthlyBudget}
                   onChange={handleChange}
                   disabled={isLoading}
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer disabled:opacity-50"
                 >
                   <option value="" className="bg-white">Select your budget range</option>
                   {budgetOptions.map((option) => (
@@ -178,8 +178,8 @@ function MarketingActivities() {
           </div>
 
           {/* Helper Text */}
-          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-8">
-            <p className="text-indigo-700 text-sm flex items-start gap-2">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+            <p className="text-blue-700 text-sm flex items-start gap-2">
               <span className="text-lg">💡</span>
               <span>
                 The more details you provide, the better Karya-AI can assist you with personalized marketing strategies and recommendations.
@@ -200,7 +200,7 @@ function MarketingActivities() {
             <button
               onClick={handleNext}
               disabled={isLoading}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
+              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
             >
               {isLoading ? (
                 <>

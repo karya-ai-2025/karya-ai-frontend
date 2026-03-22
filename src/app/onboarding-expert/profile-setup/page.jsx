@@ -165,7 +165,7 @@ function ExpertProfileSetup() {
             <span className="text-sm text-gray-500">25% Complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-indigo-500 h-2 rounded-full transition-all duration-300" style={{ width: '25%' }}></div>
+            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '25%' }}></div>
           </div>
         </div>
 
@@ -199,7 +199,7 @@ function ExpertProfileSetup() {
                       <User className="w-16 h-16 text-gray-400" />
                     )}
                   </div>
-                  <label className="absolute bottom-0 right-0 w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg">
+                  <label className="absolute bottom-0 right-0 w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg">
                     <Upload className="w-5 h-5 text-white" />
                     <input
                       type="file"
@@ -228,7 +228,7 @@ function ExpertProfileSetup() {
                   className={`w-full px-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.fullName && errors.fullName
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
-                      : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="e.g., Anthony Bourdain"
                 />
@@ -256,7 +256,7 @@ function ExpertProfileSetup() {
                     className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                       touched.title && errors.title
                         ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
-                        : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/50'
+                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                     }`}
                     placeholder="e.g., CRM Consultant"
                   />
@@ -281,7 +281,7 @@ function ExpertProfileSetup() {
                     value={formData.location}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all disabled:opacity-50"
+                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                     placeholder="e.g., Beaverton, OR"
                   />
                 </div>
@@ -305,7 +305,7 @@ function ExpertProfileSetup() {
                   className={`w-full px-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all resize-none disabled:opacity-50 ${
                     touched.bio && errors.bio
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
-                      : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="Tell businesses about your expertise, experience, and what makes you unique..."
                 />
@@ -328,7 +328,7 @@ function ExpertProfileSetup() {
                     value={formData.communicationStyle}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer disabled:opacity-50"
                   >
                     <option value="" className="bg-white">Select style</option>
                     {communicationStyles.map((style) => (
@@ -355,7 +355,7 @@ function ExpertProfileSetup() {
                   value={formData.workExperience}
                   onChange={handleChange}
                   disabled={isLoading}
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer disabled:opacity-50"
                 >
                   <option value="" className="bg-white">Select experience</option>
                   {experienceLevels.map((level) => (
@@ -391,7 +391,7 @@ function ExpertProfileSetup() {
             <button
               onClick={handleNext}
               disabled={isLoading}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
+              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
             >
               {isLoading ? (
                 <>

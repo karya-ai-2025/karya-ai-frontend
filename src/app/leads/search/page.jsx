@@ -67,7 +67,7 @@ function LeadsSearch() {
     { id: 'research', label: 'Contact Research', description: 'Research and gather information about contacts.', icon: <Search className="w-4 h-4 text-orange-400" /> },
     { id: 'linkedin-msg', label: 'LinkedIn Message', description: 'Send LinkedIn messages.', icon: <Linkedin className="w-4 h-4 text-blue-400" /> },
     { id: 'linkedin-connect', label: 'LinkedIn Connect Request', description: 'Send LinkedIn connection requests.', icon: <UserPlus className="w-4 h-4 text-blue-400" /> },
-    { id: 'custom', label: 'Custom Task', description: 'Perform custom actions as defined by the user.', icon: <ClipboardList className="w-4 h-4 text-purple-400" /> },
+    { id: 'custom', label: 'Custom Task', description: 'Perform custom actions as defined by the user.', icon: <ClipboardList className="w-4 h-4 text-blue-600" /> },
   ];
 
   // Sample companies data
@@ -142,25 +142,25 @@ function LeadsSearch() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0118] flex">
+    <div className="min-h-screen bg-white flex">
       {/* Animated Background */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-pink-900/20"></div>
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-600/10 rounded-full blur-3xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-transparent to-orange-50"></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-100 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-orange-100 rounded-full blur-3xl"></div>
       </div>
 
       {/* Left Sidebar - Filters */}
-      <div className="relative w-72 bg-[#1a0a2e]/80 backdrop-blur-xl border-r border-white/10 flex flex-col">
+      <div className="relative w-72 bg-white border-r border-gray-200 flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-white/10">
-          <Link href="/leads" className="flex items-center gap-2 text-gray-400 hover:text-white mb-4 transition-colors">
+        <div className="p-4 border-b border-gray-200">
+          <Link href="/leads" className="flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Dashboard</span>
           </Link>
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-white">Filters</h2>
-            <button onClick={clearAllFilters} className="text-purple-400 text-sm font-medium hover:text-purple-300">
+            <h2 className="font-bold text-gray-900">Filters</h2>
+            <button onClick={clearAllFilters} className="text-blue-600 text-sm font-medium hover:text-blue-500">
               Clear All
             </button>
           </div>
@@ -173,7 +173,7 @@ function LeadsSearch() {
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-gray-300">Keyword</label>
               {filters.keyword && (
-                <button onClick={() => clearFilter('keyword')} className="text-purple-400 text-xs hover:text-purple-300">Clear</button>
+                <button onClick={() => clearFilter('keyword')} className="text-blue-600 text-xs hover:text-blue-500">Clear</button>
               )}
             </div>
             <input
@@ -181,7 +181,7 @@ function LeadsSearch() {
               placeholder="Enter keyword"
               value={filters.keyword}
               onChange={(e) => handleFilterChange('keyword', e.target.value)}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-white placeholder-gray-500"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 placeholder-gray-500"
             />
             <p className="text-xs text-gray-500 mt-1">You can search keyword in company name, industry, company din number or people name</p>
           </div>
@@ -191,16 +191,16 @@ function LeadsSearch() {
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-gray-300">State</label>
               {filters.state && (
-                <button onClick={() => clearFilter('state')} className="text-purple-400 text-xs hover:text-purple-300">Clear</button>
+                <button onClick={() => clearFilter('state')} className="text-blue-600 text-xs hover:text-blue-500">Clear</button>
               )}
             </div>
             <select
               value={filters.state}
               onChange={(e) => handleFilterChange('state', e.target.value)}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-white"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900"
             >
               {stateOptions.map((opt, i) => (
-                <option key={i} value={i === 0 ? '' : opt} className="bg-[#1a0a2e] text-white">{opt}</option>
+                <option key={i} value={i === 0 ? '' : opt} className="bg-white text-gray-900">{opt}</option>
               ))}
             </select>
           </div>
@@ -210,20 +210,20 @@ function LeadsSearch() {
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-gray-300">Company Age</label>
               {filters.companyAge && (
-                <button onClick={() => clearFilter('companyAge')} className="text-purple-400 text-xs hover:text-purple-300">Clear</button>
+                <button onClick={() => clearFilter('companyAge')} className="text-blue-600 text-xs hover:text-blue-500">Clear</button>
               )}
             </div>
             <select
               value={filters.companyAge}
               onChange={(e) => handleFilterChange('companyAge', e.target.value)}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-white"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900"
             >
-              <option value="" className="bg-[#1a0a2e]">Choose age</option>
-              <option value="0-1" className="bg-[#1a0a2e]">0-1 years</option>
-              <option value="1-3" className="bg-[#1a0a2e]">1-3 years</option>
-              <option value="3-5" className="bg-[#1a0a2e]">3-5 years</option>
-              <option value="5-10" className="bg-[#1a0a2e]">5-10 years</option>
-              <option value="10+" className="bg-[#1a0a2e]">10+ years</option>
+              <option value="" className="bg-white">Choose age</option>
+              <option value="0-1" className="bg-white">0-1 years</option>
+              <option value="1-3" className="bg-white">1-3 years</option>
+              <option value="3-5" className="bg-white">3-5 years</option>
+              <option value="5-10" className="bg-white">5-10 years</option>
+              <option value="10+" className="bg-white">10+ years</option>
             </select>
           </div>
 
@@ -232,16 +232,16 @@ function LeadsSearch() {
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-gray-300">Industry</label>
               {filters.industry && (
-                <button onClick={() => clearFilter('industry')} className="text-purple-400 text-xs hover:text-purple-300">Clear</button>
+                <button onClick={() => clearFilter('industry')} className="text-blue-600 text-xs hover:text-blue-500">Clear</button>
               )}
             </div>
             <select
               value={filters.industry}
               onChange={(e) => handleFilterChange('industry', e.target.value)}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-white"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900"
             >
               {industryOptions.map((opt, i) => (
-                <option key={i} value={i === 0 ? '' : opt} className="bg-[#1a0a2e]">{opt}</option>
+                <option key={i} value={i === 0 ? '' : opt} className="bg-white">{opt}</option>
               ))}
             </select>
           </div>
@@ -251,16 +251,16 @@ function LeadsSearch() {
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-gray-300">Company Type</label>
               {filters.companyType && (
-                <button onClick={() => clearFilter('companyType')} className="text-purple-400 text-xs hover:text-purple-300">Clear</button>
+                <button onClick={() => clearFilter('companyType')} className="text-blue-600 text-xs hover:text-blue-500">Clear</button>
               )}
             </div>
             <select
               value={filters.companyType}
               onChange={(e) => handleFilterChange('companyType', e.target.value)}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-white"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900"
             >
               {companyTypeOptions.map((opt, i) => (
-                <option key={i} value={i === 0 ? '' : opt} className="bg-[#1a0a2e]">{opt}</option>
+                <option key={i} value={i === 0 ? '' : opt} className="bg-white">{opt}</option>
               ))}
             </select>
           </div>
@@ -270,16 +270,16 @@ function LeadsSearch() {
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-gray-300">Paid up capital</label>
               {filters.paidUpCapital && (
-                <button onClick={() => clearFilter('paidUpCapital')} className="text-purple-400 text-xs hover:text-purple-300">Clear</button>
+                <button onClick={() => clearFilter('paidUpCapital')} className="text-blue-600 text-xs hover:text-blue-500">Clear</button>
               )}
             </div>
             <select
               value={filters.paidUpCapital}
               onChange={(e) => handleFilterChange('paidUpCapital', e.target.value)}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-white"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900"
             >
               {capitalOptions.map((opt, i) => (
-                <option key={i} value={i === 0 ? '' : opt} className="bg-[#1a0a2e]">{opt}</option>
+                <option key={i} value={i === 0 ? '' : opt} className="bg-white">{opt}</option>
               ))}
             </select>
           </div>
@@ -289,32 +289,32 @@ function LeadsSearch() {
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-gray-300">City</label>
               {filters.city && (
-                <button onClick={() => clearFilter('city')} className="text-purple-400 text-xs hover:text-purple-300">Clear</button>
+                <button onClick={() => clearFilter('city')} className="text-blue-600 text-xs hover:text-blue-500">Clear</button>
               )}
             </div>
             <select
               value={filters.city}
               onChange={(e) => handleFilterChange('city', e.target.value)}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-white"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900"
             >
-              <option value="" className="bg-[#1a0a2e]">Choose</option>
-              <option value="Mumbai" className="bg-[#1a0a2e]">Mumbai</option>
-              <option value="Delhi" className="bg-[#1a0a2e]">Delhi</option>
-              <option value="Bangalore" className="bg-[#1a0a2e]">Bangalore</option>
-              <option value="Chennai" className="bg-[#1a0a2e]">Chennai</option>
-              <option value="Hyderabad" className="bg-[#1a0a2e]">Hyderabad</option>
-              <option value="Pune" className="bg-[#1a0a2e]">Pune</option>
+              <option value="" className="bg-white">Choose</option>
+              <option value="Mumbai" className="bg-white">Mumbai</option>
+              <option value="Delhi" className="bg-white">Delhi</option>
+              <option value="Bangalore" className="bg-white">Bangalore</option>
+              <option value="Chennai" className="bg-white">Chennai</option>
+              <option value="Hyderabad" className="bg-white">Hyderabad</option>
+              <option value="Pune" className="bg-white">Pune</option>
             </select>
           </div>
         </div>
 
         {/* Search Button */}
-        <div className="p-4 border-t border-white/10">
-          <button className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl font-medium transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-500/25">
+        <div className="p-4 border-t border-gray-200">
+          <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white rounded-xl font-medium transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25">
             <Search className="w-5 h-5" />
             Search
           </button>
-          <button onClick={clearAllFilters} className="w-full mt-2 py-2 text-gray-400 text-sm hover:text-white transition-colors">
+          <button onClick={clearAllFilters} className="w-full mt-2 py-2 text-gray-400 text-sm hover:text-gray-900 transition-colors">
             Clear All
           </button>
         </div>
@@ -323,14 +323,14 @@ function LeadsSearch() {
       {/* Main Content */}
       <div className="relative flex-1 flex flex-col">
         {/* Top Header */}
-        <header className="sticky top-0 z-10 bg-[#0a0118]/80 backdrop-blur-xl border-b border-white/10 px-6 py-4">
+        <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/25">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/25">
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
-                <span className="font-bold text-white">EasyProspect</span>
+                <span className="font-bold text-gray-900">EasyProspect</span>
               </Link>
               <span className="text-gray-600">/</span>
               <span className="text-gray-400">Search Results</span>
@@ -339,10 +339,10 @@ function LeadsSearch() {
               <div className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg text-sm font-medium border border-emerald-500/30">
                 Credits left: 847
               </div>
-              <button className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-purple-500/25 transition-all">
+              <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-orange-500 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all">
                 Book Demo
               </button>
-              <button className="px-4 py-2 border border-white/20 text-white rounded-lg font-medium hover:bg-white/5 transition-all">
+              <button className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-all">
                 Watch Demo
               </button>
               <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
@@ -356,21 +356,21 @@ function LeadsSearch() {
         <div className="flex-1 overflow-auto p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-white">Result</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Result</h1>
               <p className="text-gray-400 mt-1">
-                <span className="text-purple-400 font-semibold">1,764,142</span> companies found
+                <span className="text-blue-600 font-semibold">1,764,142</span> companies found
               </p>
             </div>
-            <button className="px-4 py-2 bg-purple-500/20 text-purple-300 rounded-lg font-medium hover:bg-purple-500/30 transition-all border border-purple-500/30">
+            <button className="px-4 py-2 bg-blue-100 text-blue-500 rounded-lg font-medium hover:bg-blue-200 transition-all border border-blue-300">
               My List
             </button>
           </div>
 
           {/* Results Table */}
-          <div className="bg-[#1a0a2e]/60 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
+          <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-white/5 border-b border-white/10">
+                <thead className="bg-white/5 border-b border-gray-200">
                   <tr>
                     <th className="px-4 py-3 text-left">
                       <input type="checkbox" className="rounded border-white/30 bg-transparent" />
@@ -387,12 +387,12 @@ function LeadsSearch() {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {companies.map((company, index) => (
-                    <tr key={company.id} className="hover:bg-white/5 transition-colors">
+                    <tr key={company.id} className="hover:bg-gray-100 transition-colors">
                       <td className="px-4 py-4">
                         <input type="checkbox" className="rounded border-white/30 bg-transparent" />
                       </td>
                       <td className="px-4 py-4">
-                        <p className="text-sm font-medium text-white">{company.name}</p>
+                        <p className="text-sm font-medium text-gray-900">{company.name}</p>
                       </td>
                       <td className="px-4 py-4 text-sm text-gray-400">{company.industry}</td>
                       <td className="px-4 py-4 text-sm text-gray-400">{company.type}</td>
@@ -422,13 +422,13 @@ function LeadsSearch() {
             </div>
 
             {/* Pagination */}
-            <div className="px-6 py-4 border-t border-white/10 flex items-center justify-between">
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
               <p className="text-sm text-gray-400">Page 1 of 176,415</p>
               <div className="flex items-center gap-2">
-                <button className="px-4 py-2 border border-white/20 rounded-lg text-sm text-gray-400 hover:bg-white/5 disabled:opacity-50" disabled>
+                <button className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-400 hover:bg-white/5 disabled:opacity-50" disabled>
                   Previous
                 </button>
-                <button className="px-4 py-2 border border-white/20 rounded-lg text-sm text-gray-400 hover:bg-white/5">
+                <button className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-400 hover:bg-white/5">
                   Next
                 </button>
               </div>
@@ -437,13 +437,13 @@ function LeadsSearch() {
 
           {/* Contacts Section */}
           <div className="mt-8">
-            <div className="bg-[#1a0a2e]/60 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-              <div className="p-4 border-b border-white/10 bg-white/5">
-                <h3 className="font-bold text-white">Contact Details - Sample Company</h3>
+            <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
+              <div className="p-4 border-b border-gray-200 bg-white/5">
+                <h3 className="font-bold text-gray-900">Contact Details - Sample Company</h3>
               </div>
 
               <table className="w-full">
-                <thead className="bg-white/5 border-b border-white/10">
+                <thead className="bg-white/5 border-b border-gray-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Emails</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Phones</th>
@@ -454,11 +454,11 @@ function LeadsSearch() {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {contactsData.map((contact) => (
-                    <tr key={contact.id} className="hover:bg-white/5 transition-colors">
+                    <tr key={contact.id} className="hover:bg-gray-100 transition-colors">
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
                           <Mail className="w-4 h-4 text-gray-500" />
-                          <span className="text-sm text-purple-400 hover:text-purple-300 cursor-pointer">{contact.email}</span>
+                          <span className="text-sm text-blue-600 hover:text-blue-500 cursor-pointer">{contact.email}</span>
                           {contact.email.includes('+') && (
                             <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded border border-blue-500/30">+2</span>
                           )}
@@ -532,7 +532,7 @@ function LeadsSearch() {
 
                         {/* Actions Dropdown Menu */}
                         {showActionsDropdown === contact.id && (
-                          <div className="absolute right-0 top-full mt-1 w-56 bg-[#1a0a2e] rounded-xl shadow-2xl border border-white/20 z-50 overflow-hidden animate-slideDown">
+                          <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-slideDown">
                             <div className="py-2">
                               <button
                                 onClick={() => handleActionClick(contact.id, 'view')}
@@ -552,7 +552,7 @@ function LeadsSearch() {
                                 onClick={() => handleActionClick(contact.id, 'ai-script')}
                                 className="w-full px-4 py-3 text-left hover:bg-white/10 flex items-center gap-3 transition-all"
                               >
-                                <Sparkles className="w-5 h-5 text-purple-400" />
+                                <Sparkles className="w-5 h-5 text-blue-600" />
                                 <span className="text-gray-300">Create AI Script</span>
                               </button>
                               <button
@@ -569,7 +569,7 @@ function LeadsSearch() {
                                 <UserMinus className="w-5 h-5 text-gray-400" />
                                 <span className="text-gray-300">Archive contact</span>
                               </button>
-                              <div className="border-t border-white/10 my-1"></div>
+                              <div className="border-t border-gray-200 my-1"></div>
                               <button
                                 onClick={() => handleActionClick(contact.id, 'delete')}
                                 className="w-full px-4 py-3 text-left hover:bg-red-500/20 flex items-center gap-3 transition-all"
@@ -587,7 +587,7 @@ function LeadsSearch() {
               </table>
 
               {/* Save Contacts Button */}
-              <div className="p-4 border-t border-white/10 text-center">
+              <div className="p-4 border-t border-gray-200 text-center">
                 <button className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium transition-all shadow-lg shadow-emerald-500/25">
                   Save contacts in bulk
                 </button>
@@ -607,15 +607,15 @@ function LeadsSearch() {
           ></div>
 
           {/* Panel */}
-          <div className="relative w-[480px] bg-[#1a0a2e] h-full shadow-2xl overflow-y-auto animate-slideIn border-l border-white/10">
+          <div className="relative w-[480px] bg-white h-full shadow-2xl overflow-y-auto animate-slideIn border-l border-gray-200">
             {/* Header */}
-            <div className="sticky top-0 bg-[#1a0a2e] border-b border-white/10 px-6 py-4 flex items-center justify-between">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
                   <Briefcase className="w-4 h-4 text-gray-400" />
                 </div>
                 <span className="text-gray-500">/</span>
-                <h2 className="font-bold text-white">Create Task</h2>
+                <h2 className="font-bold text-gray-900">Create Task</h2>
               </div>
               <button
                 onClick={() => setShowTaskPanel(false)}
@@ -633,14 +633,14 @@ function LeadsSearch() {
                 <div className="relative">
                   <button
                     onClick={() => setShowTaskTypeDropdown(!showTaskTypeDropdown)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between hover:border-purple-500/50 transition-all text-gray-400"
+                    className="w-full px-4 py-3 bg-white/5 border border-gray-200 rounded-xl flex items-center justify-between hover:border-purple-500/50 transition-all text-gray-400"
                   >
                     <span>Select Type</span>
                     <ChevronDown className={`w-5 h-5 transition-transform ${showTaskTypeDropdown ? 'rotate-180' : ''}`} />
                   </button>
 
                   {showTaskTypeDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a0a2e] border border-white/20 rounded-xl shadow-xl z-10 overflow-hidden">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-10 overflow-hidden">
                       {taskTypes.map((type) => (
                         <button
                           key={type.id}
@@ -651,7 +651,7 @@ function LeadsSearch() {
                             {type.icon}
                           </div>
                           <div>
-                            <p className="font-medium text-white">{type.label}</p>
+                            <p className="font-medium text-gray-900">{type.label}</p>
                             <p className="text-xs text-gray-500">{type.description}</p>
                           </div>
                         </button>
@@ -669,7 +669,7 @@ function LeadsSearch() {
                   <input
                     type="text"
                     placeholder="Search for contacts"
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-500"
+                    className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
                   />
                 </div>
               </div>
@@ -681,7 +681,7 @@ function LeadsSearch() {
                   type="text"
                   placeholder="Enter task name"
                   defaultValue={selectedContact ? `Follow up with ${selectedContact.email.split('@')[0]}` : ''}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-500"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
                 />
               </div>
 
@@ -691,7 +691,7 @@ function LeadsSearch() {
                 <textarea
                   rows={4}
                   placeholder="Add description"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-white placeholder-gray-500"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900 placeholder-gray-400"
                 ></textarea>
               </div>
 
@@ -702,9 +702,9 @@ function LeadsSearch() {
                   <input
                     type="date"
                     defaultValue="2025-10-21"
-                    className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white"
+                    className="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   />
-                  <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 flex items-center gap-2 text-gray-400 transition-colors">
+                  <button className="px-4 py-3 bg-white/5 border border-gray-200 rounded-xl hover:bg-white/10 flex items-center gap-2 text-gray-400 transition-colors">
                     <span>Select Time</span>
                     <Calendar className="w-5 h-5" />
                   </button>
@@ -714,61 +714,61 @@ function LeadsSearch() {
               {/* Assigned To */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Assigned To</label>
-                <select className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white">
-                  <option className="bg-[#1a0a2e]">Ashish Sinha</option>
-                  <option className="bg-[#1a0a2e]">Team Member 1</option>
-                  <option className="bg-[#1a0a2e]">Team Member 2</option>
+                <select className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
+                  <option className="bg-white">Ashish Sinha</option>
+                  <option className="bg-white">Team Member 1</option>
+                  <option className="bg-white">Team Member 2</option>
                 </select>
               </div>
 
               {/* Task Priority */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Task Priority</label>
-                <select className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white">
-                  <option className="bg-[#1a0a2e]">None</option>
-                  <option className="bg-[#1a0a2e]">Low</option>
-                  <option className="bg-[#1a0a2e]">Medium</option>
-                  <option className="bg-[#1a0a2e]">High</option>
-                  <option className="bg-[#1a0a2e]">Urgent</option>
+                <select className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
+                  <option className="bg-white">None</option>
+                  <option className="bg-white">Low</option>
+                  <option className="bg-white">Medium</option>
+                  <option className="bg-white">High</option>
+                  <option className="bg-white">Urgent</option>
                 </select>
               </div>
 
               {/* Template */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Template</label>
-                <select className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white">
-                  <option className="bg-[#1a0a2e]">Add Template</option>
-                  <option className="bg-[#1a0a2e]">Follow Up Email</option>
-                  <option className="bg-[#1a0a2e]">Cold Outreach</option>
-                  <option className="bg-[#1a0a2e]">Meeting Request</option>
+                <select className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
+                  <option className="bg-white">Add Template</option>
+                  <option className="bg-white">Follow Up Email</option>
+                  <option className="bg-white">Cold Outreach</option>
+                  <option className="bg-white">Meeting Request</option>
                 </select>
               </div>
 
               {/* Tags */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Tags</label>
-                <select className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white">
-                  <option className="bg-[#1a0a2e]">Add tags</option>
-                  <option className="bg-[#1a0a2e]">Sales</option>
-                  <option className="bg-[#1a0a2e]">Marketing</option>
-                  <option className="bg-[#1a0a2e]">Support</option>
+                <select className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
+                  <option className="bg-white">Add tags</option>
+                  <option className="bg-white">Sales</option>
+                  <option className="bg-white">Marketing</option>
+                  <option className="bg-white">Support</option>
                 </select>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="sticky bottom-0 bg-[#1a0a2e] border-t border-white/10 px-6 py-4 flex items-center justify-between">
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-between">
               <button
                 onClick={() => setShowTaskPanel(false)}
-                className="px-6 py-3 text-gray-400 hover:text-white font-medium transition-colors"
+                className="px-6 py-3 text-gray-500 hover:text-gray-900 font-medium transition-colors"
               >
                 Cancel
               </button>
               <div className="flex items-center gap-3">
-                <button className="px-6 py-3 border border-white/20 rounded-xl font-medium text-white hover:bg-white/5 transition-all">
+                <button className="px-6 py-3 border border-gray-200 rounded-xl font-medium text-white hover:bg-gray-100 transition-all">
                   Save & New
                 </button>
-                <button className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-purple-500/25 transition-all">
+                <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-orange-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all">
                   Save
                 </button>
               </div>

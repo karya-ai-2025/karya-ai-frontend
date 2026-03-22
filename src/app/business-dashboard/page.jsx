@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -8,7 +9,7 @@ import {
   Search, Bell, ChevronDown, Home, BarChart3, FileText, Users, BookOpen,
   MessageSquare, TrendingUp, Settings, Plus, Calendar, Clock, CheckCircle,
   AlertCircle, ChevronRight, MoreHorizontal, Star, Upload,
-  HelpCircle, ExternalLink, Sparkles, Menu, LogOut, User, CreditCard, Lightbulb,
+  HelpCircle, ExternalLink, Menu, LogOut, User, CreditCard, Lightbulb,
   FileUp, UserPlus, CalendarClock, Download, PlayCircle, Headphones, DollarSign
 } from 'lucide-react';
 
@@ -162,13 +163,13 @@ function StatusBadge({ status, label }) {
 function ProjectCard({ project, onClick }) {
   return (
     <div
-      className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/10 transition-all cursor-pointer group"
+      className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/10 transition-all cursor-pointer group"
       onClick={onClick}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="font-bold text-gray-900 text-lg group-hover:text-indigo-600 transition-colors">{project.name}</h3>
+          <h3 className="font-bold text-gray-900 text-lg group-hover:text-blue-600 transition-colors">{project.name}</h3>
           <p className="text-sm text-gray-500 mt-0.5">Day {project.currentDay} of {project.totalDays}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -187,7 +188,7 @@ function ProjectCard({ project, onClick }) {
             className={`h-full rounded-full transition-all ${
               project.status === 'at-risk' ? 'bg-amber-500' :
               project.status === 'blocked' ? 'bg-red-500' :
-              'bg-indigo-500'
+              'bg-blue-500'
             }`}
             style={{ width: `${project.progress}%` }}
           />
@@ -223,7 +224,7 @@ function ProjectCard({ project, onClick }) {
             </div>
           ))}
         </div>
-        <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-sm font-medium transition-all flex items-center gap-1">
+        <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-lg text-white text-sm font-medium transition-all flex items-center gap-1">
           View <ChevronRight className="w-4 h-4" />
         </button>
       </div>
@@ -252,7 +253,7 @@ export default function BusinessDashboard() {
   const totalBudget = mockProjects.reduce((sum, p) => sum + p.budgetTotal, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 page-enter">
+    <div className="min-h-screen bg-white page-enter">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div className="flex items-center justify-between px-4 lg:px-6 py-3">
@@ -262,9 +263,7 @@ export default function BusinessDashboard() {
               <Menu className="w-5 h-5 text-gray-500" />
             </button>
             <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
+              <Image src="/karya-ai-logo.png" alt="Karya AI" width={36} height={36} className="rounded-xl object-contain" />
               <span className="text-lg font-bold text-gray-900 hidden sm:block">Karya-AI</span>
             </Link>
           </div>
@@ -276,7 +275,7 @@ export default function BusinessDashboard() {
               <input
                 type="text"
                 placeholder="Search projects, experts, files..."
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm"
               />
             </div>
           </div>
@@ -301,7 +300,7 @@ export default function BusinessDashboard() {
                 <div className="absolute right-0 top-12 w-80 bg-white border border-gray-200 shadow-xl rounded-xl overflow-hidden z-50">
                   <div className="p-3 border-b border-gray-200 flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900">Notifications</h3>
-                    <button className="text-xs text-indigo-500 hover:text-indigo-600 font-medium">Mark all read</button>
+                    <button className="text-xs text-blue-500 hover:text-blue-600 font-medium">Mark all read</button>
                   </div>
                   <div className="max-h-80 overflow-y-auto">
                     {mockActionItems.slice(0, 4).map(item => (
@@ -320,7 +319,7 @@ export default function BusinessDashboard() {
                     ))}
                   </div>
                   <div className="p-2 border-t border-gray-200">
-                    <button className="w-full py-2 text-sm text-indigo-500 hover:text-indigo-600 text-center font-medium">
+                    <button className="w-full py-2 text-sm text-blue-500 hover:text-blue-600 text-center font-medium">
                       View all notifications
                     </button>
                   </div>
@@ -334,7 +333,7 @@ export default function BusinessDashboard() {
                 onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifications(false); }}
                 className="flex items-center gap-2 p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                   <span className="text-white text-sm font-bold">{mockUser.avatar}</span>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-500 hidden sm:block" />
@@ -345,7 +344,7 @@ export default function BusinessDashboard() {
                   <div className="p-3 border-b border-gray-200">
                     <p className="font-semibold text-gray-900">{mockUser.name}</p>
                     <p className="text-sm text-gray-500">{mockUser.email}</p>
-                    <span className="inline-block mt-2 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-xs font-medium">
+                    <span className="inline-block mt-2 px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium">
                       {mockUser.plan} Plan
                     </span>
                   </div>
@@ -383,7 +382,7 @@ export default function BusinessDashboard() {
             {/* New Project Button */}
             <button
               onClick={() => router.push('/new-project')}
-              className="w-full mb-6 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
+              className="w-full mb-6 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
             >
               <Plus className="w-5 h-5" />
               {sidebarOpen && <span>New Project</span>}
@@ -399,7 +398,7 @@ export default function BusinessDashboard() {
                     onClick={() => { setActiveNav(item.id); router.push(item.path); }}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
                       activeNav === item.id
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                   >
@@ -431,13 +430,13 @@ export default function BusinessDashboard() {
                   {getGreeting()}, {mockUser.name.split(' ')[0]}! 👋
                 </h1>
                 <p className="text-gray-500">
-                  You have <span className="text-indigo-500 font-semibold">{activeProjectCount} active projects</span> and{' '}
+                  You have <span className="text-blue-500 font-semibold">{activeProjectCount} active projects</span> and{' '}
                   <span className="text-amber-400 font-semibold">{pendingDeliverables} pending actions</span>
                 </p>
               </div>
               <button
                 onClick={() => router.push('/new-project')}
-                className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white font-semibold transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20"
+                className="px-5 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20"
               >
                 <Plus className="w-5 h-5" />
                 Start New Project
@@ -449,8 +448,8 @@ export default function BusinessDashboard() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5 hover-lift stagger-item delay-100">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center">
-                  <BarChart3 className="w-6 h-6 text-indigo-500" />
+                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                  <BarChart3 className="w-6 h-6 text-blue-500" />
                 </div>
                 <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full font-semibold">+1</span>
               </div>
@@ -474,7 +473,7 @@ export default function BusinessDashboard() {
                 <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
                   <Users className="w-6 h-6 text-blue-700" />
                 </div>
-                <button className="text-xs text-indigo-500 hover:text-indigo-600 font-medium">View →</button>
+                <button className="text-xs text-blue-500 hover:text-blue-600 font-medium">View →</button>
               </div>
               <div className="text-3xl font-bold text-gray-900">{mockExpertPerformance.length}</div>
               <div className="text-sm text-gray-500 mt-1">Experts Engaged</div>
@@ -499,7 +498,7 @@ export default function BusinessDashboard() {
               <section>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-gray-900">Active Projects</h2>
-                  <button className="text-sm text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-1">
+                  <button className="text-sm text-blue-500 hover:text-blue-600 font-medium flex items-center gap-1">
                     View All <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -560,7 +559,7 @@ export default function BusinessDashboard() {
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-4 py-2.5 text-sm text-indigo-500 hover:text-indigo-600 text-center font-medium hover:bg-gray-50 rounded-lg transition-colors">
+                <button className="w-full mt-4 py-2.5 text-sm text-blue-500 hover:text-blue-600 text-center font-medium hover:bg-gray-50 rounded-lg transition-colors">
                   View all activity →
                 </button>
               </section>
@@ -611,14 +610,14 @@ export default function BusinessDashboard() {
               {/* Upcoming Milestones */}
               <section className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-indigo-500" />
+                  <Calendar className="w-5 h-5 text-blue-500" />
                   Upcoming Milestones
                 </h2>
                 <div className="space-y-3">
                   {mockUpcomingMilestones.map(milestone => (
                     <div key={milestone.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl transition-all cursor-pointer">
-                      <div className="w-14 h-14 bg-indigo-50 rounded-xl flex flex-col items-center justify-center flex-shrink-0">
-                        <span className="text-xs text-indigo-500 font-medium">{milestone.date.split(' ')[0]}</span>
+                      <div className="w-14 h-14 bg-blue-50 rounded-xl flex flex-col items-center justify-center flex-shrink-0">
+                        <span className="text-xs text-blue-500 font-medium">{milestone.date.split(' ')[0]}</span>
                         <span className="text-lg font-bold text-gray-900">{milestone.date.split(' ')[1]}</span>
                       </div>
                       <div>
@@ -628,7 +627,7 @@ export default function BusinessDashboard() {
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-3 py-2.5 text-sm text-indigo-500 hover:text-indigo-600 text-center font-medium hover:bg-gray-50 rounded-lg transition-colors">
+                <button className="w-full mt-3 py-2.5 text-sm text-blue-500 hover:text-blue-600 text-center font-medium hover:bg-gray-50 rounded-lg transition-colors">
                   View Full Calendar
                 </button>
               </section>
@@ -636,7 +635,7 @@ export default function BusinessDashboard() {
               {/* Knowledge Base */}
               <section className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-indigo-500" />
+                  <BookOpen className="w-5 h-5 text-blue-500" />
                   Knowledge Base
                 </h2>
                 <div className="space-y-2">
@@ -650,13 +649,13 @@ export default function BusinessDashboard() {
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-3 py-2.5 text-sm text-indigo-500 hover:text-indigo-600 text-center font-medium hover:bg-gray-50 rounded-lg transition-colors">
+                <button className="w-full mt-3 py-2.5 text-sm text-blue-500 hover:text-blue-600 text-center font-medium hover:bg-gray-50 rounded-lg transition-colors">
                   View All Files
                 </button>
               </section>
 
               {/* AI Recommendations */}
-              <section className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-200 rounded-2xl p-5">
+              <section className="bg-gradient-to-br from-blue-50 to-violet-50 border border-blue-200 rounded-2xl p-5">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Lightbulb className="w-5 h-5 text-amber-400" />
                   AI Recommendations
@@ -676,7 +675,7 @@ export default function BusinessDashboard() {
                 <h2 className="text-lg font-bold text-gray-900 mb-4">Quick Links</h2>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { icon: Plus, label: "New Project", color: "text-indigo-500" },
+                    { icon: Plus, label: "New Project", color: "text-blue-500" },
                     { icon: UserPlus, label: "Find Expert", color: "text-blue-400" },
                     { icon: FileUp, label: "Upload File", color: "text-emerald-400" },
                     { icon: CalendarClock, label: "Schedule", color: "text-amber-400" },
@@ -694,7 +693,7 @@ export default function BusinessDashboard() {
               {/* Help & Resources */}
               <section className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <HelpCircle className="w-5 h-5 text-indigo-500" />
+                  <HelpCircle className="w-5 h-5 text-blue-500" />
                   Help & Resources
                 </h2>
                 <div className="space-y-2">
@@ -709,7 +708,7 @@ export default function BusinessDashboard() {
                       <ExternalLink className="w-3.5 h-3.5 text-gray-500" />
                     </button>
                   ))}
-                  <button className="w-full flex items-center gap-3 p-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all text-left mt-2">
+                  <button className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl transition-all text-left mt-2">
                     <Headphones className="w-4 h-4 text-white" />
                     <span className="text-sm text-white font-medium">Contact Support</span>
                   </button>

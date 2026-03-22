@@ -1,6 +1,7 @@
 'use client';
 // pages/ExpertLanding.jsx
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   Play, ChevronDown, ChevronRight, Check, X, Zap, Users, Target, TrendingUp,
@@ -234,19 +235,17 @@ function ExpertLanding() {
   const currentFeature = platformFeatures[activeFeatureTab];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="bg-slate-900/50 backdrop-blur-lg border-b border-white/10 sticky top-0 z-50">
+      <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white">Karya-AI</span>
+              <Image src="/karya-ai-logo.png" alt="Karya AI" width={40} height={40} className="rounded-xl object-contain" />
+              <span className="text-xl font-bold text-gray-900">Karya-AI</span>
             </div>
             <div className="flex items-center gap-4">
-              <NavbarAuth theme="dark" loginRole="expert" ctaText="Apply Now" ctaPath="/register?role=expert" />
+              <NavbarAuth theme="light" loginRole="expert" ctaText="Apply Now" ctaPath="/register?role=expert" />
             </div>
           </div>
         </div>
@@ -257,16 +256,16 @@ function ExpertLanding() {
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
           <div className="absolute top-40 right-20 w-72 h-72 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
-          <div className="absolute bottom-20 left-40 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
+          <div className="absolute bottom-20 left-40 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
         </div>
 
         <div className="relative max-w-6xl mx-auto text-center">
-          <h1 className="text-6xl md:text-7xl font-bold text-white mb-6">
+          <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-6">
             Turn Your Expertise Into<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Recurring Revenue</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-blue-500 to-orange-500">Recurring Revenue</span>
           </h1>
-          <p className="text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">Get matched to pre-qualified projects. Access premium tools. Keep 80% of earnings.</p>
-          <button onClick={() => router.push('/register?role=expert')} className="px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 rounded-xl text-white font-bold text-lg transition-all hover:scale-105 shadow-xl inline-flex items-center gap-2">
+          <p className="text-2xl text-gray-500 mb-8 max-w-3xl mx-auto">Get matched to pre-qualified projects. Access premium tools. Keep 80% of earnings.</p>
+          <button onClick={() => router.push('/register?role=expert')} className="px-8 py-4 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-bold text-lg transition-all hover:scale-105 shadow-xl inline-flex items-center gap-2">
             Apply Now
             <ArrowRight className="w-5 h-5" />
           </button>
@@ -278,17 +277,18 @@ function ExpertLanding() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
               <div className="absolute bottom-6 left-6 right-6">
                 <div className="grid grid-cols-3 gap-4 text-white">
+
                   <div className="bg-black/40 backdrop-blur-sm rounded-lg p-4">
                     <div className="text-3xl font-bold">$8,750</div>
-                    <div className="text-sm text-gray-300">This Month</div>
+                    <div className="text-sm text-gray-500">This Month</div>
                   </div>
                   <div className="bg-black/40 backdrop-blur-sm rounded-lg p-4">
                     <div className="text-3xl font-bold">12</div>
-                    <div className="text-sm text-gray-300">Active Projects</div>
+                    <div className="text-sm text-gray-500">Active Projects</div>
                   </div>
                   <div className="bg-black/40 backdrop-blur-sm rounded-lg p-4">
                     <div className="text-3xl font-bold">4.9★</div>
-                    <div className="text-sm text-gray-300">Avg Rating</div>
+                    <div className="text-sm text-gray-500">Avg Rating</div>
                   </div>
                 </div>
               </div>
@@ -298,19 +298,19 @@ function ExpertLanding() {
       </section>
 
       {/* Why Join - 4 Benefits Grid */}
-      <section className="py-20 px-6 bg-slate-900/50">
+      <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-white text-center mb-12">Why Top Experts Choose Us</h2>
+          <h2 className="text-4xl font-bold text-gray-900 text-center mb-12">Why Top Experts Choose Us</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {benefits.map((benefit, index) => (
-              <div key={index} className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 hover:bg-white/15 transition-all">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center text-white mb-4">
+              <div key={index} className="bg-white border border-gray-200 shadow-sm rounded-xl p-6 hover:bg-white/15 transition-all">
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center text-white mb-4">
                   {benefit.icon}
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">{benefit.title}</h3>
-                <p className="text-gray-300 mb-3">{benefit.description}</p>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{benefit.title}</h3>
+                <p className="text-gray-500 mb-3">{benefit.description}</p>
                 {benefit.stat && (
-                  <div className="text-blue-400 font-semibold">{benefit.stat}</div>
+                  <div className="text-blue-600 font-semibold">{benefit.stat}</div>
                 )}
                 {benefit.example && (
                   <div className="text-green-400 font-semibold">{benefit.example}</div>
@@ -338,10 +338,10 @@ function ExpertLanding() {
       {/* How Matching Works */}
       <section className="py-20 px-6">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-4xl font-bold text-white text-center mb-4">How Matching Works</h2>
-          <p className="text-xl text-gray-400 text-center mb-12">We find projects for you, not the other way around</p>
+          <h2 className="text-4xl font-bold text-gray-900 text-center mb-4">How Matching Works</h2>
+          <p className="text-xl text-gray-500 text-center mb-12">We find projects for you, not the other way around</p>
 
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8">
+          <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-8">
             <div className="space-y-6">
               {[
                 { title: 'Your Profile', desc: 'Expertise, tools, results, availability' },
@@ -350,15 +350,15 @@ function ExpertLanding() {
                 { title: 'Your Decision', desc: 'Accept projects that excite you, pass on the rest' }
               ].map((step, index) => (
                 <div key={index} className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
                     {index + 1}
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white">{step.title}</h3>
-                    <p className="text-gray-300">{step.desc}</p>
+                    <h3 className="text-xl font-bold text-gray-900">{step.title}</h3>
+                    <p className="text-gray-600">{step.desc}</p>
                   </div>
                   {index < 3 && (
-                    <ChevronRight className="w-6 h-6 text-blue-400" />
+                    <ChevronRight className="w-6 h-6 text-blue-600" />
                   )}
                 </div>
               ))}
@@ -368,41 +368,41 @@ function ExpertLanding() {
       </section>
 
       {/* Success Stories */}
-      <section className="py-20 px-6 bg-slate-900/50">
+      <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-white text-center mb-12">Expert Success Stories</h2>
+          <h2 className="text-4xl font-bold text-gray-900 text-center mb-12">Expert Success Stories</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {successStories.map((story, index) => (
-              <div key={index} className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6">
+              <div key={index} className="bg-white border border-gray-200 shadow-sm rounded-xl p-6">
                 <div className="flex items-center gap-4 mb-4">
                   <img src={story.photo} alt={story.name} className="w-16 h-16 rounded-full object-cover" />
                   <div>
-                    <h3 className="font-bold text-white">{story.name}</h3>
+                    <h3 className="font-bold text-gray-900">{story.name}</h3>
                     <p className="text-sm text-gray-400">{story.role}</p>
                   </div>
                 </div>
 
                 <div className="mb-4">
                   <div className="text-sm text-gray-400 mb-2">Before:</div>
-                  <div className="text-white">{story.before}</div>
+                  <div className="text-gray-700">{story.before}</div>
                 </div>
 
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-300">Projects:</span>
-                    <span className="text-white font-semibold">{story.projects}</span>
+                    <span className="text-gray-600">Projects:</span>
+                    <span className="text-gray-900 font-semibold">{story.projects}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-300">Revenue:</span>
+                    <span className="text-gray-600">Revenue:</span>
                     <span className="text-green-400 font-bold">{story.revenue}</span>
                   </div>
                 </div>
 
-                <div className="border-t border-white/10 pt-4 mb-4">
-                  <p className="text-gray-300 italic">"{story.quote}"</p>
+                <div className="border-t border-gray-200 pt-4 mb-4">
+                  <p className="text-gray-600 italic">"{story.quote}"</p>
                 </div>
 
-                <button className="text-blue-400 hover:text-blue-300 font-medium flex items-center gap-2">
+                <button className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2">
                   Read Full Story
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -415,7 +415,7 @@ function ExpertLanding() {
       {/* Platform Features - Tabs */}
       <section className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-white text-center mb-12">Platform Features for Experts</h2>
+          <h2 className="text-4xl font-bold text-gray-900 text-center mb-12">Platform Features for Experts</h2>
 
           {/* Tab Navigation */}
           <div className="flex flex-wrap justify-center gap-4 mb-8">
@@ -425,8 +425,8 @@ function ExpertLanding() {
                 onClick={() => setActiveFeatureTab(key)}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   activeFeatureTab === key
-                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
-                    : 'bg-white/10 text-gray-400 hover:text-white'
+                    ? 'bg-gradient-to-r from-blue-600 to-orange-500 text-white'
+                    : 'bg-white border border-gray-200 text-gray-500 hover:text-gray-900'
                 }`}
               >
                 {feature.title}
@@ -435,20 +435,20 @@ function ExpertLanding() {
           </div>
 
           {/* Tab Content */}
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8">
+          <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-8">
             <div className="grid md:grid-cols-2 gap-8">
               <div>
-                <h3 className="text-2xl font-bold text-white mb-6">{currentFeature.title}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">{currentFeature.title}</h3>
                 <ul className="space-y-3">
                   {currentFeature.items.map((item, idx) => (
                     <li key={idx} className="flex items-start gap-3">
                       <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-300">{item}</span>
+                      <span className="text-gray-600">{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-              <div className="bg-white/5 rounded-xl p-6 flex items-center justify-center">
+              <div className="bg-gray-50 rounded-xl p-6 flex items-center justify-center">
                 <img
                   src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop"
                   alt={currentFeature.title}
@@ -461,24 +461,24 @@ function ExpertLanding() {
       </section>
 
       {/* Vetting Process */}
-      <section className="py-20 px-6 bg-slate-900/50">
+      <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-4">
             <div className="inline-block px-4 py-2 bg-red-500/20 border border-red-500/50 rounded-full text-red-300 font-semibold mb-4">
               Only 12% of applicants accepted
             </div>
-            <h2 className="text-4xl font-bold text-white mb-4">Our Vetting Process</h2>
-            <p className="text-xl text-gray-400">Maintain your elite status with excellence</p>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Vetting Process</h2>
+            <p className="text-xl text-gray-500">Maintain your elite status with excellence</p>
           </div>
 
           <div className="grid md:grid-cols-5 gap-4 mt-12">
             {vettingSteps.map((step) => (
-              <div key={step.step} className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 text-center">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">
+              <div key={step.step} className="bg-white border border-gray-200 shadow-sm rounded-xl p-6 text-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">
                   {step.step}
                 </div>
-                <h3 className="font-bold text-white mb-2">{step.title}</h3>
-                <p className="text-sm text-gray-300">{step.description}</p>
+                <h3 className="font-bold text-gray-900 mb-2">{step.title}</h3>
+                <p className="text-sm text-gray-500">{step.description}</p>
               </div>
             ))}
           </div>
@@ -489,29 +489,29 @@ function ExpertLanding() {
       <section className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-4">
-            <h2 className="text-4xl font-bold text-white mb-4">Membership Tiers</h2>
-            <p className="text-xl text-gray-400">Choose the plan that fits your goals</p>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Membership Tiers</h2>
+            <p className="text-xl text-gray-500">Choose the plan that fits your goals</p>
           </div>
 
           {/* Earnings Breakdown */}
-          <div className="max-w-md mx-auto mb-12 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6">
-            <h3 className="text-xl font-bold text-white mb-4 text-center">Earnings Structure</h3>
+          <div className="max-w-md mx-auto mb-12 bg-white border border-gray-200 shadow-sm rounded-xl p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Earnings Structure</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-gray-300">You Keep:</span>
+                <span className="text-gray-600">You Keep:</span>
                 <span className="text-green-400 font-bold text-2xl">80%</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-300">Platform Fee:</span>
-                <span className="text-white">15%</span>
+                <span className="text-gray-600">Platform Fee:</span>
+                <span className="text-gray-700">15%</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-300">Payment Processing:</span>
-                <span className="text-white">5%</span>
+                <span className="text-gray-600">Payment Processing:</span>
+                <span className="text-gray-700">5%</span>
               </div>
-              <div className="border-t border-white/20 pt-3 mt-3">
-                <p className="text-center text-gray-300 text-sm">
-                  Example: $10,000 project = <span className="text-green-400 font-bold">$8,000</span> to you
+              <div className="border-t border-gray-300 pt-3 mt-3">
+                <p className="text-center text-gray-600 text-sm">
+                  Example: $10,000 project = <span className="text-green-600 font-bold">$8,000</span> to you
                 </p>
               </div>
             </div>
@@ -519,29 +519,29 @@ function ExpertLanding() {
 
           <div className="grid md:grid-cols-3 gap-6">
             {membershipTiers.map((tier, index) => (
-              <div key={index} className={`relative bg-white/10 backdrop-blur-sm border rounded-2xl p-8 ${tier.popular ? 'border-blue-500 shadow-xl scale-105' : 'border-white/20'}`}>
+              <div key={index} className={`relative bg-white border border-gray-200 shadow-sm rounded-2xl p-8 ${tier.popular ? 'border-blue-500 shadow-xl scale-105' : 'border-gray-200'}`}>
                 {tier.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full text-white text-sm font-semibold">Most Popular</div>
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-blue-600 to-orange-500 rounded-full text-white text-sm font-semibold">Most Popular</div>
                 )}
 
                 <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-white mb-2">{tier.name}</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{tier.name}</h3>
                   <div className="mb-4">
-                    <span className="text-4xl font-bold text-white">{tier.price}</span>
+                    <span className="text-4xl font-bold text-gray-900">{tier.price}</span>
                     <span className="text-gray-400">{tier.period}</span>
                   </div>
                 </div>
 
                 <ul className="space-y-3 mb-8">
                   {tier.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-gray-300">
+                    <li key={idx} className="flex items-start gap-2 text-gray-600">
                       <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                       <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
 
-                <button onClick={() => router.push('/register?role=expert')} className={`w-full py-3 rounded-xl font-semibold transition-all ${tier.popular ? 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white' : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'}`}>
+                <button onClick={() => router.push('/register?role=expert')} className={`w-full py-3 rounded-xl font-semibold transition-all ${tier.popular ? 'bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white' : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300'}`}>
                   {tier.cta}
                 </button>
               </div>
@@ -549,27 +549,27 @@ function ExpertLanding() {
           </div>
 
           {/* Payment Terms */}
-          <div className="mt-12 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6">
-            <h3 className="text-xl font-bold text-white mb-4">Payment Terms</h3>
-            <div className="grid md:grid-cols-2 gap-4 text-gray-300">
-              <div><strong className="text-white">Schedule:</strong> Upon milestone completion</div>
-              <div><strong className="text-white">Processing:</strong> 5 business days</div>
-              <div><strong className="text-white">Methods:</strong> Direct deposit, PayPal, Wire</div>
-              <div><strong className="text-white">Currency:</strong> USD (international conversion available)</div>
-              <div className="md:col-span-2"><strong className="text-white">Tax Docs:</strong> 1099 provided (US experts)</div>
+          <div className="mt-12 bg-white border border-gray-200 shadow-sm rounded-xl p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Payment Terms</h3>
+            <div className="grid md:grid-cols-2 gap-4 text-gray-700">
+              <div><strong className="text-gray-900">Schedule:</strong> Upon milestone completion</div>
+              <div><strong className="text-gray-900">Processing:</strong> 5 business days</div>
+              <div><strong className="text-gray-900">Methods:</strong> Direct deposit, PayPal, Wire</div>
+              <div><strong className="text-gray-900">Currency:</strong> USD (international conversion available)</div>
+              <div className="md:col-span-2"><strong className="text-gray-900">Tax Docs:</strong> 1099 provided (US experts)</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Comparison */}
-      <section className="py-20 px-6 bg-slate-900/50">
+      <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl font-bold text-white text-center mb-12">Why We're Different</h2>
+          <h2 className="text-4xl font-bold text-gray-900 text-center mb-12">Why We're Different</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Traditional Freelance Platforms</h3>
-              <ul className="space-y-2 text-gray-300">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Traditional Freelance Platforms</h3>
+              <ul className="space-y-2 text-gray-600">
                 <li className="flex items-start gap-2">
                   <X className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                   20% commission or more
@@ -588,13 +588,13 @@ function ExpertLanding() {
                 </li>
               </ul>
               <div className="mt-4 p-3 bg-red-500/20 rounded-lg">
-                <p className="text-white font-semibold">$10k project = $8k to you - unpaid sourcing time</p>
+                <p className="text-gray-900 font-semibold">$10k project = $8k to you - unpaid sourcing time</p>
               </div>
             </div>
 
             <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Our Platform</h3>
-              <ul className="space-y-2 text-gray-300">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Our Platform</h3>
+              <ul className="space-y-2 text-gray-600">
                 <li className="flex items-start gap-2">
                   <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                   15% commission (+ 5% processing)
@@ -613,7 +613,7 @@ function ExpertLanding() {
                 </li>
               </ul>
               <div className="mt-4 p-3 bg-green-500/20 rounded-lg">
-                <p className="text-white font-semibold">$10k project = $8k to you + zero sourcing time</p>
+                <p className="text-gray-900 font-semibold">$10k project = $8k to you + zero sourcing time</p>
               </div>
             </div>
           </div>
@@ -623,17 +623,17 @@ function ExpertLanding() {
       {/* FAQ */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl font-bold text-white text-center mb-12">Frequently Asked Questions</h2>
+          <h2 className="text-4xl font-bold text-gray-900 text-center mb-12">Frequently Asked Questions</h2>
           <div className="space-y-4">
             {faqs.map((faq, index) => (
-              <div key={index} className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl overflow-hidden">
-                <button onClick={() => toggleFAQ(index)} className="w-full p-6 flex items-center justify-between hover:bg-white/5 transition-all text-left">
-                  <span className="font-semibold text-white">{faq.question}</span>
-                  <ChevronDown className={`w-5 h-5 text-white flex-shrink-0 transition-transform ${openFAQ === index ? 'rotate-180' : ''}`} />
+              <div key={index} className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
+                <button onClick={() => toggleFAQ(index)} className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-all text-left">
+                  <span className="font-semibold text-gray-900">{faq.question}</span>
+                  <ChevronDown className={`w-5 h-5 text-gray-600 flex-shrink-0 transition-transform ${openFAQ === index ? 'rotate-180' : ''}`} />
                 </button>
                 {openFAQ === index && (
-                  <div className="p-6 pt-0 border-t border-white/10">
-                    <p className="text-gray-300">{faq.answer}</p>
+                  <div className="p-6 pt-0 border-t border-gray-200">
+                    <p className="text-gray-600">{faq.answer}</p>
                   </div>
                 )}
               </div>
@@ -643,28 +643,28 @@ function ExpertLanding() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 px-6 bg-slate-900/50">
+      <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 backdrop-blur-sm border border-white/20 rounded-3xl p-12">
-            <h2 className="text-4xl font-bold text-white text-center mb-4">Join 500+ Elite Experts</h2>
-            <p className="text-gray-300 text-center mb-8">Start getting matched to high-quality projects</p>
+          <div className="bg-gradient-to-r from-blue-50 to-orange-50 border border-gray-200 rounded-3xl p-12">
+            <h2 className="text-4xl font-bold text-gray-900 text-center mb-4">Join 500+ Elite Experts</h2>
+            <p className="text-gray-500 text-center mb-8">Start getting matched to high-quality projects</p>
 
             <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl mx-auto">
               <div className="grid md:grid-cols-2 gap-4">
-                <input type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="Your Name" required className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50" />
-                <input type="email" name="email" value={formData.email} onChange={handleFormChange} placeholder="Email Address" required className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50" />
+                <input type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="Your Name" required className="px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50" />
+                <input type="email" name="email" value={formData.email} onChange={handleFormChange} placeholder="Email Address" required className="px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50" />
               </div>
 
-              <input type="text" name="expertise" value={formData.expertise} onChange={handleFormChange} placeholder="Your Expertise (e.g., Growth Marketing, CRM Consultant)" required className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50" />
+              <input type="text" name="expertise" value={formData.expertise} onChange={handleFormChange} placeholder="Your Expertise (e.g., Growth Marketing, CRM Consultant)" required className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50" />
 
-              <textarea name="experience" value={formData.experience} onChange={handleFormChange} placeholder="Brief background (years of experience, notable achievements)" rows={4} required className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-none" />
+              <textarea name="experience" value={formData.experience} onChange={handleFormChange} placeholder="Brief background (years of experience, notable achievements)" rows={4} required className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-none" />
 
               <div className="flex gap-4">
-                <button type="submit" className="flex-1 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 rounded-xl text-white font-bold text-lg transition-all hover:scale-105 shadow-xl flex items-center justify-center gap-2">
+                <button type="submit" className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-bold text-lg transition-all hover:scale-105 shadow-xl flex items-center justify-center gap-2">
                   Start Application
                   <ArrowRight className="w-5 h-5" />
                 </button>
-                <button type="button" onClick={() => router.push('/contact')} className="flex-1 py-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white font-bold text-lg transition-all flex items-center justify-center gap-2">
+                <button type="button" onClick={() => router.push('/contact')} className="flex-1 py-4 bg-white hover:bg-gray-50 border border-gray-300 rounded-xl text-gray-700 font-bold text-lg transition-all flex items-center justify-center gap-2">
                   Schedule Call
                   <Calendar className="w-5 h-5" />
                 </button>
@@ -679,13 +679,11 @@ function ExpertLanding() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900/50 border-t border-white/10 py-12 px-6">
+      <footer className="bg-gray-50 border-t border-gray-200 py-12 px-6">
         <div className="max-w-6xl mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-              <Zap className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-white">Karya-AI</span>
+            <Image src="/karya-ai-logo.png" alt="Karya AI" width={40} height={40} className="rounded-xl object-contain" />
+            <span className="text-xl font-bold text-gray-900">Karya-AI</span>
           </div>
           <p className="text-gray-400">© 2026 Karya-AI. All rights reserved.</p>
         </div>
