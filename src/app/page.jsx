@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getPlansWithPackages } from '@/services/planService';
 import { useAuth } from '@/contexts/AuthContext';
 
 function HomePage() {
@@ -26,6 +27,8 @@ function HomePage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [dynamicWordIndex, setDynamicWordIndex] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [pricingData, setPricingData] = useState([]);
+  const [pricingLoading, setPricingLoading] = useState(true);
   const signInRef = useRef(null);
   const profileRef = useRef(null);
 
@@ -57,6 +60,68 @@ function HomePage() {
   ];
 
   // Rotate dynamic word every 2 seconds
+  // Fetch pricing data from API
+  useEffect(() => {
+    const fetchPricingData = async () => {
+      try {
+        setPricingLoading(true);
+        const response = await getPlansWithPackages();
+        if (response.success && response.data) {
+          // Transform API data to match the UI structure
+          const transformedPricing = [];
+
+          response.data.forEach(plan => {
+            if (plan.packages && plan.packages.length > 0) {
+              plan.packages.forEach((pkg, index) => {
+                let tierName = pkg.name;
+                let description = `For ${plan.displayName.toLowerCase()}`;
+                let popular = index === 1; // Make second package popular
+                let cta = 'Get Started';
+
+                if (pkg.name.toLowerCase().includes('enterprise') || plan.type === 'enterprise') {
+                  cta = 'Contact Sales';
+                }
+
+                transformedPricing.push({
+                  name: tierName,
+                  price: `$${pkg.price}`,
+                  period: '/month',
+                  description: description,
+                  features: [
+                    `${pkg.credits.toLocaleString()} Credits/month`,
+                    `${pkg.projectsAvailable} Project${pkg.projectsAvailable > 1 ? 's' : ''}`,
+                    'AI-powered lead generation',
+                    'Data enrichment & validation',
+                    pkg.support || 'Email support',
+                    'Advanced analytics'
+                  ],
+                  cta: cta,
+                  popular: popular,
+                  planId: plan._id,
+                  packageId: pkg._id
+                });
+              });
+            }
+          });
+
+          setPricingData(transformedPricing);
+        }
+      } catch (error) {
+        console.error('Error fetching pricing data:', error);
+        // Fallback to hardcoded data if API fails
+        setPricingData([
+          { name: 'Starter', price: '$29', period: '/month', description: 'Perfect for startups', features: ['1,000 Credits/month', '1 Project', 'AI planning', 'Basic analytics'], cta: 'Get Started', popular: false },
+          { name: 'Growth', price: '$79', period: '/month', description: 'For growing businesses', features: ['3,000 Credits/month', '3 Projects', 'Advanced AI planning', 'Priority support'], cta: 'Get Started', popular: true },
+          { name: 'Scale', price: '$149', period: '/month', description: 'Enterprise solutions', features: ['7,000 Credits/month', '5 Projects', 'Custom solutions', 'Dedicated support'], cta: 'Contact Sales', popular: false }
+        ]);
+      } finally {
+        setPricingLoading(false);
+      }
+    };
+
+    fetchPricingData();
+  }, []);
+
   useEffect(() => {
     const wordTimer = setInterval(() => {
       setDynamicWordIndex((prev) => (prev + 1) % dynamicWords.length);
@@ -198,11 +263,6 @@ function HomePage() {
     { name: 'Product Marketing', icon: <Rocket className="w-6 h-6" />, count: '78 experts' }
   ];
 
-  const pricingTiers = [
-    { name: 'Starter', price: '$499', period: '/project', description: 'Perfect for single campaigns', features: ['Single project', 'AI roadmap generation', 'Up to 2 expert matches', 'Basic analytics', 'Email support'], cta: 'Start Free Trial', popular: false },
-    { name: 'Growth', price: '$1,499', period: '/month', description: 'For growing businesses', features: ['Up to 5 active projects', 'Advanced AI planning', 'Unlimited expert matches', 'Advanced analytics', 'Priority support', 'Dedicated success manager'], cta: 'Start Growing', popular: true },
-    { name: 'Scale', price: 'Custom', period: '', description: 'Enterprise-grade solutions', features: ['Unlimited projects', 'White-label options', 'API access', 'Custom AI training', '24/7 dedicated support', 'SLA guarantees'], cta: 'Contact Sales', popular: false }
-  ];
 
   const faqs = [
     { question: 'How does AI planning work?', answer: 'Our AI analyzes your goals, industry, and resources to create a customized 90-day roadmap.' },
@@ -215,12 +275,12 @@ function HomePage() {
   // UPDATED: Removed Home, For Business, and Marketplace from navbar
   const navLinks = [
     { label: 'Features', path: '/features', icon: <Zap className="w-4 h-4" /> },
-    { label: 'Pricing', path: '/pricing', icon: <FileText className="w-4 h-4" /> },
+    { label: 'Pricing', path: '/#pricing', icon: <FileText className="w-4 h-4" /> },
   ];
 
   const footerLinks = [
     { label: 'Features', path: '/features' },
-    { label: 'Pricing', path: '/pricing' },
+    { label: 'Pricing', path: '/#pricing' },
     { label: 'Preferences', path: '/preferences' },
     { label: 'Support & Help', path: '/support-help' },
     { label: 'Legal & Compliance', path: '/legal-compliance' },
@@ -962,34 +1022,58 @@ function HomePage() {
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-2 sm:mb-3">Transparent Pricing</h2>
           <p className="text-gray-500 text-sm sm:text-base text-center mb-6 sm:mb-8">No hidden fees. Pay for results.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-4">
-            {pricingTiers.map((tier, i) => (
-              <div key={i} className={`group relative animate-fadeInUp ${tier.popular ? 'z-10' : ''}`} style={{ animationDelay: `${i * 150}ms` }}>
-                {tier.popular && <div className="absolute -inset-1 bg-blue-500/20 rounded-2xl sm:rounded-3xl blur-lg opacity-50"></div>}
-                <div className={`relative bg-white border rounded-2xl sm:rounded-3xl p-5 sm:p-6 h-full ${tier.popular ? 'border-blue-500 shadow-lg' : 'border-gray-200 hover:border-blue-200'} transition-all`}>
-                  {tier.popular && <div className="absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2 px-3 sm:px-4 py-1 sm:py-1.5 bg-gradient-to-r from-blue-600 to-orange-500 rounded-full text-white text-xs font-semibold shadow-lg">Most Popular</div>}
+
+          {pricingLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white border border-gray-200 rounded-2xl sm:rounded-3xl p-5 sm:p-6 h-full animate-pulse">
                   <div className="text-center mb-4 sm:mb-6">
-                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">{tier.name}</h3>
-                    <p className="text-gray-500 text-xs sm:text-sm mb-3 sm:mb-4">{tier.description}</p>
-                    <div>
-                      <span className="text-3xl sm:text-4xl font-bold text-gray-900">{tier.price}</span>
-                      <span className="text-gray-500 text-xs sm:text-sm">{tier.period}</span>
-                    </div>
+                    <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-4"></div>
+                    <div className="h-8 bg-gray-200 rounded"></div>
                   </div>
-                  <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
-                    {tier.features.map((f, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-gray-600 text-xs sm:text-sm">
-                        <Check className="w-3 sm:w-4 h-3 sm:h-4 text-green-500 flex-shrink-0 mt-0.5" />{f}
-                      </li>
+                  <div className="space-y-3 mb-6">
+                    {[1, 2, 3, 4].map((j) => (
+                      <div key={j} className="h-4 bg-gray-200 rounded"></div>
                     ))}
-                  </ul>
-                  <button onClick={() => router.push('/register')} className={`w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base transition-all ${tier.popular ? 'bg-blue-600 text-white hover:shadow-lg hover:shadow-blue-500/20' : 'bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-300'}`}>
-                    {tier.cta}
-                  </button>
+                  </div>
+                  <div className="h-10 bg-gray-200 rounded"></div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-4">
+              {pricingData.map((tier, i) => (
+                <div key={i} className={`group relative animate-fadeInUp ${tier.popular ? 'z-10' : ''}`} style={{ animationDelay: `${i * 150}ms` }}>
+                  {tier.popular && <div className="absolute -inset-1 bg-indigo-500/20 rounded-2xl sm:rounded-3xl blur-lg opacity-50"></div>}
+                  <div className={`relative bg-white border rounded-2xl sm:rounded-3xl p-5 sm:p-6 h-full ${tier.popular ? 'border-indigo-500 shadow-lg' : 'border-gray-200 hover:border-indigo-200'} transition-all`}>
+                    {tier.popular && <div className="absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2 px-3 sm:px-4 py-1 sm:py-1.5 bg-indigo-600 rounded-full text-white text-xs font-semibold">Most Popular</div>}
+                    <div className="text-center mb-4 sm:mb-6">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">{tier.name}</h3>
+                      <p className="text-gray-500 text-xs sm:text-sm mb-3 sm:mb-4">{tier.description}</p>
+                      <div>
+                        <span className="text-3xl sm:text-4xl font-bold text-gray-900">{tier.price}</span>
+                        <span className="text-gray-500 text-xs sm:text-sm">{tier.period}</span>
+                      </div>
+                    </div>
+                    <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
+                      {tier.features.map((f, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-gray-600 text-xs sm:text-sm">
+                          <Check className="w-3 sm:w-4 h-3 sm:h-4 text-green-500 flex-shrink-0 mt-0.5" />{f}
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      onClick={() => router.push('/register')}
+                      className={`w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base transition-all ${tier.popular ? 'bg-indigo-600 text-white hover:shadow-lg hover:shadow-indigo-500/20' : 'bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-300'}`}
+                    >
+                      {tier.cta}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
