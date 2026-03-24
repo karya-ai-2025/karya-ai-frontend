@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     env:
-      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+      NEXT_PUBLIC_API_URL: "https://backend-ai-dfbwd8bch9dvgfha.canadacentral-01.azurewebsites.net/api"
 
     permissions:
        id-token: write
