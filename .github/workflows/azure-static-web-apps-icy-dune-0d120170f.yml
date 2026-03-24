@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     env:
-      NEXT_PUBLIC_API_URL: "https://karya-ai-backend-gsbtgvg7axebhccn.canadacentral-01.azurewebsites.net"
+      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
     permissions:
        id-token: write
