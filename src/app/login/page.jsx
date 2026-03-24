@@ -31,7 +31,8 @@ const ROLE_CONFIG = {
 };
 
 // API Base URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL 
+
 
 function Login() {
   const router = useRouter();
