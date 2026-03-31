@@ -11,13 +11,12 @@ import {
   AlertCircle,
   Zap,
   CreditCard,
-  X,
   Shield,
   Calendar,
   Target,
   Package
 } from 'lucide-react';
-import { getPlans, getPackagesByPlan, upgradePlan } from '@/services/planService';
+import { getPlans, getPackagesByPlan, upgradePlan, simpleUpgrade } from '@/services/planService';
 import { useAuth } from '@/contexts/AuthContext';
 
 const PlanSelection = () => {
@@ -30,7 +29,6 @@ const PlanSelection = () => {
   const [error, setError] = useState('');
 
   // Upgrade flow states
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [upgradeSuccess, setUpgradeSuccess] = useState(false);
@@ -82,24 +80,24 @@ const PlanSelection = () => {
     fetchPackages(plan._id);
   };
 
-  const handlePackageSelect = (pkg) => {
-    setSelectedPackage(pkg);
-    setShowUpgradeModal(true);
-  };
+  const handlePackageSelect = async (pkg) => {
+    // Get token from localStorage since AuthContext stores it separately
+    const token = localStorage.getItem('token');
 
-  const handleUpgradeConfirm = async () => {
-    if (!user?.token || !selectedPlan || !selectedPackage) {
-      setError('Missing required information for upgrade');
+    if (!token || !user || !selectedPlan) {
+      setError('Please login to upgrade your plan');
       return;
     }
 
+    setSelectedPackage(pkg);
     setIsUpgrading(true);
+    setError('');
 
     try {
-      const response = await upgradePlan(
+      const response = await simpleUpgrade(
         selectedPlan._id,
-        selectedPackage._id,
-        user.token
+        pkg._id,
+        token
       );
 
       if (response.success) {
@@ -108,31 +106,32 @@ const PlanSelection = () => {
         // Trigger plan update event for navbar to refresh
         window.dispatchEvent(new CustomEvent('planUpdated'));
 
+        // Show success message with next billing date
+        const nextBillingMessage = response.data.nextBillingDate
+          ? `Next billing date: ${new Date(response.data.nextBillingDate).toLocaleDateString()}`
+          : 'One-time purchase - no recurring billing';
+
+        // Set success message
+        setError(''); // Clear any previous errors
+
         setTimeout(() => {
-          setShowUpgradeModal(false);
           setUpgradeSuccess(false);
           setSelectedPackage(null);
-          // Optionally refresh user data or redirect
+          // Optionally refresh user data
           window.location.reload(); // Simple refresh to update user state
-        }, 3000);
+        }, 4000);
+
       } else {
         setError(response.message || 'Failed to upgrade plan');
       }
     } catch (err) {
-      setError('Failed to upgrade plan. Please try again.');
+      setError(err.message || 'Failed to upgrade plan. Please try again.');
       console.error('Upgrade error:', err);
     } finally {
       setIsUpgrading(false);
     }
   };
 
-  const handleModalClose = () => {
-    if (!isUpgrading) {
-      setShowUpgradeModal(false);
-      setSelectedPackage(null);
-      setUpgradeSuccess(false);
-    }
-  };
 
   const getPlanIcon = (planType) => {
     switch (planType) {
@@ -189,8 +188,26 @@ const PlanSelection = () => {
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Choose Your Plan</h2>
-        <p className="text-gray-600">You are on free plan right now. Here are available plans for you.</p>
       </div>
+
+      {/* Success Message */}
+      {upgradeSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3">
+          <Check className="h-5 w-5 text-green-600" />
+          <div>
+            <p className="text-green-800 font-medium">Plan upgraded successfully!</p>
+            <p className="text-green-700 text-sm">You now have access to all premium features.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
+          <AlertCircle className="h-5 w-5 text-red-600" />
+          <p className="text-red-800">{error}</p>
+        </div>
+      )}
 
       {/* Plan Type Selection */}
       <div className="bg-white rounded-lg">
@@ -305,7 +322,7 @@ const PlanSelection = () => {
                         <div className="flex items-center space-x-3">
                           <Zap className="h-4 w-4 text-indigo-600" />
                           <span className="text-sm text-gray-700">
-                            {pkg.credits.toLocaleString()} Credits/month
+                            {pkg.credits.toLocaleString()} Credits
                           </span>
                         </div>
                         <div className="flex items-center space-x-3">
@@ -314,11 +331,11 @@ const PlanSelection = () => {
                             {pkg.projectsAvailable} Project{pkg.projectsAvailable > 1 ? 's' : ''}
                           </span>
                         </div>
-                        {pkg.Support && (
+                        {pkg.support && (
                           <div className="flex items-center space-x-3">
                             <Check className="h-4 w-4 text-indigo-600" />
                             <span className="text-sm text-gray-700">
-                              {pkg.Support}
+                              {pkg.support}
                             </span>
                           </div>
                         )}
@@ -326,15 +343,35 @@ const PlanSelection = () => {
 
                       {/* Select Button */}
                       <button
-                        className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2 ${
-                          isPopular
+                        onClick={() => handlePackageSelect(pkg)}
+                        disabled={isUpgrading}
+                        className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors cursor-pointer flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          upgradeSuccess && selectedPackage?._id === pkg._id
+                            ? 'bg-green-600 text-white'
+                            : isUpgrading && selectedPackage?._id === pkg._id
+                            ? 'bg-gray-400 text-white'
+                            : isPopular
                             ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                             : 'bg-gray-900 text-white hover:bg-gray-800'
                         }`}
                       >
-                        <CreditCard className="h-4 w-4" />
-                        <span>Choose {pkg.name}</span>
-                        <ArrowRight className="h-4 w-4" />
+                        {isUpgrading && selectedPackage?._id === pkg._id ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Upgrading...</span>
+                          </>
+                        ) : upgradeSuccess && selectedPackage?._id === pkg._id ? (
+                          <>
+                            <Check className="h-4 w-4" />
+                            <span>Upgraded!</span>
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="h-4 w-4" />
+                            <span>Choose {pkg.name}</span>
+                            <ArrowRight className="h-4 w-4" />
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>

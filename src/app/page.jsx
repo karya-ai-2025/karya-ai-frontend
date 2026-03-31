@@ -89,7 +89,7 @@ function HomePage() {
                   features: [
                     `${pkg.credits.toLocaleString()} Credits/month`,
                     `${pkg.projectsAvailable} Project${pkg.projectsAvailable > 1 ? 's' : ''}`,
-                    pkg.Support                 
+                    pkg.support                 
                   ],
                   cta: cta,
                   popular: popular,
@@ -1122,7 +1122,7 @@ function HomePage() {
               <Link key={i} href={link.path} className="text-gray-500 hover:text-gray-900 transition-colors">{link.label}</Link>
             ))}
           </div>
-          <p className="text-center text-gray-400 text-xs sm:text-sm mt-4 sm:mt-6">&copy; 2024 Karya-AI. All rights reserved.</p>
+          <p className="text-center text-gray-400 text-xs sm:text-sm mt-4 sm:mt-6">&copy; 2026 Karya-AI. All rights reserved.</p>
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import TopNavbar from '@/components/TopNavbar';
 import PlanSelection from '@/components/PlanSelection';
+import BillingDashboard from '@/components/BillingDashboard';
 import {
   ArrowLeft,
   User,
@@ -609,17 +610,7 @@ function SettingsContent() {
       case 'upgrade':
         return <PlanSelection />;
       case 'billing':
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold text-gray-900">Billing</h2>
-              <p className="text-gray-600 mt-1">Manage your billing information and invoices.</p>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <p className="text-gray-500">Billing management coming soon...</p>
-            </div>
-          </div>
-        );
+        return <BillingDashboard />;
       default:
         return renderEditProfile();
     }

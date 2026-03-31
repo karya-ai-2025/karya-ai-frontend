@@ -23,6 +23,7 @@ import {
 
 const navigationItems = [
   { id: 'home', label: 'Home', icon: Home, href: '/business-dashboard' },
+  { id: 'my-projects', label: 'My Projects', icon: Package, href: '/business-dashboard' },
   { id: 'karya-ai', label: 'Karya AI', icon: Sparkles, href: '/business-dashboard/karya-ai' },
   { id: 'messages', label: 'Messages', icon: MessageCircle, href: '/business-dashboard/messages' },
 ];
@@ -125,7 +126,7 @@ export default function Sidebar({ sidebarCollapsed, setSidebarCollapsed, activeI
         </div>
 
         {/* Team Section */}
-        <div className="pt-4">
+        <div className="pt-3">
           <SectionHeader title="Team" sidebarCollapsed={sidebarCollapsed} />
           <div className="space-y-0.5">
             {teamSection.map((item) => (
@@ -142,7 +143,7 @@ export default function Sidebar({ sidebarCollapsed, setSidebarCollapsed, activeI
         </div>
 
         {/* Knowledge Section */}
-        <div className="pt-4">
+        <div className="pt-3">
           <SectionHeader title="Knowledge" sidebarCollapsed={sidebarCollapsed} />
           <div className="space-y-0.5">
             {knowledgeSection.map((item) => (
@@ -159,7 +160,7 @@ export default function Sidebar({ sidebarCollapsed, setSidebarCollapsed, activeI
         </div>
 
         {/* Additional Section */}
-        <div className="pt-4">
+        <div className="pt-3">
           <div className="space-y-0.5">
             {additionalSection.map((item) => (
               <NavItem
