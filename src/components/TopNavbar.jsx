@@ -154,7 +154,7 @@ export default function TopNavbar() {
       .join('');
   };
 
-  // Get remaining credits
+  // Get remaining credits (calculated as totalCredits - creditsUsed by backend API)
   const getRemainingCredits = () => {
     if (planLoading) return '...';
 
@@ -166,6 +166,7 @@ export default function TopNavbar() {
       return planData?.success === false ? 'Error' : '0';
     }
 
+    // Backend calculates: remainingCredits = userPlan.totalCredits - userPlan.creditsUsed
     const remainingCredits = planData.data?.limits?.remainingCredits || 0;
     return remainingCredits.toLocaleString();
   };
@@ -232,7 +233,7 @@ export default function TopNavbar() {
     if (planLoading || !planData?.hasActivePlan) return 'text-gray-600';
 
     const remaining = planData.data?.limits?.remainingCredits || 0;
-    const total = planData.data?.userPlan?.planPackageId?.credits || 1;
+    const total = planData.data?.userPlan?.totalCredits || 1;
     const percentage = (remaining / total) * 100;
 
     if (percentage > 50) return 'text-green-600';
@@ -313,7 +314,7 @@ export default function TopNavbar() {
                 <p className="text-xs text-gray-500 capitalize">{user?.activeRole}</p>
               </div>
               <div className="flex items-center space-x-1">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-linear-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                   <span className="text-xs font-semibold text-white">
                     {getUserInitials(user?.fullName)}
                   </span>

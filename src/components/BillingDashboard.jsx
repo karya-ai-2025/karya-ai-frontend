@@ -69,7 +69,8 @@ export default function BillingDashboard() {
           console.log('Usage Data:', {
             projectsCreated: userPlan.projectsCreated,
             creditsUsed: userPlan.creditsUsed,
-            planPackageCredits: userPlan.planPackageId?.credits,
+            totalCredits: userPlan.totalCredits,
+            planPackageCredits: userPlan.planPackageId?.credits, // Original plan credits (for reference)
             planPackageProjects: userPlan.planPackageId?.projectsAvailable
           });
 
@@ -504,7 +505,7 @@ export default function BillingDashboard() {
                 <h3 className="font-semibold text-gray-900">Credits</h3>
               </div>
               <span className="text-sm font-medium text-gray-600">
-                {(userPlan?.planPackageId?.credits - userPlan?.creditsUsed || 0).toLocaleString()} remaining
+                {(userPlan?.totalCredits - userPlan?.creditsUsed || 0).toLocaleString()} remaining
               </span>
             </div>
 
@@ -512,16 +513,16 @@ export default function BillingDashboard() {
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Used</span>
                 <span className="font-medium">
-                  {(userPlan?.creditsUsed || 0).toLocaleString()} / {(userPlan?.planPackageId?.credits || 0).toLocaleString()}
+                  {(userPlan?.creditsUsed || 0).toLocaleString()} / {(userPlan?.totalCredits || 0).toLocaleString()}
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className={`h-2 rounded-full transition-all duration-300 ${getUsageColor(
-                    getUsagePercentage(userPlan?.creditsUsed || 0, userPlan?.planPackageId?.credits || 0)
+                    getUsagePercentage(userPlan?.creditsUsed || 0, userPlan?.totalCredits || 0)
                   )}`}
                   style={{
-                    width: `${getUsagePercentage(userPlan?.creditsUsed || 0, userPlan?.planPackageId?.credits || 0)}%`
+                    width: `${getUsagePercentage(userPlan?.creditsUsed || 0, userPlan?.totalCredits || 0)}%`
                   }}
                 ></div>
               </div>
