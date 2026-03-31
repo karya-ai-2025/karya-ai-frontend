@@ -100,7 +100,7 @@ function QuickWins() {
             <span className="text-sm text-gray-500">100% Complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-indigo-500 h-2 rounded-full transition-all duration-300" style={{ width: '100%' }}></div>
+            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '100%' }}></div>
           </div>
         </div>
 
@@ -136,7 +136,7 @@ function QuickWins() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for quick wins..."
                 disabled={isLoading}
-                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all disabled:opacity-50"
+                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
               />
             </div>
           </div>
@@ -151,7 +151,7 @@ function QuickWins() {
                   disabled={isLoading}
                   className={`p-4 rounded-lg border-2 transition-all text-left ${
                     selectedWins.includes(win)
-                      ? 'bg-indigo-50 border-indigo-500 shadow-lg'
+                      ? 'bg-blue-50 border-blue-500 shadow-lg'
                       : 'bg-gray-50 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
                   } disabled:opacity-50`}
                 >
@@ -162,7 +162,7 @@ function QuickWins() {
                       {win}
                     </span>
                     {selectedWins.includes(win) && (
-                      <Check className="w-5 h-5 text-indigo-500 flex-shrink-0 ml-2" />
+                      <Check className="w-5 h-5 text-blue-500 flex-shrink-0 ml-2" />
                     )}
                   </div>
                 </button>
@@ -178,8 +178,8 @@ function QuickWins() {
 
           {/* Selected Count */}
           {selectedWins.length > 0 && (
-            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6">
-              <p className="text-indigo-700 text-sm text-center flex items-center justify-center gap-2">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <p className="text-blue-700 text-sm text-center flex items-center justify-center gap-2">
                 <Sparkles className="w-4 h-4" />
                 {selectedWins.length} quick win{selectedWins.length !== 1 ? 's' : ''} selected
               </p>
@@ -211,7 +211,7 @@ function QuickWins() {
             <button
               onClick={handleComplete}
               disabled={isLoading}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
+              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
             >
               {isLoading ? (
                 <>

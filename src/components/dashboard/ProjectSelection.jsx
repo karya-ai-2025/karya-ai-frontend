@@ -271,7 +271,7 @@ export default function ProjectSelection() {
                 onClick={() => setSelectedFilter(tab.id)}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   selectedFilter === tab.id
-                    ? 'border-indigo-500 text-indigo-600'
+                    ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -300,7 +300,7 @@ export default function ProjectSelection() {
             <div className="text-gray-500 mb-4">{emptyMessage}</div>
             <button
               onClick={emptyActionHandler}
-              className="text-indigo-600 hover:text-indigo-500 font-medium"
+              className="text-blue-600 hover:text-blue-500 font-medium"
             >
               {emptyAction}
             </button>

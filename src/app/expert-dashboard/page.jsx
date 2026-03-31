@@ -1,6 +1,7 @@
 'use client';
 // pages/ExpertDashboard.jsx
 import { useState } from 'react';
+import NextImage from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +12,7 @@ import {
   Sparkles, Menu, LogOut, User, CreditCard, TrendingUp, TrendingDown,
   MessageSquare, FileText, Send, Eye, ThumbsUp, ThumbsDown, Timer,
   Zap, Award, BarChart3, ArrowUpRight, PlayCircle, BookOpen, Megaphone,
-  RefreshCw, Mail, Database, Activity, GraduationCap, Image, Quote
+  RefreshCw, Mail, Database, Activity, GraduationCap, Image, Quote, Layers
 } from 'lucide-react';
 
 // Mock expert user data
@@ -185,6 +186,7 @@ const mockPlatformUpdates = [
 const sidebarNavItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/expert/dashboard' },
   { id: 'projects', label: 'Active Projects', icon: Briefcase, path: '/expert/projects' },
+  { id: 'project-marketplace', label: 'Project Catalog', icon: Layers, path: '/project-marketplace' },
   { id: 'opportunities', label: 'Opportunities', icon: Target, path: '/expert/opportunities', badge: 2 },
   { id: 'clients', label: 'Clients', icon: Users, path: '/expert/clients' },
   { id: 'earnings', label: 'Earnings', icon: DollarSign, path: '/expert/earnings' },
@@ -227,7 +229,7 @@ function getClientHealthEmoji(health) {
 // Project Card Component
 function ProjectCard({ project, onOpenWorkspace }) {
   return (
-    <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5 hover:border-indigo-300 transition-all">
+    <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5 hover:border-blue-300 transition-all">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -252,7 +254,7 @@ function ProjectCard({ project, onOpenWorkspace }) {
         </div>
         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-indigo-500 rounded-full"
+            className="h-full bg-blue-500 rounded-full"
             style={{ width: `${project.progress}%` }}
           />
         </div>
@@ -291,7 +293,7 @@ function ProjectCard({ project, onOpenWorkspace }) {
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={onOpenWorkspace}
-          className="py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-sm font-medium transition-all flex items-center justify-center gap-1"
+          className="py-2 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-lg text-white text-sm font-medium transition-all flex items-center justify-center gap-1"
         >
           <Eye className="w-4 h-4" /> Workspace
         </button>
@@ -355,9 +357,9 @@ function OpportunityCard({ opportunity, onExpressInterest, onPass, onViewBrief }
       </div>
 
       {/* Why Matched */}
-      <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl mb-4">
-        <p className="text-xs text-indigo-500 mb-1">Why you matched</p>
-        <p className="text-sm text-indigo-600">{opportunity.whyMatched}</p>
+      <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl mb-4">
+        <p className="text-xs text-blue-500 mb-1">Why you matched</p>
+        <p className="text-sm text-blue-600">{opportunity.whyMatched}</p>
       </div>
 
       {/* Respond Timer */}
@@ -400,7 +402,7 @@ function EarningsChart({ data }) {
       {data.map((item, idx) => (
         <div key={idx} className="flex-1 flex flex-col items-center gap-2">
           <div
-            className="w-full bg-indigo-500 rounded-t-lg transition-all hover:bg-indigo-400"
+            className="w-full bg-blue-500 rounded-t-lg transition-all hover:bg-blue-400"
             style={{ height: `${(item.amount / maxAmount) * 100}%`, minHeight: '8px' }}
           />
           <span className="text-xs text-gray-500">{item.month}</span>
@@ -426,7 +428,7 @@ function ExpertDashboard() {
   const quarterProgress = (mockExpert.earnings.thisQuarter / mockExpert.earnings.quarterGoal * 100).toFixed(0);
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 page-enter">
+    <div className="h-screen flex flex-col bg-white page-enter">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200 shadow-sm flex-shrink-0 z-50">
         <div className="flex items-center justify-between px-4 lg:px-6 py-3">
@@ -436,9 +438,7 @@ function ExpertDashboard() {
               <Menu className="w-5 h-5 text-gray-500" />
             </button>
             <Link href="/expert/dashboard" className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
+              <NextImage src="/karya-ai-logo.png" alt="Karya AI" width={36} height={36} className="rounded-xl object-contain" />
               <span className="text-lg font-bold text-gray-900 hidden sm:block">Karya-AI</span>
             </Link>
           </div>
@@ -450,7 +450,7 @@ function ExpertDashboard() {
               <input
                 type="text"
                 placeholder="Search projects, clients, files..."
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm"
               />
             </div>
           </div>
@@ -484,7 +484,7 @@ function ExpertDashboard() {
                 <div className="absolute right-0 top-12 w-80 bg-white border border-gray-200 shadow-xl rounded-xl overflow-hidden z-50">
                   <div className="p-3 border-b border-gray-200 flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900">Notifications</h3>
-                    <button className="text-xs text-indigo-500 hover:text-indigo-600 font-medium">Mark all read</button>
+                    <button className="text-xs text-blue-500 hover:text-blue-600 font-medium">Mark all read</button>
                   </div>
                   <div className="max-h-80 overflow-y-auto">
                     {mockActivityFeed.slice(0, 4).map(item => (
@@ -500,7 +500,7 @@ function ExpertDashboard() {
                     ))}
                   </div>
                   <div className="p-2 border-t border-gray-200">
-                    <button className="w-full py-2 text-sm text-indigo-500 hover:text-indigo-600 text-center font-medium">
+                    <button className="w-full py-2 text-sm text-blue-500 hover:text-blue-600 text-center font-medium">
                       View all notifications
                     </button>
                   </div>
@@ -514,7 +514,7 @@ function ExpertDashboard() {
                 onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifications(false); }}
                 className="flex items-center gap-2 p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                   <span className="text-white text-sm font-bold">{getInitials(user?.name)}</span>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-500 hidden sm:block" />
@@ -571,7 +571,7 @@ function ExpertDashboard() {
                     title={!sidebarOpen ? item.label : ''}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${!sidebarOpen ? 'justify-center' : ''} ${
                       activeNav === item.id
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                   >
@@ -603,7 +603,7 @@ function ExpertDashboard() {
                   Welcome back, {(user?.name || 'there').split(' ')[0]}! 👋
                 </h1>
                 <p className="text-gray-500">
-                  You have <span className="text-indigo-500 font-semibold">{mockProjects.length} active projects</span> and{' '}
+                  You have <span className="text-blue-500 font-semibold">{mockProjects.length} active projects</span> and{' '}
                   <span className="text-emerald-400 font-semibold">{mockOpportunities.length} new opportunities</span>
                 </p>
               </div>
@@ -642,7 +642,7 @@ function ExpertDashboard() {
               </div>
               <p className="text-3xl font-bold text-gray-900">${mockExpert.earnings.thisQuarter.toLocaleString()}</p>
               <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${quarterProgress}%` }} />
+                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${quarterProgress}%` }} />
               </div>
             </div>
 
@@ -673,7 +673,7 @@ function ExpertDashboard() {
                     key={view}
                     onClick={() => setEarningsView(view)}
                     className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                      earningsView === view ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-900'
+                      earningsView === view ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-900'
                     }`}
                   >
                     {view.charAt(0).toUpperCase() + view.slice(1)}
@@ -691,7 +691,7 @@ function ExpertDashboard() {
               <section>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-gray-900">Active Projects</h2>
-                  <button className="text-sm text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-1">
+                  <button className="text-sm text-blue-500 hover:text-blue-600 font-medium flex items-center gap-1">
                     View All <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -715,7 +715,7 @@ function ExpertDashboard() {
                       {mockOpportunities.length}
                     </span>
                   </h2>
-                  <button className="text-sm text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-1">
+                  <button className="text-sm text-blue-500 hover:text-blue-600 font-medium flex items-center gap-1">
                     Browse All <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -769,7 +769,7 @@ function ExpertDashboard() {
               {/* Performance Metrics */}
               <section className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-indigo-500" />
+                  <BarChart3 className="w-5 h-5 text-blue-500" />
                   Performance Metrics
                 </h2>
                 <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -805,10 +805,10 @@ function ExpertDashboard() {
               <section className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <Database className="w-5 h-5 text-indigo-500" />
+                    <Database className="w-5 h-5 text-blue-500" />
                     CRM Quick Stats
                   </h2>
-                  <button className="text-sm text-indigo-500 hover:text-indigo-600 font-medium">
+                  <button className="text-sm text-blue-500 hover:text-blue-600 font-medium">
                     Open CRM →
                   </button>
                 </div>
@@ -838,7 +838,7 @@ function ExpertDashboard() {
               {/* This Week's Schedule */}
               <section className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-indigo-500" />
+                  <Calendar className="w-5 h-5 text-blue-500" />
                   This Week
                 </h2>
                 <div className="space-y-3">
@@ -847,11 +847,11 @@ function ExpertDashboard() {
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                         item.type === 'meeting' ? 'bg-blue-50' :
                         item.type === 'deadline' ? 'bg-red-50' :
-                        'bg-indigo-50'
+                        'bg-blue-50'
                       }`}>
                         {item.type === 'meeting' && <Users className="w-5 h-5 text-blue-400" />}
                         {item.type === 'deadline' && <AlertCircle className="w-5 h-5 text-red-400" />}
-                        {item.type === 'focus' && <Zap className="w-5 h-5 text-indigo-500" />}
+                        {item.type === 'focus' && <Zap className="w-5 h-5 text-blue-500" />}
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-900">{item.title}</p>
@@ -860,7 +860,7 @@ function ExpertDashboard() {
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-3 py-2.5 text-sm text-indigo-500 hover:text-indigo-600 text-center font-medium hover:bg-gray-50 rounded-lg transition-colors">
+                <button className="w-full mt-3 py-2.5 text-sm text-blue-500 hover:text-blue-600 text-center font-medium hover:bg-gray-50 rounded-lg transition-colors">
                   View Full Calendar
                 </button>
               </section>
@@ -882,7 +882,7 @@ function ExpertDashboard() {
               </section>
 
               {/* Skill Development */}
-              <section className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-200 rounded-2xl p-5">
+              <section className="bg-gradient-to-br from-blue-50 to-violet-50 border border-blue-200 rounded-2xl p-5">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <GraduationCap className="w-5 h-5 text-amber-400" />
                   Skill Development
@@ -895,7 +895,7 @@ function ExpertDashboard() {
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-3 py-2 text-sm text-indigo-500 hover:text-indigo-600 text-center font-medium">
+                <button className="w-full mt-3 py-2 text-sm text-blue-500 hover:text-blue-600 text-center font-medium">
                   View All Recommendations
                 </button>
               </section>
@@ -903,11 +903,11 @@ function ExpertDashboard() {
               {/* Portfolio Highlight */}
               <section className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Image className="w-5 h-5 text-indigo-500" />
+                  <Image className="w-5 h-5 text-blue-500" />
                   Portfolio Highlight
                 </h2>
                 <div className="bg-gray-50 rounded-xl overflow-hidden">
-                  <div className="h-32 bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center">
+                  <div className="h-32 bg-gradient-to-br from-blue-100 to-violet-100 flex items-center justify-center">
                     <span className="text-4xl">📈</span>
                   </div>
                   <div className="p-3">
@@ -919,7 +919,7 @@ function ExpertDashboard() {
                     </div>
                   </div>
                 </div>
-                <button className="w-full mt-3 py-2 text-sm text-indigo-500 hover:text-indigo-600 text-center font-medium">
+                <button className="w-full mt-3 py-2 text-sm text-blue-500 hover:text-blue-600 text-center font-medium">
                   Update Portfolio
                 </button>
               </section>
@@ -927,7 +927,7 @@ function ExpertDashboard() {
               {/* Platform Updates */}
               <section className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Megaphone className="w-5 h-5 text-indigo-500" />
+                  <Megaphone className="w-5 h-5 text-blue-500" />
                   Platform Updates
                 </h2>
                 <div className="space-y-2">
@@ -952,7 +952,7 @@ function ExpertDashboard() {
                     { icon: Clock, label: "Update Availability", color: "text-blue-400" },
                     { icon: FileText, label: "Submit Invoice", color: "text-amber-400" },
                     { icon: MessageSquare, label: "Message Support", color: "text-pink-400" },
-                    { icon: BookOpen, label: "Training Resources", color: "text-indigo-500" }
+                    { icon: BookOpen, label: "Training Resources", color: "text-blue-500" }
                   ].map((item, idx) => (
                     <button key={idx} className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all text-left">
                       <item.icon className={`w-4 h-4 ${item.color}`} />

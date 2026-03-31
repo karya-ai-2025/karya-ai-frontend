@@ -28,14 +28,15 @@ export default function TopNavbar() {
 
   // Fetch user plan data
   const fetchPlanData = async () => {
-    if (!user?.token) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
       setPlanLoading(false);
       return;
     }
 
     try {
       setPlanLoading(true);
-      const response = await checkUserPlanAccess(user.token);
+      const response = await checkUserPlanAccess(token);
       setPlanData(response);
     } catch (error) {
       console.error('Error fetching plan data:', error);
@@ -215,7 +216,7 @@ export default function TopNavbar() {
                 <p className="text-xs text-gray-500 capitalize">{user?.activeRole}</p>
               </div>
               <div className="flex items-center space-x-1">
-                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                   <span className="text-xs font-semibold text-white">
                     {getUserInitials(user?.fullName)}
                   </span>
@@ -234,7 +235,7 @@ export default function TopNavbar() {
                 {/* User Info Header */}
                 <div className="px-4 py-3 border-b border-gray-100">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                       <span className="text-sm font-semibold text-white">
                         {getUserInitials(user?.fullName)}
                       </span>
@@ -246,7 +247,7 @@ export default function TopNavbar() {
                       <p className="text-xs text-gray-500 truncate">
                         {user?.email}
                       </p>
-                      <p className="text-xs text-indigo-600 capitalize font-medium">
+                      <p className="text-xs text-blue-600 capitalize font-medium">
                         {user?.activeRole} Account
                       </p>
                     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   Home,
@@ -55,7 +56,7 @@ const NavItem = ({ item, section = 'main', isActive, onClick, sidebarCollapsed }
       onClick={() => onClick(item.id, item.href)}
       className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
         isActive
-          ? 'bg-indigo-50 text-indigo-700'
+          ? 'bg-blue-50 text-blue-700'
           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
       } ${sidebarCollapsed ? 'justify-center' : ''}`}
     >
@@ -93,9 +94,10 @@ export default function Sidebar({ sidebarCollapsed, setSidebarCollapsed, activeI
       {/* Sidebar Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         {!sidebarCollapsed && (
-          <h1 className="text-xl font-bold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent p-[0.9px]">
-            Karya AI
-          </h1>
+          <div className="flex items-center gap-2">
+            <Image src="/karya-ai-logo.png" alt="Karya AI" width={32} height={32} className="rounded-lg object-contain" />
+            <h1 className="text-base font-bold text-gray-900">Karya AI</h1>
+          </div>
         )}
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}

@@ -141,7 +141,7 @@ function ExpertServices() {
             <span className="text-sm text-gray-500">75% Complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-indigo-500 h-2 rounded-full transition-all duration-300" style={{ width: '75%' }}></div>
+            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '75%' }}></div>
           </div>
         </div>
 
@@ -200,7 +200,7 @@ function ExpertServices() {
                         onChange={(e) => handleServiceChange(service.id, 'name', e.target.value)}
                         placeholder="e.g., HubSpot CRM Implementation"
                         disabled={isLoading}
-                        className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all disabled:opacity-50"
+                        className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                       />
                     </div>
                   </div>
@@ -216,7 +216,7 @@ function ExpertServices() {
                       placeholder="Describe what this service includes..."
                       rows={3}
                       disabled={isLoading}
-                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none disabled:opacity-50"
+                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all resize-none disabled:opacity-50"
                     />
                   </div>
 
@@ -230,7 +230,7 @@ function ExpertServices() {
                         value={service.pricingType}
                         onChange={(e) => handleServiceChange(service.id, 'pricingType', e.target.value)}
                         disabled={isLoading}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer disabled:opacity-50"
                       >
                         {pricingTypes.map((type) => (
                           <option key={type.value} value={type.value} className="bg-white">
@@ -260,7 +260,7 @@ function ExpertServices() {
                             'Contact for quote'
                           }
                           disabled={isLoading}
-                          className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all disabled:opacity-50"
+                          className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                         />
                       </div>
                     </div>
@@ -282,7 +282,7 @@ function ExpertServices() {
                           onChange={(e) => handleServiceChange(service.id, 'duration', e.target.value)}
                           placeholder="e.g., 2-4 weeks"
                           disabled={isLoading}
-                          className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all disabled:opacity-50"
+                          className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                         />
                       </div>
                     </div>
@@ -337,7 +337,7 @@ function ExpertServices() {
             <button
               onClick={handleNext}
               disabled={isLoading}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
+              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
             >
               {isLoading ? (
                 <>

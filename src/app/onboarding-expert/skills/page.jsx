@@ -173,7 +173,7 @@ function ExpertSkills() {
             <span className="text-sm text-gray-500">50% Complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-indigo-500 h-2 rounded-full transition-all duration-300" style={{ width: '50%' }}></div>
+            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '50%' }}></div>
           </div>
         </div>
 
@@ -228,7 +228,7 @@ function ExpertSkills() {
             {Object.entries(skillCategories).map(([category, skills]) => (
               <div key={category}>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <div className="w-1 h-6 bg-indigo-500 rounded-full"></div>
+                  <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
                   {category}
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -267,7 +267,7 @@ function ExpertSkills() {
                   onKeyPress={(e) => e.key === 'Enter' && addCustomSkill()}
                   placeholder="Enter custom skill..."
                   disabled={isLoading}
-                  className="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all disabled:opacity-50"
+                  className="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                   autoFocus
                 />
                 <button
@@ -335,7 +335,7 @@ function ExpertSkills() {
             <button
               onClick={handleNext}
               disabled={isLoading || selectedSkills.length === 0}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
+              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
             >
               {isLoading ? (
                 <>

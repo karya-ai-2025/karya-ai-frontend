@@ -1,6 +1,7 @@
 'use client';
 // pages/Login.jsx
 import { useState, Suspense } from 'react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertCircle, CheckCircle } from 'lucide-react';
@@ -16,7 +17,7 @@ const ROLE_CONFIG = {
     title: 'Business Owner Login',
     subtitle: 'Sign in to manage your marketing workspace',
     icon: Briefcase,
-    gradient: 'bg-indigo-600',
+    gradient: 'bg-gradient-to-r from-blue-600 to-orange-500',
     dashboardRoute: '/business-dashboard',
     onboardingRoute: '/onboarding-owner/welcome'
   },
@@ -24,7 +25,7 @@ const ROLE_CONFIG = {
     title: 'Expert Login',
     subtitle: 'Sign in to connect with businesses',
     icon: Users,
-    gradient: 'bg-blue-600',
+    gradient: 'bg-gradient-to-r from-blue-600 to-orange-500',
     dashboardRoute: '/expert-landing',
     onboardingRoute: '/onboarding-expert/profile-setup'
   }
@@ -168,7 +169,7 @@ function Login() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       {/* Animated Background */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-indigo-300 rounded-full filter blur-xl animate-blob"></div>
+        <div className="absolute top-20 left-20 w-72 h-72 bg-blue-300 rounded-full filter blur-xl animate-blob"></div>
         <div className="absolute top-40 right-20 w-72 h-72 bg-blue-300 rounded-full filter blur-xl animate-blob animation-delay-2000"></div>
         <div className="absolute bottom-20 left-40 w-72 h-72 bg-violet-300 rounded-full filter blur-xl animate-blob animation-delay-4000"></div>
       </div>
@@ -177,10 +178,8 @@ function Login() {
         {/* Logo/Brand */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
-            <div className={`w-12 h-12 ${currentRole.gradient} rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-indigo-500/20`}>
-              <Icon className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">Karya-AI</span>
+            <Image src="/karya-ai-logo.png" alt="Karya AI" width={48} height={48} className="rounded-xl object-contain group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/20" />
+            <span className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">Karya-AI</span>
           </Link>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{currentRole.title}</h1>
           <p className="text-gray-500">{currentRole.subtitle}</p>
@@ -191,7 +190,7 @@ function Login() {
               onClick={() => router.push(`/login?role=${ROLES.OWNER}`)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 role === ROLES.OWNER
-                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-300'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-300'
                   : 'text-gray-500 hover:text-gray-900'
               }`}
             >
@@ -249,7 +248,7 @@ function Login() {
                   className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                     touched.email && errors.email
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
-                      : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="you@example.com"
                   autoComplete="email"
@@ -280,7 +279,7 @@ function Login() {
                   className={`w-full pl-12 pr-12 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                     touched.password && errors.password
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
-                      : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="••••••••"
                   autoComplete="current-password"
@@ -310,11 +309,11 @@ function Login() {
                 <input
                   id="remember"
                   type="checkbox"
-                  className="w-4 h-4 rounded border-gray-300 bg-white text-indigo-600 focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-4 h-4 rounded border-gray-300 bg-white text-blue-600 focus:ring-2 focus:ring-blue-500/50"
                 />
                 <span className="ml-2 text-sm text-gray-600">Remember me</span>
               </label>
-              <Link href="/forgot-password" className="text-sm text-indigo-600 hover:text-indigo-600 transition-colors">
+              <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-600 transition-colors">
                 Forgot password?
               </Link>
             </div>
@@ -385,7 +384,7 @@ function Login() {
           <div className="mt-6 text-center">
             <p className="text-gray-500">
               Don't have an account?{' '}
-              <Link href={`/register?role=${role}`} className="text-indigo-600 hover:text-indigo-600 font-medium transition-colors">
+              <Link href={`/register?role=${role}`} className="text-blue-600 hover:text-blue-600 font-medium transition-colors">
                 Sign up for free
               </Link>
             </p>

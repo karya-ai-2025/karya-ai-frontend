@@ -83,7 +83,7 @@ export default function ProjectWorkspace() {
       <div className="flex flex-col min-h-screen bg-gray-50">
         <TopNavbar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       </div>
     );
@@ -108,7 +108,7 @@ export default function ProjectWorkspace() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={() => router.push('/business-dashboard')}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
               >
                 <ArrowLeft size={16} className="mr-2" />
                 Back to Dashboard

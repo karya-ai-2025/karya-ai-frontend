@@ -336,9 +336,9 @@ function getFileIcon(type, size = 5) {
     case 'pdf': return <FileText className={`${iconClass} text-red-400`} />;
     case 'docx': case 'doc': return <FileText className={`${iconClass} text-blue-400`} />;
     case 'xlsx': case 'xls': return <FileSpreadsheet className={`${iconClass} text-emerald-400`} />;
-    case 'png': case 'jpg': case 'jpeg': case 'gif': return <Image className={`${iconClass} text-purple-400`} />;
+    case 'png': case 'jpg': case 'jpeg': case 'gif': return <Image className={`${iconClass} text-blue-600`} />;
     case 'mp4': case 'mov': return <Video className={`${iconClass} text-pink-400`} />;
-    default: return <File className={`${iconClass} text-slate-400`} />;
+    default: return <File className={`${iconClass} text-gray-500`} />;
   }
 }
 
@@ -347,8 +347,8 @@ function getFileColor(type) {
     case 'pdf': return { bg: 'bg-red-500/20', border: 'border-red-500/40', text: 'text-red-400' };
     case 'docx': case 'doc': return { bg: 'bg-blue-500/20', border: 'border-blue-500/40', text: 'text-blue-400' };
     case 'xlsx': case 'xls': return { bg: 'bg-emerald-500/20', border: 'border-emerald-500/40', text: 'text-emerald-400' };
-    case 'png': case 'jpg': case 'jpeg': case 'gif': return { bg: 'bg-purple-500/20', border: 'border-purple-500/40', text: 'text-purple-400' };
-    default: return { bg: 'bg-slate-500/20', border: 'border-slate-500/40', text: 'text-slate-400' };
+    case 'png': case 'jpg': case 'jpeg': case 'gif': return { bg: 'bg-blue-500/20', border: 'border-purple-500/40', text: 'text-blue-600' };
+    default: return { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-500' };
   }
 }
 
@@ -364,7 +364,7 @@ function FolderTreeItem({ item, level = 0, selectedFolder, onSelect, expandedFol
       <button
         onClick={() => isFolder ? (hasChildren ? onToggle(item.id) : onSelect(item.id)) : onSelect(item.id)}
         className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-sm transition-all ${
-          isSelected ? 'bg-purple-600 text-white' : 'text-slate-300 hover:bg-slate-700'
+          isSelected ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
         }`}
         style={{ paddingLeft: `${8 + level * 12}px` }}
       >
@@ -408,7 +408,7 @@ function FileCard({ file, onSelect, onPin }) {
 
   return (
     <div
-      className="bg-slate-700 border border-slate-600 rounded-xl p-4 hover:border-purple-500/50 hover:shadow-lg transition-all cursor-pointer group relative"
+      className="bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-lg transition-all cursor-pointer group relative"
       onClick={() => onSelect(file)}
     >
       {/* Thumbnail/Icon */}
@@ -419,7 +419,7 @@ function FileCard({ file, onSelect, onPin }) {
       </div>
 
       {/* File Info */}
-      <h4 className="font-medium text-white text-sm truncate mb-1 group-hover:text-purple-300 transition-colors">
+      <h4 className="font-medium text-gray-900 text-sm truncate mb-1 group-hover:text-blue-600 transition-colors">
         {file.name}
       </h4>
 
@@ -435,10 +435,10 @@ function FileCard({ file, onSelect, onPin }) {
 
       {/* Uploaded By */}
       <div className="flex items-center gap-2 mb-2">
-        <div className={`w-5 h-5 ${file.uploadedBy.color || 'bg-slate-600'} rounded-full flex items-center justify-center`}>
+        <div className={`w-5 h-5 ${file.uploadedBy.color || 'bg-gray-200'} rounded-full flex items-center justify-center`}>
           <span className="text-white text-xs">{file.uploadedBy.avatar}</span>
         </div>
-        <span className="text-xs text-slate-400">{file.modified}</span>
+        <span className="text-xs text-gray-500">{file.modified}</span>
       </div>
 
       {/* Shared With */}
@@ -447,7 +447,7 @@ function FileCard({ file, onSelect, onPin }) {
           <Users className="w-3 h-3 text-slate-500" />
           <div className="flex -space-x-1">
             {file.sharedWith.slice(0, 3).map((user, idx) => (
-              <div key={idx} className="w-5 h-5 bg-slate-600 rounded-full flex items-center justify-center border border-slate-700">
+              <div key={idx} className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center border border-gray-200">
                 <span className="text-white text-xs">{user.avatar}</span>
               </div>
             ))}
@@ -462,7 +462,7 @@ function FileCard({ file, onSelect, onPin }) {
       {file.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
           {file.tags.slice(0, 2).map(tag => (
-            <span key={tag} className="px-1.5 py-0.5 bg-slate-600 rounded text-xs text-slate-300">{tag}</span>
+            <span key={tag} className="px-1.5 py-0.5 bg-gray-200 rounded text-xs text-gray-600">{tag}</span>
           ))}
         </div>
       )}
@@ -471,7 +471,7 @@ function FileCard({ file, onSelect, onPin }) {
       <div className="absolute top-3 right-3 flex items-center gap-1">
         {file.isPinned && <Pin className="w-3.5 h-3.5 text-amber-400 fill-current" />}
         {file.hasComments && (
-          <span className="flex items-center gap-0.5 text-xs text-slate-400">
+          <span className="flex items-center gap-0.5 text-xs text-gray-500">
             <MessageSquare className="w-3 h-3" />{file.commentCount}
           </span>
         )}
@@ -479,17 +479,17 @@ function FileCard({ file, onSelect, onPin }) {
 
       {/* Quick Actions on Hover */}
       <div className="absolute bottom-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-        <button onClick={(e) => { e.stopPropagation(); }} className="p-1.5 bg-slate-600 hover:bg-slate-500 rounded-lg" title="Preview">
-          <Eye className="w-3.5 h-3.5 text-slate-300" />
+        <button onClick={(e) => { e.stopPropagation(); }} className="p-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg" title="Preview">
+          <Eye className="w-3.5 h-3.5 text-gray-600" />
         </button>
-        <button onClick={(e) => { e.stopPropagation(); }} className="p-1.5 bg-slate-600 hover:bg-slate-500 rounded-lg" title="Download">
-          <Download className="w-3.5 h-3.5 text-slate-300" />
+        <button onClick={(e) => { e.stopPropagation(); }} className="p-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg" title="Download">
+          <Download className="w-3.5 h-3.5 text-gray-600" />
         </button>
-        <button onClick={(e) => { e.stopPropagation(); }} className="p-1.5 bg-slate-600 hover:bg-slate-500 rounded-lg" title="Share">
-          <Share2 className="w-3.5 h-3.5 text-slate-300" />
+        <button onClick={(e) => { e.stopPropagation(); }} className="p-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg" title="Share">
+          <Share2 className="w-3.5 h-3.5 text-gray-600" />
         </button>
-        <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="p-1.5 bg-slate-600 hover:bg-slate-500 rounded-lg">
-          <MoreHorizontal className="w-3.5 h-3.5 text-slate-300" />
+        <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="p-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg">
+          <MoreHorizontal className="w-3.5 h-3.5 text-gray-600" />
         </button>
       </div>
     </div>
@@ -503,7 +503,7 @@ function FileRow({ file, onSelect }) {
   return (
     <tr
       onClick={() => onSelect(file)}
-      className="hover:bg-slate-700/50 cursor-pointer border-b border-slate-700/50 transition-all group"
+      className="hover:bg-gray-100/50 cursor-pointer border-b border-gray-200/50 transition-all group"
     >
       <td className="py-3 px-4">
         <div className="flex items-center gap-3">
@@ -524,22 +524,22 @@ function FileRow({ file, onSelect }) {
           {file.type}
         </span>
       </td>
-      <td className="py-3 px-4 text-sm text-slate-400">{file.size}</td>
+      <td className="py-3 px-4 text-sm text-gray-500">{file.size}</td>
       <td className="py-3 px-4">
         <div className="flex items-center gap-2">
-          <div className={`w-6 h-6 ${file.uploadedBy.color || 'bg-slate-600'} rounded-full flex items-center justify-center`}>
+          <div className={`w-6 h-6 ${file.uploadedBy.color || 'bg-gray-200'} rounded-full flex items-center justify-center`}>
             <span className="text-white text-xs">{file.uploadedBy.avatar}</span>
           </div>
-          <span className="text-sm text-slate-300">{file.uploadedBy.name}</span>
+          <span className="text-sm text-gray-600">{file.uploadedBy.name}</span>
         </div>
       </td>
-      <td className="py-3 px-4 text-sm text-slate-400">{file.uploadDate}</td>
-      <td className="py-3 px-4 text-sm text-slate-400">{file.modified}</td>
+      <td className="py-3 px-4 text-sm text-gray-500">{file.uploadDate}</td>
+      <td className="py-3 px-4 text-sm text-gray-500">{file.modified}</td>
       <td className="py-3 px-4">
         {file.sharedWith.length > 0 ? (
           <div className="flex items-center -space-x-1">
             {file.sharedWith.slice(0, 3).map((user, idx) => (
-              <div key={idx} className="w-6 h-6 bg-slate-600 rounded-full flex items-center justify-center border border-slate-800">
+              <div key={idx} className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center border border-slate-800">
                 <span className="text-white text-xs">{user.avatar}</span>
               </div>
             ))}
@@ -551,17 +551,17 @@ function FileRow({ file, onSelect }) {
           <span className="text-slate-500">—</span>
         )}
       </td>
-      <td className="py-3 px-4 text-sm text-slate-400">v{file.version}</td>
+      <td className="py-3 px-4 text-sm text-gray-500">v{file.version}</td>
       <td className="py-3 px-4">
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-          <button className="p-1.5 hover:bg-slate-600 rounded-lg" title="Preview">
-            <Eye className="w-4 h-4 text-slate-400" />
+          <button className="p-1.5 hover:bg-gray-200 rounded-lg" title="Preview">
+            <Eye className="w-4 h-4 text-gray-500" />
           </button>
-          <button className="p-1.5 hover:bg-slate-600 rounded-lg" title="Download">
-            <Download className="w-4 h-4 text-slate-400" />
+          <button className="p-1.5 hover:bg-gray-200 rounded-lg" title="Download">
+            <Download className="w-4 h-4 text-gray-500" />
           </button>
-          <button className="p-1.5 hover:bg-slate-600 rounded-lg" title="More">
-            <MoreHorizontal className="w-4 h-4 text-slate-400" />
+          <button className="p-1.5 hover:bg-gray-200 rounded-lg" title="More">
+            <MoreHorizontal className="w-4 h-4 text-gray-500" />
           </button>
         </div>
       </td>
@@ -581,14 +581,14 @@ function FilePreviewModal({ file, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex">
       {/* Preview Pane */}
-      <div className="flex-[7] bg-slate-900 flex flex-col">
+      <div className="flex-[7] bg-white border-l border-gray-200 flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
             {getFileIcon(file.type, 5)}
             <div>
-              <h2 className="font-semibold text-white">{file.name}</h2>
-              <div className="flex items-center gap-2 text-xs text-slate-400">
+              <h2 className="font-semibold text-gray-900">{file.name}</h2>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
                 <span className={`px-1.5 py-0.5 rounded uppercase ${colors.bg} ${colors.text}`}>{file.type}</span>
                 <span>{file.size}</span>
                 <span>•</span>
@@ -599,25 +599,25 @@ function FilePreviewModal({ file, onClose }) {
           <div className="flex items-center gap-2">
             {/* Zoom Controls */}
             <div className="flex items-center gap-1 bg-slate-800 rounded-lg px-2 py-1">
-              <button onClick={() => setZoom(z => Math.max(50, z - 10))} className="p-1 hover:bg-slate-700 rounded">
-                <ZoomOut className="w-4 h-4 text-slate-400" />
+              <button onClick={() => setZoom(z => Math.max(50, z - 10))} className="p-1 hover:bg-gray-100 rounded">
+                <ZoomOut className="w-4 h-4 text-gray-500" />
               </button>
-              <span className="text-sm text-slate-400 w-12 text-center">{zoom}%</span>
-              <button onClick={() => setZoom(z => Math.min(200, z + 10))} className="p-1 hover:bg-slate-700 rounded">
-                <ZoomIn className="w-4 h-4 text-slate-400" />
+              <span className="text-sm text-gray-500 w-12 text-center">{zoom}%</span>
+              <button onClick={() => setZoom(z => Math.min(200, z + 10))} className="p-1 hover:bg-gray-100 rounded">
+                <ZoomIn className="w-4 h-4 text-gray-500" />
               </button>
             </div>
-            <button className="p-2 hover:bg-slate-700 rounded-lg" title="Print">
-              <Printer className="w-4 h-4 text-slate-400" />
+            <button className="p-2 hover:bg-gray-100 rounded-lg" title="Print">
+              <Printer className="w-4 h-4 text-gray-500" />
             </button>
-            <button className="p-2 hover:bg-slate-700 rounded-lg" title="Download">
-              <Download className="w-4 h-4 text-slate-400" />
+            <button className="p-2 hover:bg-gray-100 rounded-lg" title="Download">
+              <Download className="w-4 h-4 text-gray-500" />
             </button>
-            <button className="p-2 hover:bg-slate-700 rounded-lg" title="Full Screen">
-              <Maximize2 className="w-4 h-4 text-slate-400" />
+            <button className="p-2 hover:bg-gray-100 rounded-lg" title="Full Screen">
+              <Maximize2 className="w-4 h-4 text-gray-500" />
             </button>
-            <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-lg">
-              <X className="w-5 h-5 text-slate-400" />
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+              <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
         </div>
@@ -631,43 +631,43 @@ function FilePreviewModal({ file, onClose }) {
               </div>
               <h3 className="text-xl font-semibold text-slate-800 mb-2">{file.name}</h3>
               <p className="text-slate-500">Document preview would render here</p>
-              <p className="text-sm text-slate-400 mt-4">{file.type.toUpperCase()} • {file.size} • {totalPages} pages</p>
+              <p className="text-sm text-gray-500 mt-4">{file.type.toUpperCase()} • {file.size} • {totalPages} pages</p>
             </div>
           </div>
         </div>
 
         {/* Page Navigation */}
-        <div className="flex items-center justify-center gap-4 p-4 border-t border-slate-700">
+        <div className="flex items-center justify-center gap-4 p-4 border-t border-gray-200">
           <button
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="p-2 hover:bg-slate-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ArrowLeft className="w-5 h-5 text-slate-400" />
+            <ArrowLeft className="w-5 h-5 text-gray-500" />
           </button>
-          <span className="text-sm text-slate-400">
+          <span className="text-sm text-gray-500">
             Page {currentPage} of {totalPages}
           </span>
           <button
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            className="p-2 hover:bg-slate-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ArrowRight className="w-5 h-5 text-slate-400" />
+            <ArrowRight className="w-5 h-5 text-gray-500" />
           </button>
         </div>
       </div>
 
       {/* Right Panel */}
-      <div className="flex-[3] bg-slate-800 border-l border-slate-700 flex flex-col max-w-md">
+      <div className="flex-[3] bg-slate-800 border-l border-gray-200 flex flex-col max-w-md">
         {/* Tabs */}
-        <div className="flex border-b border-slate-700">
+        <div className="flex border-b border-gray-200">
           {['preview', 'versions', 'comments', 'sharing'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`flex-1 py-3 text-xs font-medium capitalize transition-all ${
-                activeTab === tab ? 'text-purple-400 border-b-2 border-purple-400 bg-slate-700/50' : 'text-slate-400 hover:text-white'
+                activeTab === tab ? 'text-blue-600 border-b-2 border-blue-600 bg-gray-100/50' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
               {tab}
@@ -682,34 +682,34 @@ function FilePreviewModal({ file, onClose }) {
             <div className="space-y-4">
               <div>
                 <label className="text-xs text-slate-500 block mb-1">File Name</label>
-                <p className="text-white">{file.name}</p>
+                <p className="text-gray-900">{file.name}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-slate-500 block mb-1">Type</label>
-                  <p className="text-white">{file.type.toUpperCase()}</p>
+                  <p className="text-gray-700">{file.type.toUpperCase()}</p>
                 </div>
                 <div>
                   <label className="text-xs text-slate-500 block mb-1">Size</label>
-                  <p className="text-white">{file.size}</p>
+                  <p className="text-gray-700">{file.size}</p>
                 </div>
               </div>
               <div>
                 <label className="text-xs text-slate-500 block mb-1">Uploaded By</label>
                 <div className="flex items-center gap-2">
-                  <div className={`w-6 h-6 ${file.uploadedBy.color || 'bg-slate-600'} rounded-full flex items-center justify-center`}>
+                  <div className={`w-6 h-6 ${file.uploadedBy.color || 'bg-gray-200'} rounded-full flex items-center justify-center`}>
                     <span className="text-white text-xs">{file.uploadedBy.avatar}</span>
                   </div>
-                  <span className="text-white">{file.uploadedBy.name}</span>
+                  <span className="text-gray-900">{file.uploadedBy.name}</span>
                 </div>
               </div>
               <div>
                 <label className="text-xs text-slate-500 block mb-1">Upload Date</label>
-                <p className="text-white">{file.uploadDate}</p>
+                <p className="text-gray-700">{file.uploadDate}</p>
               </div>
               <div>
                 <label className="text-xs text-slate-500 block mb-1">Last Modified</label>
-                <p className="text-white">{file.modified}</p>
+                <p className="text-gray-700">{file.modified}</p>
               </div>
               <div>
                 <label className="text-xs text-slate-500 block mb-1">Location</label>
@@ -721,7 +721,7 @@ function FilePreviewModal({ file, onClose }) {
                 <label className="text-xs text-slate-500 block mb-2">Tags</label>
                 <div className="flex flex-wrap gap-2">
                   {file.tags.map(tag => (
-                    <span key={tag} className="px-2 py-1 bg-slate-700 rounded-lg text-xs text-slate-300">{tag}</span>
+                    <span key={tag} className="px-2 py-1 bg-gray-100 rounded-lg text-xs text-gray-600">{tag}</span>
                   ))}
                 </div>
               </div>
@@ -731,9 +731,9 @@ function FilePreviewModal({ file, onClose }) {
                 <label className="text-xs text-slate-500 block mb-2">Related Files</label>
                 <div className="space-y-2">
                   {mockFiles.filter(f => f.id !== file.id).slice(0, 3).map(related => (
-                    <div key={related.id} className="flex items-center gap-2 p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 cursor-pointer">
+                    <div key={related.id} className="flex items-center gap-2 p-2 bg-gray-100/50 rounded-lg hover:bg-gray-100 cursor-pointer">
                       {getFileIcon(related.type, 4)}
-                      <span className="text-sm text-slate-300 truncate">{related.name}</span>
+                      <span className="text-sm text-gray-600 truncate">{related.name}</span>
                     </div>
                   ))}
                 </div>
@@ -746,26 +746,26 @@ function FilePreviewModal({ file, onClose }) {
             <div className="space-y-3">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-white">Version History</h3>
-                <button className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1">
+                <button className="text-xs text-blue-600 hover:text-purple-300 flex items-center gap-1">
                   <GitCompare className="w-3 h-3" /> Compare
                 </button>
               </div>
               {mockVersions.map(version => (
-                <div key={version.id} className={`p-3 rounded-xl border ${version.isCurrent ? 'bg-purple-500/10 border-purple-500/30' : 'bg-slate-700/50 border-slate-600'}`}>
+                <div key={version.id} className={`p-3 rounded-xl border ${version.isCurrent ? 'bg-blue-500/10 border-purple-500/30' : 'bg-gray-100/50 border-gray-200'}`}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-white">Version {version.version}</span>
                     {version.isCurrent && (
-                      <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded text-xs">Current</span>
+                      <span className="px-2 py-0.5 bg-blue-500/20 text-blue-600 rounded text-xs">Current</span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-400 mb-1">{version.date} by {version.author}</p>
-                  <p className="text-sm text-slate-300">{version.notes}</p>
+                  <p className="text-xs text-gray-500 mb-1">{version.date} by {version.author}</p>
+                  <p className="text-sm text-gray-600">{version.notes}</p>
                   {!version.isCurrent && (
                     <div className="flex gap-2 mt-3">
-                      <button className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1">
+                      <button className="text-xs text-blue-600 hover:text-purple-300 flex items-center gap-1">
                         <RotateCcw className="w-3 h-3" /> Restore
                       </button>
-                      <button className="text-xs text-slate-400 hover:text-slate-300 flex items-center gap-1">
+                      <button className="text-xs text-gray-500 hover:text-gray-600 flex items-center gap-1">
                         <Eye className="w-3 h-3" /> View
                       </button>
                     </div>
@@ -789,8 +789,8 @@ function FilePreviewModal({ file, onClose }) {
                         <span className="text-sm font-medium text-white">{comment.author}</span>
                         <span className="text-xs text-slate-500">{comment.timestamp}</span>
                       </div>
-                      <p className="text-sm text-slate-300 bg-slate-700/50 rounded-xl p-3">{comment.content}</p>
-                      <button className="text-xs text-purple-400 mt-1 flex items-center gap-1">
+                      <p className="text-sm text-gray-600 bg-gray-100/50 rounded-xl p-3">{comment.content}</p>
+                      <button className="text-xs text-blue-600 mt-1 flex items-center gap-1">
                         <MessageSquare className="w-3 h-3" /> Reply
                       </button>
                     </div>
@@ -805,7 +805,7 @@ function FilePreviewModal({ file, onClose }) {
                           <span className="text-sm font-medium text-white">{reply.author}</span>
                           <span className="text-xs text-slate-500">{reply.timestamp}</span>
                         </div>
-                        <p className="text-sm text-slate-300">{reply.content}</p>
+                        <p className="text-sm text-gray-600">{reply.content}</p>
                       </div>
                     </div>
                   ))}
@@ -813,16 +813,16 @@ function FilePreviewModal({ file, onClose }) {
               ))}
 
               {/* Add Comment */}
-              <div className="pt-4 border-t border-slate-700">
+              <div className="pt-4 border-t border-gray-200">
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add a comment..."
-                  className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-purple-500 resize-none"
+                  className="w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-purple-500 resize-none"
                   rows={3}
                 />
                 <div className="flex justify-end mt-2">
-                  <button className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-sm font-medium">
+                  <button className="px-4 py-2 bg-purple-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium">
                     Comment
                   </button>
                 </div>
@@ -837,14 +837,14 @@ function FilePreviewModal({ file, onClose }) {
                 <label className="text-xs text-slate-500 block mb-2">Shared With</label>
                 <div className="space-y-2">
                   {file.sharedWith.map((user, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2 bg-slate-700/50 rounded-xl">
+                    <div key={idx} className="flex items-center justify-between p-2 bg-gray-100/50 rounded-xl">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center">
+                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                           <span className="text-white text-sm">{user.avatar}</span>
                         </div>
                         <span className="text-sm text-white">{user.name}</span>
                       </div>
-                      <select className="bg-slate-600 border border-slate-500 rounded-lg px-2 py-1 text-xs text-white">
+                      <select className="bg-gray-200 border border-slate-500 rounded-lg px-2 py-1 text-xs text-white">
                         <option>View</option>
                         <option>Comment</option>
                         <option>Edit</option>
@@ -852,19 +852,19 @@ function FilePreviewModal({ file, onClose }) {
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-3 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-sm text-purple-400 flex items-center justify-center gap-2">
+                <button className="w-full mt-3 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm text-blue-600 flex items-center justify-center gap-2">
                   <Plus className="w-4 h-4" /> Add People
                 </button>
               </div>
 
-              <div className="pt-4 border-t border-slate-700">
+              <div className="pt-4 border-t border-gray-200">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm text-white">Link Sharing</span>
-                  <button className="w-10 h-5 bg-slate-600 rounded-full relative">
+                  <button className="w-10 h-5 bg-gray-200 rounded-full relative">
                     <div className="w-4 h-4 bg-slate-400 rounded-full absolute left-0.5 top-0.5" />
                   </button>
                 </div>
-                <button className="w-full py-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-sm text-slate-300 flex items-center justify-center gap-2">
+                <button className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm text-gray-600 flex items-center justify-center gap-2">
                   <Link2 className="w-4 h-4" /> Copy Link
                 </button>
               </div>
@@ -873,23 +873,23 @@ function FilePreviewModal({ file, onClose }) {
         </div>
 
         {/* Actions */}
-        <div className="p-4 border-t border-slate-700 space-y-2">
+        <div className="p-4 border-t border-gray-200 space-y-2">
           <div className="grid grid-cols-2 gap-2">
-            <button className="py-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2">
+            <button className="py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2">
               <Edit3 className="w-4 h-4" /> Edit
             </button>
-            <button className="py-2.5 bg-purple-600 hover:bg-purple-500 rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2">
+            <button className="py-2.5 bg-purple-600 hover:bg-blue-500 rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2">
               <Download className="w-4 h-4" /> Download
             </button>
           </div>
           <div className="flex gap-2">
-            <button className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 text-xs flex items-center justify-center gap-1">
+            <button className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 text-xs flex items-center justify-center gap-1">
               <Move className="w-3 h-3" /> Move
             </button>
-            <button className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 text-xs flex items-center justify-center gap-1">
+            <button className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 text-xs flex items-center justify-center gap-1">
               <Copy className="w-3 h-3" /> Copy
             </button>
-            <button className="flex-1 py-2 bg-slate-700 hover:bg-red-500/20 hover:text-red-400 rounded-lg text-slate-300 text-xs flex items-center justify-center gap-1">
+            <button className="flex-1 py-2 bg-gray-100 hover:bg-red-500/20 hover:text-red-400 rounded-lg text-gray-600 text-xs flex items-center justify-center gap-1">
               <Trash2 className="w-3 h-3" /> Delete
             </button>
           </div>
@@ -906,18 +906,18 @@ function UploadModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-lg">
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
+      <div className="bg-slate-800 border border-gray-200 rounded-2xl w-full max-w-lg">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h3 className="font-semibold text-white">Upload Files</h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-lg">
-            <X className="w-5 h-5 text-slate-400" />
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
         <div className="p-6">
           <div
             className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
-              isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-slate-600 hover:border-slate-500'
+              isDragging ? 'border-purple-500 bg-blue-500/10' : 'border-gray-200 hover:border-slate-500'
             }`}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
@@ -932,8 +932,8 @@ function UploadModal({ onClose }) {
 
           <div className="mt-6 space-y-4">
             <div>
-              <label className="text-sm text-slate-400 block mb-2">Destination Folder</label>
-              <select className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500">
+              <label className="text-sm text-gray-500 block mb-2">Destination Folder</label>
+              <select className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500">
                 <option>Deliverables</option>
                 <option>Strategy Documents</option>
                 <option>Campaign Assets</option>
@@ -941,21 +941,21 @@ function UploadModal({ onClose }) {
               </select>
             </div>
             <div>
-              <label className="text-sm text-slate-400 block mb-2">Tags</label>
+              <label className="text-sm text-gray-500 block mb-2">Tags</label>
               <input
                 type="text"
                 placeholder="Add tags (comma separated)"
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-purple-500"
               />
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 p-4 border-t border-slate-700">
-          <button onClick={onClose} className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-white text-sm font-medium">
+        <div className="flex justify-end gap-2 p-4 border-t border-gray-200">
+          <button onClick={onClose} className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-white text-sm font-medium">
             Cancel
           </button>
-          <button className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-sm font-medium">
+          <button className="px-4 py-2.5 bg-purple-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium">
             Upload
           </button>
         </div>
@@ -977,10 +977,10 @@ function AIAssistantPanel() {
   ];
 
   return (
-    <div className={`border-t border-slate-700 bg-slate-800/50 transition-all ${isExpanded ? 'h-64' : 'h-auto'}`}>
+    <div className={`border-t border-gray-200 bg-slate-800/50 transition-all ${isExpanded ? 'h-64' : 'h-auto'}`}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-3 hover:bg-slate-700/50 transition-colors"
+        className="w-full flex items-center justify-between p-3 hover:bg-gray-100/50 transition-colors"
       >
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
@@ -991,7 +991,7 @@ function AIAssistantPanel() {
             <p className="text-xs text-slate-500">Ask about these documents</p>
           </div>
         </div>
-        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
       </button>
 
       {isExpanded && (
@@ -1003,9 +1003,9 @@ function AIAssistantPanel() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Ask a question about your files..."
-              className="w-full bg-slate-700 border border-slate-600 rounded-xl pl-4 pr-10 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-purple-500"
+              className="w-full bg-gray-100 border border-gray-200 rounded-xl pl-4 pr-10 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-purple-500"
             />
-            <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-purple-600 hover:bg-purple-500 rounded-lg">
+            <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-purple-600 hover:bg-blue-500 rounded-lg">
               <Send className="w-4 h-4 text-white" />
             </button>
           </div>
@@ -1018,7 +1018,7 @@ function AIAssistantPanel() {
                 <button
                   key={idx}
                   onClick={() => setQuery(suggestion)}
-                  className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs text-slate-300 transition-colors"
+                  className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs text-gray-600 transition-colors"
                 >
                   {suggestion}
                 </button>
@@ -1067,15 +1067,15 @@ function FilesKnowledgeBase() {
   });
 
   return (
-    <div className="flex h-full bg-slate-900 rounded-xl overflow-hidden border border-slate-700">
+    <div className="flex h-full bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm">
       {/* Left Sidebar */}
-      <div className="w-64 flex-shrink-0 border-r border-slate-700 flex flex-col bg-slate-800">
+      <div className="w-64 flex-shrink-0 border-r border-gray-200 flex flex-col bg-slate-800">
         {/* Folder Tree */}
         <div className="flex-1 overflow-y-auto p-3">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Folders</h3>
-            <button className="p-1 hover:bg-slate-700 rounded" title="New Folder">
-              <FolderPlus className="w-4 h-4 text-slate-400" />
+            <button className="p-1 hover:bg-gray-100 rounded" title="New Folder">
+              <FolderPlus className="w-4 h-4 text-gray-500" />
             </button>
           </div>
 
@@ -1083,7 +1083,7 @@ function FilesKnowledgeBase() {
           <button
             onClick={() => setSelectedFolder(null)}
             className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-sm mb-2 ${
-              selectedFolder === null ? 'bg-purple-600 text-white' : 'text-slate-300 hover:bg-slate-700'
+              selectedFolder === null ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
             <Folder className="w-4 h-4" />
@@ -1105,7 +1105,7 @@ function FilesKnowledgeBase() {
         </div>
 
         {/* Quick Access */}
-        <div className="border-t border-slate-700 p-3">
+        <div className="border-t border-gray-200 p-3">
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1">
             <Pin className="w-3 h-3" /> Quick Access
           </h3>
@@ -1114,10 +1114,10 @@ function FilesKnowledgeBase() {
               <button
                 key={file.id}
                 onClick={() => setSelectedFile(file)}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left hover:bg-slate-700 transition-colors"
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left hover:bg-gray-100 transition-colors"
               >
                 {getFileIcon(file.type, 4)}
-                <span className="text-sm text-slate-300 truncate">{file.name}</span>
+                <span className="text-sm text-gray-600 truncate">{file.name}</span>
               </button>
             ))}
           </div>
@@ -1130,7 +1130,7 @@ function FilesKnowledgeBase() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-slate-700 bg-slate-800/50">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-gray-200 bg-slate-800/50">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -1139,24 +1139,24 @@ function FilesKnowledgeBase() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search all files..."
-              className="w-full pl-9 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-purple-500"
+              className="w-full pl-9 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-purple-500"
             />
           </div>
 
           {/* View & Actions */}
           <div className="flex items-center gap-2">
             {/* View Toggle */}
-            <div className="flex bg-slate-700 rounded-lg p-1">
+            <div className="flex bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-900'}`}
                 title="Grid View"
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-900'}`}
                 title="List View"
               >
                 <List className="w-4 h-4" />
@@ -1167,7 +1167,7 @@ function FilesKnowledgeBase() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500"
+              className="bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500"
             >
               <option value="modified">Date Modified</option>
               <option value="name">Name</option>
@@ -1178,7 +1178,7 @@ function FilesKnowledgeBase() {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm transition-all ${
-                showFilters ? 'bg-purple-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                showFilters ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               <Filter className="w-4 h-4" /> Filter
@@ -1186,20 +1186,20 @@ function FilesKnowledgeBase() {
 
             {/* Create New */}
             <div className="relative group">
-              <button className="flex items-center gap-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-white text-sm">
+              <button className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-white text-sm">
                 <Plus className="w-4 h-4" /> New <ChevronDown className="w-3 h-3" />
               </button>
-              <div className="absolute right-0 top-full mt-1 w-44 bg-slate-800 border border-slate-700 rounded-xl shadow-xl hidden group-hover:block z-10">
-                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 text-sm text-slate-300 rounded-t-xl">
+              <div className="absolute right-0 top-full mt-1 w-44 bg-slate-800 border border-gray-200 rounded-xl shadow-xl hidden group-hover:block z-10">
+                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-sm text-gray-600 rounded-t-xl">
                   <FileText className="w-4 h-4 text-blue-400" /> Google Doc
                 </button>
-                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 text-sm text-slate-300">
+                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-sm text-gray-600">
                   <FileSpreadsheet className="w-4 h-4 text-emerald-400" /> Google Sheet
                 </button>
-                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 text-sm text-slate-300">
+                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-sm text-gray-600">
                   <FolderPlus className="w-4 h-4 text-amber-400" /> New Folder
                 </button>
-                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 text-sm text-slate-300 rounded-b-xl">
+                <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-sm text-gray-600 rounded-b-xl">
                   <StickyNote className="w-4 h-4 text-pink-400" /> Note
                 </button>
               </div>
@@ -1208,7 +1208,7 @@ function FilesKnowledgeBase() {
             {/* Upload */}
             <button
               onClick={() => setShowUploadModal(true)}
-              className="flex items-center gap-2 px-4 py-1.5 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-1.5 bg-purple-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium"
             >
               <Upload className="w-4 h-4" /> Upload
             </button>
@@ -1217,13 +1217,13 @@ function FilesKnowledgeBase() {
 
         {/* Filter Bar */}
         {showFilters && (
-          <div className="flex flex-wrap gap-3 p-3 border-b border-slate-700 bg-slate-800/30">
+          <div className="flex flex-wrap gap-3 p-3 border-b border-gray-200 bg-slate-800/30">
             <div>
               <label className="text-xs text-slate-500 block mb-1">File Type</label>
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="bg-slate-700 border border-slate-600 rounded-lg px-2 py-1 text-xs text-white"
+                className="bg-gray-100 border border-gray-200 rounded-lg px-2 py-1 text-xs text-white"
               >
                 <option>All</option>
                 <option>PDF</option>
@@ -1237,7 +1237,7 @@ function FilesKnowledgeBase() {
               <select
                 value={filterUploader}
                 onChange={(e) => setFilterUploader(e.target.value)}
-                className="bg-slate-700 border border-slate-600 rounded-lg px-2 py-1 text-xs text-white"
+                className="bg-gray-100 border border-gray-200 rounded-lg px-2 py-1 text-xs text-white"
               >
                 <option>All</option>
                 <option>Me</option>
@@ -1245,7 +1245,7 @@ function FilesKnowledgeBase() {
               </select>
             </div>
             <div className="flex items-end">
-              <button className="text-xs text-purple-400 hover:text-purple-300">Clear filters</button>
+              <button className="text-xs text-blue-600 hover:text-purple-300">Clear filters</button>
             </div>
           </div>
         )}
@@ -1270,10 +1270,10 @@ function FilesKnowledgeBase() {
 
           {/* List View */}
           {viewMode === 'list' && (
-            <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+            <div className="bg-slate-800 border border-gray-200 rounded-xl overflow-hidden">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-700 text-left">
+                  <tr className="border-b border-gray-200 text-left">
                     <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Name</th>
                     <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Type</th>
                     <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Size</th>
@@ -1302,10 +1302,10 @@ function FilesKnowledgeBase() {
           {filteredFiles.length === 0 && (
             <div className="flex flex-col items-center justify-center h-64">
               <FileText className="w-12 h-12 text-slate-600 mb-3" />
-              <p className="text-slate-400 mb-4">No files found</p>
+              <p className="text-gray-500 mb-4">No files found</p>
               <button
                 onClick={() => setShowUploadModal(true)}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-sm font-medium"
+                className="px-4 py-2 bg-purple-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium"
               >
                 Upload Files
               </button>

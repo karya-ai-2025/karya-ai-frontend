@@ -1,9 +1,10 @@
 'use client';
 // pages/Register.jsx
 import { useState, useEffect, Suspense } from 'react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Mail, Lock, User, Sparkles, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertCircle, CheckCircle, Check, X } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertCircle, CheckCircle, Check, X } from 'lucide-react';
 
 // Constants
 const ROLES = {
@@ -16,14 +17,14 @@ const ROLE_CONFIG = {
     title: 'Create Business Account',
     subtitle: 'Start transforming your marketing today',
     icon: Briefcase,
-    gradient: 'bg-indigo-600',
+    gradient: 'bg-gradient-to-r from-blue-600 to-orange-500',
     onboardingRoute: '/onboarding-owner/welcome'
   },
   [ROLES.EXPERT]: {
     title: 'Join as Expert',
     subtitle: 'Connect with businesses and grow your career',
     icon: Users,
-    gradient: 'bg-blue-600',
+    gradient: 'bg-gradient-to-r from-blue-600 to-orange-500',
     onboardingRoute: '/onboarding-expert/profile-setup'
   }
 };
@@ -266,7 +267,7 @@ function RegisterContent() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       {/* Animated Background */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-indigo-300 rounded-full filter blur-xl animate-blob"></div>
+        <div className="absolute top-20 left-20 w-72 h-72 bg-blue-300 rounded-full filter blur-xl animate-blob"></div>
         <div className="absolute top-40 right-20 w-72 h-72 bg-blue-300 rounded-full filter blur-xl animate-blob animation-delay-2000"></div>
         <div className="absolute bottom-20 left-40 w-72 h-72 bg-violet-300 rounded-full filter blur-xl animate-blob animation-delay-4000"></div>
       </div>
@@ -275,10 +276,8 @@ function RegisterContent() {
         {/* Logo/Brand */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
-            <div className={`w-12 h-12 ${currentRole.gradient} rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-indigo-500/20`}>
-              <Icon className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">Karya-AI</span>
+            <Image src="/karya-ai-logo.png" alt="Karya AI" width={48} height={48} className="rounded-xl object-contain group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/20" />
+            <span className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">Karya-AI</span>
           </Link>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{currentRole.title}</h1>
           <p className="text-gray-500">{currentRole.subtitle}</p>
@@ -289,7 +288,7 @@ function RegisterContent() {
               onClick={() => router.push(`/register?role=${ROLES.OWNER}`)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 role === ROLES.OWNER
-                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-300'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-300'
                   : 'text-gray-500 hover:text-gray-900'
               }`}
             >
@@ -346,7 +345,7 @@ function RegisterContent() {
                   className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.fullName && errors.fullName
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
-                      : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="John Doe"
                 />
@@ -375,7 +374,7 @@ function RegisterContent() {
                   className={`w-full pl-12 pr-10 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.email && errors.email
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
-                      : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="you@company.com"
                 />
@@ -410,7 +409,7 @@ function RegisterContent() {
                   className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.company && errors.company
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
-                      : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="Your Company"
                 />
@@ -439,7 +438,7 @@ function RegisterContent() {
                   className={`w-full pl-12 pr-12 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.password && errors.password
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
-                      : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="••••••••"
                 />
@@ -506,7 +505,7 @@ function RegisterContent() {
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
                       : formData.confirmPassword && formData.confirmPassword === formData.password
                       ? 'border-green-300 focus:border-green-500 focus:ring-green-500/50'
-                      : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="••••••••"
                 />
@@ -540,17 +539,17 @@ function RegisterContent() {
                   onChange={handleChange}
                   onBlur={() => handleBlur('acceptTerms')}
                   disabled={isLoading}
-                  className={`w-4 h-4 mt-0.5 rounded border-gray-300 bg-white text-indigo-600 focus:ring-2 focus:ring-indigo-500/50 ${
+                  className={`w-4 h-4 mt-0.5 rounded border-gray-300 bg-white text-blue-600 focus:ring-2 focus:ring-blue-500/50 ${
                     touched.acceptTerms && errors.acceptTerms ? 'border-red-500' : ''
                   }`}
                 />
                 <label htmlFor="acceptTerms" className="ml-2 text-sm text-gray-600">
                   I agree to the{' '}
-                  <Link href="/terms" className="text-indigo-600 hover:text-indigo-600 transition-colors">
+                  <Link href="/terms" className="text-blue-600 hover:text-blue-600 transition-colors">
                     Terms of Service
                   </Link>
                   {' '}and{' '}
-                  <Link href="/privacy" className="text-indigo-600 hover:text-indigo-600 transition-colors">
+                  <Link href="/privacy" className="text-blue-600 hover:text-blue-600 transition-colors">
                     Privacy Policy
                   </Link>
                 </label>
@@ -623,7 +622,7 @@ function RegisterContent() {
           <div className="mt-6 text-center">
             <p className="text-gray-500">
               Already have an account?{' '}
-              <Link href={`/login?role=${role}`} className="text-indigo-600 hover:text-indigo-600 font-medium transition-colors">
+              <Link href={`/login?role=${role}`} className="text-blue-600 hover:text-blue-600 font-medium transition-colors">
                 Sign in
               </Link>
             </p>

@@ -84,7 +84,7 @@ html {
 
 /* Light Theme (default) */
 .light-theme body {
-  background: #f9fafb !important;
+  background: #ffffff !important;
   color: var(--text-primary) !important;
 }
 

@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import {
   Sparkles, TrendingUp, Target, Zap, Users, MessageSquare, Search, Star, Award,
   Play, ChevronDown, ChevronRight, Check, Briefcase, ArrowRight, X, Globe, Rocket,
@@ -222,11 +223,11 @@ function HomePage() {
   ];
 
   const experts = [
-    { name: "Sarah Mitchell", role: "Content Strategist", expertise: "SEO, Blog Strategy, Content Marketing", rating: 4.9, reviews: 127, hourlyRate: "$95/hr", avatar: "SM", badge: "Top Rated", color: "from-blue-500 to-purple-500" },
+    { name: "Sarah Mitchell", role: "Content Strategist", expertise: "SEO, Blog Strategy, Content Marketing", rating: 4.9, reviews: 127, hourlyRate: "$95/hr", avatar: "SM", badge: "Top Rated", color: "from-blue-600 to-orange-400" },
     { name: "Marcus Chen", role: "Growth Marketer", expertise: "Performance Marketing, Analytics, A/B Testing", rating: 5.0, reviews: 89, hourlyRate: "$120/hr", avatar: "MC", badge: "Expert", color: "from-green-500 to-teal-500" },
     { name: "Emma Rodriguez", role: "Brand Designer", expertise: "Visual Identity, UI/UX, Brand Guidelines", rating: 4.8, reviews: 156, hourlyRate: "$85/hr", avatar: "ER", badge: "Rising Star", color: "from-pink-500 to-rose-500" },
     { name: "David Park", role: "PR Specialist", expertise: "Media Relations, Crisis Management, Press Releases", rating: 4.9, reviews: 94, hourlyRate: "$110/hr", avatar: "DP", badge: "Top Rated", color: "from-orange-500 to-red-500" },
-    { name: "Lisa Thompson", role: "Social Media Manager", expertise: "Community Building, Influencer Marketing", rating: 4.7, reviews: 203, hourlyRate: "$75/hr", avatar: "LT", badge: "Verified", color: "from-indigo-500 to-blue-500" },
+    { name: "Lisa Thompson", role: "Social Media Manager", expertise: "Community Building, Influencer Marketing", rating: 4.7, reviews: 203, hourlyRate: "$75/hr", avatar: "LT", badge: "Verified", color: "from-blue-500 to-blue-500" },
     { name: "James Wilson", role: "Marketing Strategist", expertise: "Go-to-Market, Product Launch, Market Research", rating: 5.0, reviews: 78, hourlyRate: "$130/hr", avatar: "JW", badge: "Expert", color: "from-purple-500 to-pink-500" }
   ];
 
@@ -292,10 +293,10 @@ function HomePage() {
   const prevSlide = () => setHeroSlide((prev) => (prev - 1 + 2) % 2);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Global Animated Background */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-violet-50"></div>
+        <div className="absolute inset-0 bg-white"></div>
         <div
           className="absolute w-[800px] h-[800px] rounded-full opacity-30 blur-3xl transition-all duration-1000 ease-out"
           style={{
@@ -304,8 +305,8 @@ function HomePage() {
             top: mousePosition.y / 10,
           }}
         ></div>
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-300/10 rounded-full blur-3xl animate-pulse-slow"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-300/10 rounded-full blur-3xl animate-pulse-slow animation-delay-2000"></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-300/10 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-orange-300/10 rounded-full blur-3xl animate-pulse-slow animation-delay-2000"></div>
         <div className="absolute top-1/2 right-1/3 w-64 h-64 bg-blue-300/10 rounded-full blur-3xl animate-float"></div>
       </div>
 
@@ -318,10 +319,8 @@ function HomePage() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-indigo-500/20">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-lg md:text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">Karya-AI</span>
+              <Image src="/karya-ai-logo.png" alt="Karya AI" width={40} height={40} className="rounded-xl object-contain" />
+              <span className="text-lg md:text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">Karya-AI</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -346,28 +345,28 @@ function HomePage() {
                     onClick={() => setShowProfileDropdown(!showProfileDropdown)}
                     className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-all group"
                   >
-                    <div className="w-9 h-9 bg-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-md group-hover:shadow-indigo-500/30 transition-shadow">
+                    <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-md group-hover:shadow-blue-500/30 transition-shadow">
                       {getInitials(user?.name)}
                     </div>
                     <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${showProfileDropdown ? 'rotate-180' : ''}`} />
                   </button>
                   {showProfileDropdown && (
-                    <div className="absolute right-0 mt-3 w-52 bg-white border border-gray-200 rounded-2xl shadow-2xl shadow-indigo-500/10 overflow-hidden animate-slideDown z-50">
+                    <div className="absolute right-0 mt-3 w-52 bg-white border border-gray-200 rounded-2xl shadow-2xl shadow-blue-500/10 overflow-hidden animate-slideDown z-50">
                       <div className="px-4 py-3 border-b border-gray-100">
                         <p className="font-semibold text-gray-900 text-sm truncate">{user?.name || 'User'}</p>
                         <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                       </div>
                       <button
                         onClick={() => { router.push(getDashboardPath()); setShowProfileDropdown(false); }}
-                        className="w-full px-4 py-3 text-left text-gray-700 hover:bg-indigo-50 flex items-center gap-3 transition-all text-sm"
+                        className="w-full px-4 py-3 text-left text-gray-700 hover:bg-blue-50 flex items-center gap-3 transition-all text-sm"
                       >
-                        <LayoutDashboard className="w-4 h-4 text-indigo-500" /> Dashboard
+                        <LayoutDashboard className="w-4 h-4 text-blue-500" /> Dashboard
                       </button>
                       <button
                         onClick={() => { router.push('/preferences'); setShowProfileDropdown(false); }}
-                        className="w-full px-4 py-3 text-left text-gray-700 hover:bg-indigo-50 flex items-center gap-3 transition-all text-sm"
+                        className="w-full px-4 py-3 text-left text-gray-700 hover:bg-blue-50 flex items-center gap-3 transition-all text-sm"
                       >
-                        <Settings className="w-4 h-4 text-indigo-500" /> Settings
+                        <Settings className="w-4 h-4 text-blue-500" /> Settings
                       </button>
                       <div className="border-t border-gray-100">
                         <button
@@ -385,19 +384,19 @@ function HomePage() {
                   <div className="relative" ref={signInRef}>
                     <button
                       onClick={() => setShowSignInDropdown(!showSignInDropdown)}
-                      className="px-4 py-2 text-gray-900 font-medium transition-all border border-gray-300 rounded-xl hover:border-indigo-300 hover:bg-indigo-50 flex items-center gap-2 group"
+                      className="px-4 py-2 text-gray-900 font-medium transition-all border border-gray-300 rounded-xl hover:border-blue-300 hover:bg-blue-50 flex items-center gap-2 group"
                     >
                       Sign In
                       <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showSignInDropdown ? 'rotate-180' : ''}`} />
                     </button>
                     {showSignInDropdown && (
-                      <div className="absolute right-0 mt-3 w-56 bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl shadow-indigo-500/10 overflow-hidden animate-slideDown">
+                      <div className="absolute right-0 mt-3 w-56 bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl shadow-blue-500/10 overflow-hidden animate-slideDown">
                         <button
                           onClick={() => { router.push('/login?role=owner'); setShowSignInDropdown(false); }}
-                          className="w-full px-4 py-4 text-left text-gray-900 hover:bg-indigo-50 flex items-center gap-3 transition-all group"
+                          className="w-full px-4 py-4 text-left text-gray-900 hover:bg-blue-50 flex items-center gap-3 transition-all group"
                         >
-                          <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <Briefcase className="w-5 h-5 text-indigo-500" />
+                          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Briefcase className="w-5 h-5 text-blue-500" />
                           </div>
                           <div>
                             <div className="font-medium">As Business</div>
@@ -421,10 +420,10 @@ function HomePage() {
                   </div>
                   <button
                     onClick={() => router.push('/register')}
-                    className="relative px-5 py-2 bg-indigo-600 rounded-xl text-white font-medium transition-all hover:scale-105 hover:shadow-xl hover:shadow-indigo-500/20 group overflow-hidden"
+                    className="relative px-5 py-2 bg-blue-600 rounded-xl text-white font-medium transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-500/20 group overflow-hidden"
                   >
                     <span className="relative z-10">Get Started</span>
-                    <div className="absolute inset-0 bg-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="absolute inset-0 bg-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </button>
                 </>
               )}
@@ -459,7 +458,7 @@ function HomePage() {
                     <>
                       <button
                         onClick={() => { router.push(getDashboardPath()); setMobileMenuOpen(false); }}
-                        className="flex-1 px-4 py-2 bg-indigo-600 rounded-lg text-white font-medium flex items-center justify-center gap-2"
+                        className="flex-1 px-4 py-2 bg-blue-600 rounded-lg text-white font-medium flex items-center justify-center gap-2"
                       >
                         <LayoutDashboard className="w-4 h-4" /> Dashboard
                       </button>
@@ -480,7 +479,7 @@ function HomePage() {
                       </button>
                       <button
                         onClick={() => { router.push('/register'); setMobileMenuOpen(false); }}
-                        className="flex-1 px-4 py-2 bg-indigo-600 rounded-lg text-white font-medium"
+                        className="flex-1 px-4 py-2 bg-blue-600 rounded-lg text-white font-medium"
                       >
                         Get Started
                       </button>
@@ -508,9 +507,9 @@ function HomePage() {
               <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center">
                   {/* Badge */}
-                  <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-full mb-4 sm:mb-6 animate-fadeInUp">
+                  <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full mb-4 sm:mb-6 animate-fadeInUp">
                     <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    <span className="text-indigo-700 text-[10px] sm:text-xs md:text-sm font-medium">Now with AI-Powered Matching</span>
+                    <span className="text-blue-700 text-[10px] sm:text-xs md:text-sm font-medium">Now with AI-Powered Matching</span>
                   </div>
 
                   {/* Main Heading - Mobile optimized */}
@@ -518,7 +517,7 @@ function HomePage() {
                     <span className="block text-[1.5rem] sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl">
                       From Idea to Customers
                     </span>
-                    <span className="block text-[1.5rem] sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 bg-size-200 animate-gradient mt-1 sm:mt-2">
+                    <span className="block text-[1.5rem] sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-blue-500 to-orange-500 bg-size-200 animate-gradient mt-1 sm:mt-2">
                       in 90 Days
                     </span>
                   </h1>
@@ -532,7 +531,7 @@ function HomePage() {
                   <div className="flex flex-col sm:flex-row gap-3 justify-center animate-fadeInUp animation-delay-600 px-2">
                     <button
                       onClick={() => router.push('/register')}
-                      className="group relative px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-indigo-600 rounded-xl text-white font-bold text-sm sm:text-base md:text-lg transition-all hover:scale-105 hover:shadow-2xl hover:shadow-indigo-500/20 overflow-hidden"
+                      className="group relative px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-gradient-to-r from-blue-600 to-orange-500 rounded-xl text-white font-bold text-sm sm:text-base md:text-lg transition-all hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/20 overflow-hidden"
                     >
                       <span className="relative z-10 flex items-center justify-center gap-2">
                         Start Your Project Free
@@ -554,9 +553,9 @@ function HomePage() {
               <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Badge */}
                 <div className="flex justify-center mb-3 sm:mb-4">
-                  <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-full animate-fadeInUp">
-                    <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-500 animate-spin-slow" />
-                    <span className="text-indigo-700 text-[10px] sm:text-xs md:text-sm font-medium">Powered by AI + Human Expertise</span>
+                  <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-full animate-fadeInUp">
+                    <Image src="/karya-ai-logo.png" alt="Karya AI" width={16} height={16} className="rounded object-contain" />
+                    <span className="text-orange-700 text-[10px] sm:text-xs md:text-sm font-medium">Powered by AI + Human Expertise</span>
                   </div>
                 </div>
 
@@ -567,7 +566,7 @@ function HomePage() {
                       The AI{' '}
                       <span
                         key={dynamicWordIndex}
-                        className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 animate-wordSlide inline-block"
+                        className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-blue-500 to-orange-500 animate-wordSlide inline-block"
                       >
                         {dynamicWords[dynamicWordIndex]}
                       </span>
@@ -585,7 +584,7 @@ function HomePage() {
                   {/* CTA Button */}
                   <button
                     onClick={() => router.push('/register')}
-                    className="group relative px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-indigo-600 rounded-xl text-white font-bold text-sm sm:text-base md:text-lg transition-all hover:scale-105 hover:shadow-2xl hover:shadow-indigo-500/20 overflow-hidden animate-fadeInUp animation-delay-600"
+                    className="group relative px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-gradient-to-r from-blue-600 to-orange-500 rounded-xl text-white font-bold text-sm sm:text-base md:text-lg transition-all hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/20 overflow-hidden animate-fadeInUp animation-delay-600"
                   >
                     <span className="relative z-10 flex items-center gap-2">
                       Get Started Free
@@ -620,7 +619,7 @@ function HomePage() {
               onClick={() => goToSlide(index)}
               className={`h-2 rounded-full transition-all duration-500 ${
                 heroSlide === index
-                  ? 'w-6 sm:w-8 md:w-10 bg-indigo-600'
+                  ? 'w-6 sm:w-8 md:w-10 bg-blue-600'
                   : 'w-2 bg-gray-300 hover:bg-gray-400'
               }`}
             />
@@ -635,17 +634,17 @@ function HomePage() {
           <div className="mb-10 sm:mb-12">
             <div className="max-w-3xl mx-auto">
               <div className="relative group">
-                <div className="absolute -inset-1 bg-indigo-500/10 rounded-2xl sm:rounded-3xl opacity-20 group-hover:opacity-40 blur-xl transition-opacity"></div>
+                <div className="absolute -inset-1 bg-blue-500/10 rounded-2xl sm:rounded-3xl opacity-20 group-hover:opacity-40 blur-xl transition-opacity"></div>
                 <div className="relative bg-white border border-gray-200 shadow-sm rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-2xl">
                   <div className="flex items-start gap-3 sm:gap-4">
-                    <div className="w-10 sm:w-14 h-10 sm:h-14 bg-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/20 animate-float">
-                      <Sparkles className="w-5 sm:w-7 h-5 sm:h-7 text-white" />
+                    <div className="flex-shrink-0 animate-float drop-shadow-lg">
+                      <Image src="/karya-ai-logo.png" alt="Karya AI" width={56} height={56} className="rounded-xl sm:rounded-2xl object-contain" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs sm:text-sm text-indigo-500 mb-1 sm:mb-2 font-medium">Ask me anything...</div>
+                      <div className="text-xs sm:text-sm text-blue-500 mb-1 sm:mb-2 font-medium">Ask me anything...</div>
                       <div className="text-base sm:text-xl text-gray-900 min-h-[40px] sm:min-h-[60px] flex items-center">
                         <span className="break-words">{currentQuestion}</span>
-                        <span className="inline-block w-0.5 h-5 sm:h-7 bg-indigo-500 ml-1 animate-blink flex-shrink-0"></span>
+                        <span className="inline-block w-0.5 h-5 sm:h-7 bg-blue-500 ml-1 animate-blink flex-shrink-0"></span>
                       </div>
                     </div>
                   </div>
@@ -660,7 +659,7 @@ function HomePage() {
                         <button
                           key={i}
                           onClick={btn.action}
-                          className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-xs text-indigo-700 transition-all hover:scale-105 whitespace-nowrap"
+                          className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg text-xs text-blue-700 transition-all hover:scale-105 whitespace-nowrap"
                         >
                           {btn.label}
                         </button>
@@ -675,7 +674,7 @@ function HomePage() {
           {/* Video Demo */}
           <div className="mb-6 sm:mb-8">
             <div className="relative max-w-4xl mx-auto group">
-              <div className="absolute -inset-2 sm:-inset-4 bg-indigo-500/10 rounded-2xl sm:rounded-3xl opacity-20 group-hover:opacity-30 blur-2xl transition-opacity"></div>
+              <div className="absolute -inset-2 sm:-inset-4 bg-blue-500/10 rounded-2xl sm:rounded-3xl opacity-20 group-hover:opacity-30 blur-2xl transition-opacity"></div>
               <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer shadow-2xl border border-gray-200">
                 <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=1200&h=600&fit=crop" alt="Platform Demo" className="w-full h-auto group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all flex items-center justify-center">
@@ -698,7 +697,7 @@ function HomePage() {
           {/* Section Header - Centered */}
           <div className="text-center mb-8 sm:mb-10">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 px-2">
-              YOUR AI + Human Expert <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Marketplace</span>
+              YOUR AI + Human Expert <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-orange-500">Marketplace</span>
             </h2>
             <p className="text-gray-500 text-sm sm:text-lg max-w-2xl mx-auto px-4">
               Connect with top Go-To-Market professionals who understand your needs & have done it before.
@@ -709,7 +708,7 @@ function HomePage() {
           <div className="mb-12">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Top Projects</h3>
-              <button className="text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-2 transition-all hover:gap-3 group text-sm sm:text-base">
+              <button className="text-blue-500 hover:text-blue-600 font-medium flex items-center gap-2 transition-all hover:gap-3 group text-sm sm:text-base">
                 View All <ChevronRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
@@ -720,11 +719,11 @@ function HomePage() {
                 {values.map((value, index) => (
                   <div
                     key={index}
-                    className="group px-3 sm:px-4 py-1.5 sm:py-2 bg-white border border-gray-200 shadow-sm rounded-full hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-300 cursor-pointer hover:scale-105 animate-fadeInUp"
+                    className="group px-3 sm:px-4 py-1.5 sm:py-2 bg-white border border-gray-200 shadow-sm rounded-full hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 cursor-pointer hover:scale-105 animate-fadeInUp"
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
                     <div className="flex items-center gap-1.5 sm:gap-2 text-gray-900 whitespace-nowrap">
-                      <span className="text-indigo-500 group-hover:text-indigo-600 transition-all">{React.cloneElement(value.icon, { className: 'w-4 h-4 sm:w-5 sm:h-5' })}</span>
+                      <span className="text-blue-500 group-hover:text-blue-600 transition-all">{React.cloneElement(value.icon, { className: 'w-4 h-4 sm:w-5 sm:h-5' })}</span>
                       <span className="font-medium text-xs sm:text-sm">{value.label}</span>
                     </div>
                   </div>
@@ -739,8 +738,8 @@ function HomePage() {
                   className="group relative animate-fadeInUp"
                   style={{ animationDelay: `${index * 150}ms` }}
                 >
-                  <div className="absolute -inset-1 bg-indigo-500/10 rounded-2xl sm:rounded-3xl opacity-0 group-hover:opacity-100 blur-xl transition-all duration-500"></div>
-                  <div className="relative bg-white border border-gray-200 shadow-sm rounded-2xl sm:rounded-3xl p-5 sm:p-6 hover:border-indigo-300 transition-all duration-300 h-full group-hover:translate-y-[-8px]">
+                  <div className="absolute -inset-1 bg-blue-500/10 rounded-2xl sm:rounded-3xl opacity-0 group-hover:opacity-100 blur-xl transition-all duration-500"></div>
+                  <div className="relative bg-white border border-gray-200 shadow-sm rounded-2xl sm:rounded-3xl p-5 sm:p-6 hover:border-blue-300 transition-all duration-300 h-full group-hover:translate-y-[-8px]">
                     <div className={`w-12 sm:w-14 h-12 sm:h-14 bg-gradient-to-br ${project.color} rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 text-white group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg`}>
                       {React.cloneElement(project.icon, { className: 'w-6 sm:w-8 h-6 sm:h-8' })}
                     </div>
@@ -757,7 +756,7 @@ function HomePage() {
                           router.push('/leads');
                         }
                       }}
-                      className="w-full py-2.5 sm:py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg sm:rounded-xl text-white font-semibold text-sm sm:text-base transition-all hover:shadow-lg hover:shadow-indigo-500/20 flex items-center justify-center gap-2"
+                      className="w-full py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 rounded-lg sm:rounded-xl text-white font-semibold text-sm sm:text-base transition-all hover:shadow-lg hover:shadow-blue-500/20 flex items-center justify-center gap-2"
                     >
                       <Rocket className="w-4 h-4" />
                       Launch
@@ -772,13 +771,13 @@ function HomePage() {
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
-                <div className="w-8 sm:w-10 h-8 sm:h-10 bg-indigo-50 rounded-lg sm:rounded-xl flex items-center justify-center">
-                  <MapPin className="w-4 sm:w-5 h-4 sm:h-5 text-indigo-500" />
+                <div className="w-8 sm:w-10 h-8 sm:h-10 bg-blue-50 rounded-lg sm:rounded-xl flex items-center justify-center">
+                  <MapPin className="w-4 sm:w-5 h-4 sm:h-5 text-blue-500" />
                 </div>
                 Top Regional Talent
               </h3>
               {/* UPDATED: Navigate to expert-marketplace */}
-              <button onClick={() => router.push('/expert-marketplace')} className="text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-2 transition-all hover:gap-3 group text-sm sm:text-base">
+              <button onClick={() => router.push('/expert-marketplace')} className="text-blue-500 hover:text-blue-600 font-medium flex items-center gap-2 transition-all hover:gap-3 group text-sm sm:text-base">
                 View All Experts <ChevronRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
@@ -790,7 +789,7 @@ function HomePage() {
                   className="group relative animate-fadeInUp"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <div className="absolute -inset-0.5 bg-indigo-500/10 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
+                  <div className="absolute -inset-0.5 bg-blue-500/10 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
                   <div className="relative bg-white border border-gray-200 rounded-xl sm:rounded-2xl p-4 sm:p-5 transition-all duration-300 group-hover:border-transparent shadow-sm">
                     <div className="flex justify-between items-start mb-2 sm:mb-3">
                       <div className="px-2 py-0.5 sm:py-1 bg-yellow-50 border border-yellow-200 rounded-full">
@@ -810,7 +809,7 @@ function HomePage() {
                       </div>
                       <div className="min-w-0">
                         <h3 className="text-sm sm:text-base font-bold text-gray-900 truncate">{expert.name}</h3>
-                        <p className="text-indigo-500 text-xs sm:text-sm">{expert.role}</p>
+                        <p className="text-blue-500 text-xs sm:text-sm">{expert.role}</p>
                       </div>
                     </div>
                     <p className="text-gray-500 text-xs mb-2 sm:mb-3 line-clamp-2">{expert.expertise}</p>
@@ -819,7 +818,7 @@ function HomePage() {
                         <div className="text-xs text-gray-400">Starting at</div>
                         <div className="text-base sm:text-lg font-bold text-gray-900">{expert.hourlyRate}</div>
                       </div>
-                      <button className="px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white text-xs sm:text-sm font-medium transition-all hover:scale-105">
+                      <button className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-xs sm:text-sm font-medium transition-all hover:scale-105">
                         Connect
                       </button>
                     </div>
@@ -848,10 +847,10 @@ function HomePage() {
                 className="group relative animate-fadeInUp"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="absolute inset-0 bg-indigo-500/5 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity blur-xl"></div>
-                <div className="relative bg-white border border-gray-200 shadow-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:border-indigo-200 transition-all h-full">
+                <div className="absolute inset-0 bg-blue-500/5 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity blur-xl"></div>
+                <div className="relative bg-white border border-gray-200 shadow-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:border-blue-200 transition-all h-full">
                   <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">{point.problem}</h3>
-                  <div className="h-1 w-10 sm:w-12 bg-indigo-500 rounded-full mb-2 sm:mb-3"></div>
+                  <div className="h-1 w-10 sm:w-12 bg-blue-500 rounded-full mb-2 sm:mb-3"></div>
                   <p className="text-gray-500 text-xs sm:text-sm">{point.solution}</p>
                 </div>
               </div>
@@ -869,12 +868,12 @@ function HomePage() {
             {capabilities.map((cap, index) => (
               <div
                 key={cap.id}
-                className="group bg-white border border-gray-200 shadow-sm rounded-xl sm:rounded-2xl overflow-hidden hover:border-indigo-200 transition-all animate-fadeInUp"
+                className="group bg-white border border-gray-200 shadow-sm rounded-xl sm:rounded-2xl overflow-hidden hover:border-blue-200 transition-all animate-fadeInUp"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <button onClick={() => toggleAccordion(cap.id)} className="w-full p-4 sm:p-5 flex items-center justify-between hover:bg-gray-50 transition-all">
                   <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="w-10 sm:w-12 h-10 sm:h-12 bg-indigo-600 rounded-lg sm:rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-indigo-500/20 flex-shrink-0">
+                    <div className="w-10 sm:w-12 h-10 sm:h-12 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-blue-500/20 flex-shrink-0">
                       {cap.id === 'ai-planning' && <Zap className="w-5 sm:w-6 h-5 sm:h-6 text-white" />}
                       {cap.id === 'expert-marketplace' && <Users className="w-5 sm:w-6 h-5 sm:h-6 text-white" />}
                       {cap.id === 'workspace' && <Briefcase className="w-5 sm:w-6 h-5 sm:h-6 text-white" />}
@@ -885,7 +884,7 @@ function HomePage() {
                       <p className="text-gray-500 text-xs sm:text-sm truncate">{cap.description}</p>
                     </div>
                   </div>
-                  <ChevronDown className={`w-5 sm:w-6 h-5 sm:h-6 text-indigo-500 transition-transform duration-300 flex-shrink-0 ${openAccordion === cap.id ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-5 sm:w-6 h-5 sm:h-6 text-blue-500 transition-transform duration-300 flex-shrink-0 ${openAccordion === cap.id ? 'rotate-180' : ''}`} />
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === cap.id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
                   <div className="p-4 sm:p-5 pt-0 border-t border-gray-200">
@@ -914,7 +913,7 @@ function HomePage() {
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
-                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base transition-all ${activeTab === key ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-gray-100 text-gray-700 hover:text-gray-900 hover:bg-gray-200 border border-gray-300'}`}
+                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base transition-all ${activeTab === key ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-gray-100 text-gray-700 hover:text-gray-900 hover:bg-gray-200 border border-gray-300'}`}
               >
                 {stage.title}
               </button>
@@ -936,7 +935,7 @@ function HomePage() {
                 <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">Recommended Experts</h3>
                 <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   {currentStage.experts.map((e, i) => (
-                    <span key={i} className="px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-100 border border-indigo-300 rounded-lg text-indigo-800 text-xs sm:text-sm font-medium">{e}</span>
+                    <span key={i} className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-100 border border-blue-300 rounded-lg text-blue-800 text-xs sm:text-sm font-medium">{e}</span>
                   ))}
                 </div>
               </div>
@@ -948,7 +947,7 @@ function HomePage() {
                 <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">Expected Outcomes</h3>
                 <p className="text-green-700 font-semibold text-sm sm:text-base">{currentStage.outcomes}</p>
               </div>
-              <button className="text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-2 group text-xs sm:text-sm">
+              <button className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2 group text-xs sm:text-sm">
                 Read Case Study: {currentStage.caseStudy} <ChevronRight className="w-3 sm:w-4 h-3 sm:h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
@@ -967,10 +966,10 @@ function HomePage() {
                 className="group relative cursor-pointer animate-fadeInUp"
                 style={{ animationDelay: `${i * 100}ms` }}
               >
-                <div className="absolute -inset-0.5 bg-indigo-500/10 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity blur-sm"></div>
+                <div className="absolute -inset-0.5 bg-blue-500/10 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity blur-sm"></div>
                 <div className="relative bg-white border border-gray-200 rounded-xl sm:rounded-2xl p-4 sm:p-5 group-hover:border-transparent transition-all shadow-sm">
                   <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
-                    <div className="w-10 sm:w-12 h-10 sm:h-12 bg-indigo-600 rounded-lg sm:rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition-transform shadow-lg flex-shrink-0">
+                    <div className="w-10 sm:w-12 h-10 sm:h-12 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition-transform shadow-lg flex-shrink-0">
                       {React.cloneElement(cat.icon, { className: 'w-5 sm:w-6 h-5 sm:h-6' })}
                     </div>
                     <div className="min-w-0">
@@ -978,7 +977,7 @@ function HomePage() {
                       <p className="text-gray-500 text-xs sm:text-sm">{cat.count}</p>
                     </div>
                   </div>
-                  <button className="text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-2 group-hover:gap-3 transition-all text-xs sm:text-sm">
+                  <button className="text-blue-500 hover:text-blue-600 font-medium flex items-center gap-2 group-hover:gap-3 transition-all text-xs sm:text-sm">
                     See Experts <ChevronRight className="w-3 sm:w-4 h-3 sm:h-4" />
                   </button>
                 </div>
@@ -995,14 +994,14 @@ function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="group relative animate-fadeInUp" style={{ animationDelay: `${i * 150}ms` }}>
-                <div className="absolute -inset-1 bg-indigo-500/5 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity blur-xl"></div>
-                <div className="relative bg-white border border-gray-200 shadow-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:border-indigo-200 transition-all">
+                <div className="absolute -inset-1 bg-blue-500/5 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity blur-xl"></div>
+                <div className="relative bg-white border border-gray-200 shadow-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:border-blue-200 transition-all">
                   <div className="flex items-center gap-1 mb-2 sm:mb-3">
                     {[1, 2, 3, 4, 5].map((s) => (<Star key={s} className="w-3 sm:w-4 h-3 sm:h-4 text-yellow-400 fill-current" />))}
                   </div>
                   <p className="text-gray-600 mb-3 sm:mb-4 text-xs sm:text-sm">"This platform transformed how we execute our marketing. From zero to 500 customers in 90 days!"</p>
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg sm:rounded-xl"></div>
+                    <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-br from-blue-600 to-orange-400 rounded-lg sm:rounded-xl"></div>
                     <div>
                       <p className="font-semibold text-gray-900 text-xs sm:text-sm">Sarah Johnson</p>
                       <p className="text-xs text-gray-500">CEO, TechStartup</p>
@@ -1081,10 +1080,10 @@ function HomePage() {
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-6 sm:mb-8">Frequently Asked Questions</h2>
           <div className="space-y-2 sm:space-y-3">
             {faqs.map((faq, i) => (
-              <div key={i} className="bg-gray-50 border border-gray-300 shadow-sm rounded-xl sm:rounded-2xl overflow-hidden hover:border-indigo-400 transition-all">
+              <div key={i} className="bg-gray-50 border border-gray-300 shadow-sm rounded-xl sm:rounded-2xl overflow-hidden hover:border-blue-400 transition-all">
                 <button onClick={() => toggleFAQ(i)} className="w-full p-4 sm:p-5 flex items-center justify-between hover:bg-gray-100 text-left transition-all">
                   <span className="font-semibold text-gray-900 text-sm sm:text-base pr-4">{faq.question}</span>
-                  <ChevronDown className={`w-4 sm:w-5 h-4 sm:h-5 text-indigo-600 transition-transform duration-300 flex-shrink-0 ${openFAQ === i ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 sm:w-5 h-4 sm:h-5 text-blue-600 transition-transform duration-300 flex-shrink-0 ${openFAQ === i ? 'rotate-180' : ''}`} />
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openFAQ === i ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
                   <div className="p-4 sm:p-5 pt-0 border-t border-gray-300">
@@ -1100,12 +1099,12 @@ function HomePage() {
       {/* Bottom CTA */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-12">
         <div className="relative group">
-          <div className="absolute -inset-1 bg-indigo-500/10 rounded-2xl sm:rounded-3xl opacity-30 group-hover:opacity-50 blur-xl transition-opacity"></div>
+          <div className="absolute -inset-1 bg-blue-500/10 rounded-2xl sm:rounded-3xl opacity-30 group-hover:opacity-50 blur-xl transition-opacity"></div>
           <div className="relative bg-white border border-gray-200 shadow-sm rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">Ready to transform your marketing?</h2>
             <p className="text-gray-500 mb-6 sm:mb-8 max-w-2xl mx-auto text-sm sm:text-base">Start with AI-powered insights and scale with human expertise when you need it</p>
             <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
-              <button onClick={() => router.push('/onboarding-owner/welcome')} className="group px-6 sm:px-8 py-3 sm:py-4 bg-indigo-600 hover:bg-indigo-700 rounded-xl sm:rounded-2xl text-white font-bold text-sm sm:text-lg transition-all hover:scale-105 hover:shadow-2xl hover:shadow-indigo-500/20">
+              <button onClick={() => router.push('/onboarding-owner/welcome')} className="group px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl sm:rounded-2xl text-white font-bold text-sm sm:text-lg transition-all hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/20">
                 <span className="flex items-center justify-center gap-2">Get Started Free <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform" /></span>
               </button>
               <button className="px-6 sm:px-8 py-3 sm:py-4 bg-white border border-gray-300 hover:bg-gray-100 rounded-xl sm:rounded-2xl text-gray-900 font-bold text-sm sm:text-lg transition-all hover:scale-105">
@@ -1117,9 +1116,13 @@ function HomePage() {
 
         {/* Footer */}
         <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200">
+          <div className="flex items-center justify-center gap-2 mb-5">
+            <Image src="/karya-ai-logo.png" alt="Karya AI" width={36} height={36} className="rounded-xl object-contain" />
+            <span className="text-lg font-bold text-gray-900">Karya-AI</span>
+          </div>
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-xs sm:text-sm">
             {footerLinks.map((link, i) => (
-              <Link key={i} href={link.path} className="text-gray-500 hover:text-gray-900 transition-colors">{link.label}</Link>
+              <Link key={i} href={link.path} className="text-gray-500 hover:text-orange-500 transition-colors">{link.label}</Link>
             ))}
           </div>
           <p className="text-center text-gray-400 text-xs sm:text-sm mt-4 sm:mt-6">&copy; 2024 Karya-AI. All rights reserved.</p>
