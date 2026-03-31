@@ -229,6 +229,94 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Change password (logged in user)
+  const changePassword = async (currentPassword, newPassword) => {
+    setError(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/auth/change-password`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to change password');
+      }
+
+      // Update token if returned
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      }
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setUser(data.user);
+      }
+
+      return { success: true };
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
+  // Deactivate account
+  const deactivateAccount = async (password) => {
+    setError(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/auth/deactivate`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to deactivate account');
+      }
+
+      // Clear local storage and user state
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
+
+      return { success: true };
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
+  // Resend verification email
+  const resendVerification = async () => {
+    try {
+      const response = await fetch(`${API_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: user?.email })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to resend verification');
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
   // Get auth header for API calls
   const getAuthHeader = () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -257,6 +345,9 @@ export const AuthProvider = ({ children }) => {
     switchRole,
     createProfile,
     updateProfile,
+    changePassword,
+    deactivateAccount,
+    resendVerification,
     checkAuth,
     getAuthHeader,
     setError

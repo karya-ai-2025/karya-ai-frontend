@@ -10,7 +10,8 @@ import {
   MessageSquare, TrendingUp, Settings, Plus, Calendar, Clock, CheckCircle,
   AlertCircle, ChevronRight, MoreHorizontal, Star, Upload,
   HelpCircle, ExternalLink, Menu, LogOut, User, CreditCard, Lightbulb,
-  FileUp, UserPlus, CalendarClock, Download, PlayCircle, Headphones, DollarSign
+  FileUp, UserPlus, CalendarClock, Download, PlayCircle, Headphones, DollarSign,
+  Layers, Rocket
 } from 'lucide-react';
 
 // Mock user data
@@ -137,6 +138,7 @@ const sidebarNavItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/dashboard' },
   { id: 'projects', label: 'Active Projects', icon: BarChart3, path: '/business-dashboard/project-workspace/1' },
   { id: 'drafts', label: 'Project Drafts', icon: FileText, path: '/drafts' },
+  { id: 'marketplace', label: 'Project Catalog', icon: Layers, path: '/project-marketplace' },
   { id: 'experts', label: 'My Experts', icon: Users, path: '/my-experts' },
   { id: 'knowledge', label: 'Knowledge Base', icon: BookOpen, path: '/knowledge-base' },
   { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/messages', badge: 3 },

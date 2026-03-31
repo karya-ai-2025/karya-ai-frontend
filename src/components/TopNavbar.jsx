@@ -28,14 +28,15 @@ export default function TopNavbar() {
 
   // Fetch user plan data
   const fetchPlanData = async () => {
-    if (!user?.token) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
       setPlanLoading(false);
       return;
     }
 
     try {
       setPlanLoading(true);
-      const response = await checkUserPlanAccess(user.token);
+      const response = await checkUserPlanAccess(token);
       setPlanData(response);
     } catch (error) {
       console.error('Error fetching plan data:', error);

@@ -12,7 +12,7 @@ import {
   Sparkles, Menu, LogOut, User, CreditCard, TrendingUp, TrendingDown,
   MessageSquare, FileText, Send, Eye, ThumbsUp, ThumbsDown, Timer,
   Zap, Award, BarChart3, ArrowUpRight, PlayCircle, BookOpen, Megaphone,
-  RefreshCw, Mail, Database, Activity, GraduationCap, Image, Quote
+  RefreshCw, Mail, Database, Activity, GraduationCap, Image, Quote, Layers
 } from 'lucide-react';
 
 // Mock expert user data
@@ -186,6 +186,7 @@ const mockPlatformUpdates = [
 const sidebarNavItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/expert/dashboard' },
   { id: 'projects', label: 'Active Projects', icon: Briefcase, path: '/expert/projects' },
+  { id: 'project-marketplace', label: 'Project Catalog', icon: Layers, path: '/project-marketplace' },
   { id: 'opportunities', label: 'Opportunities', icon: Target, path: '/expert/opportunities', badge: 2 },
   { id: 'clients', label: 'Clients', icon: Users, path: '/expert/clients' },
   { id: 'earnings', label: 'Earnings', icon: DollarSign, path: '/expert/earnings' },
