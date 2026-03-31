@@ -123,8 +123,9 @@ export default function ProjectSelection() {
         return;
       }
 
-      // Check if user can create more projects
-      if (!planCheck.data.limits.canCreateProject) {
+      // Only check project creation limits when selecting from "All Projects" (creating new projects)
+      // Don't check limits for existing projects in "My Projects"
+      if (selectedFilter !== 'my-projects' && !planCheck.data.limits.canCreateProject) {
         alert(`You've reached your project limit (${planCheck.data.userPlan.planPackageId.projectsAvailable}). Please upgrade your plan or complete existing projects.`);
         return;
       }
@@ -141,6 +142,21 @@ export default function ProjectSelection() {
       const result = await response.json();
 
       if (result.success) {
+        // If this was a new project, refresh the plan status to show updated counts
+        if (result.data.isNewProject) {
+          try {
+            const updatedPlanCheck = await checkUserPlanAccess(token);
+            setPlanStatus(updatedPlanCheck);
+
+            // Emit event to notify other components (like TopNavbar) to refresh
+            window.dispatchEvent(new CustomEvent('projectCreated', {
+              detail: { projectId: result.data.project.id }
+            }));
+          } catch (refreshError) {
+            console.warn('Could not refresh plan status:', refreshError);
+          }
+        }
+
         // Navigate to project workspace using project slug
         const projectSlug = result.data.project.slug;
         router.push(`/business-dashboard/project-workspace/${projectSlug}`);
@@ -209,54 +225,6 @@ export default function ProjectSelection() {
 
   return (
     <div className="p-6">
-      {/* Plan Status Widget */}
-      {!planLoading && (
-        <div className="mb-6">
-          {planStatus?.hasActivePlan ? (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Crown className="h-5 w-5 text-green-600" />
-                  <div>
-                    <h3 className="font-medium text-green-900">
-                      {planStatus.data.userPlan.planId.displayName} - {planStatus.data.userPlan.planPackageId.name}
-                    </h3>
-                    <p className="text-sm text-green-700">
-                      {planStatus.data.limits.remainingCredits.toLocaleString()} credits • {planStatus.data.limits.remainingProjects} projects remaining
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => router.push('/settings?section=upgrade')}
-                  className="text-green-600 hover:text-green-500 text-sm font-medium"
-                >
-                  Manage Plan
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Crown className="h-5 w-5 text-yellow-600" />
-                  <div>
-                    <h3 className="font-medium text-yellow-900">Free Plan</h3>
-                    <p className="text-sm text-yellow-700">
-                      Upgrade to access projects and unlock advanced features
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => router.push('/settings?section=upgrade')}
-                  className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition-colors text-sm font-medium"
-                >
-                  Upgrade Plan
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Filter Tabs */}
       <div className="mb-6">
