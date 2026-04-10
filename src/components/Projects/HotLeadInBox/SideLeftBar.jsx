@@ -117,7 +117,7 @@ export default function SideLeftBar({
 
       {/* Menu Items */}
       <nav className="p-4">
-        {menuItems.map((item, index) => (
+        {mainTabs.map((item, index) => (
           <button
             key={index}
             className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors mb-1 ${

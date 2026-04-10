@@ -20,6 +20,9 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  FolderKanban,
+  PlusCircle,
+  ClipboardList,
 } from 'lucide-react';
 
 const navigationItems = [
@@ -29,9 +32,12 @@ const navigationItems = [
 ];
 
 const teamSection = [
-  { id: 'my-experts', label: 'My Experts', icon: Users, href: '/business-dashboard/experts' },
-  { id: 'intros', label: 'Intros', icon: Handshake, href: '/business-dashboard/intros' },
-  { id: 'marketplace', label: 'Marketplace', icon: Store, href: '/business-dashboard/marketplace' },
+  { id: 'my-experts',      label: 'My Experts',       icon: Users,          href: '/business-dashboard/experts' },
+  { id: 'my-projects',     label: 'My Projects',      icon: FolderKanban,   href: '/business-dashboard/my-projects' },
+  { id: 'submit-project',  label: 'Submit Project',   icon: PlusCircle,     href: '/business-dashboard/submit-project' },
+  { id: 'my-submissions',  label: 'My Submissions',   icon: ClipboardList,  href: '/business-dashboard/my-submissions' },
+  { id: 'intros',          label: 'Intros',           icon: Handshake,      href: '/business-dashboard/intros' },
+  { id: 'marketplace',     label: 'Marketplace',      icon: Store,          href: '/business-dashboard/marketplace' },
 ];
 
 const knowledgeSection = [

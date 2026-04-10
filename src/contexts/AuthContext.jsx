@@ -19,8 +19,15 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check if user is logged in on mount
+  // On mount: immediately restore user from localStorage cache so isAuthenticated
+  // is true before checkAuth finishes, preventing premature redirects to login.
+  // checkAuth then validates/refreshes the token in the background.
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    const cached = localStorage.getItem('user');
+    if (token && cached) {
+      try { setUser(JSON.parse(cached)); } catch { /* ignore */ }
+    }
     checkAuth();
   }, []);
 
@@ -45,14 +52,25 @@ export const AuthProvider = ({ children }) => {
         const data = await response.json();
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
-      } else {
+      } else if (response.status === 401 || response.status === 403) {
+        // Explicit auth failure — token is invalid or expired, clear session
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
+      } else {
+        // Server error (5xx) or other — restore from localStorage so user stays logged in
+        const cached = localStorage.getItem('user');
+        if (cached) {
+          try { setUser(JSON.parse(cached)); } catch { setUser(null); }
+        }
       }
     } catch (err) {
+      // Network error (backend unreachable) — restore from localStorage
       console.error('Auth check failed:', err);
-      setUser(null);
+      const cached = localStorage.getItem('user');
+      if (cached) {
+        try { setUser(JSON.parse(cached)); } catch { setUser(null); }
+      }
     } finally {
       setLoading(false);
     }

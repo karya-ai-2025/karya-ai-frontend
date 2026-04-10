@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Play,
   ArrowRight,
@@ -16,18 +17,18 @@ import {
 
 function WelcomeOnboard() {
   const router = useRouter();
+  const { activeRole } = useAuth();
   const [showOptions, setShowOptions] = useState(false);
   const [showScheduler, setShowScheduler] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // Get user role from localStorage
-  const userRole = typeof window !== 'undefined' ? (localStorage.getItem('userRole') || 'owner') : 'owner';
+  const getDashboardPath = () =>
+    activeRole === 'expert' ? '/expert-dashboard' : '/business-dashboard';
 
   const handleSkip = () => {
-    // Skip directly to dashboard
-    router.push('/business-dashboard');
+    router.push(getDashboardPath());
   };
 
   const handleStartOnboarding = () => {
@@ -47,7 +48,7 @@ function WelcomeOnboard() {
     if (selectedDate && selectedTime) {
       // TODO: Save scheduled call to backend
       alert(`Call scheduled for ${selectedDate} at ${selectedTime}`);
-      router.push('/business-dashboard');
+      router.push(getDashboardPath());
     } else {
       alert('Please select both date and time');
     }
