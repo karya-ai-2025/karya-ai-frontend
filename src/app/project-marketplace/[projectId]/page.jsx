@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, Star, Clock, Users, CheckCircle, MapPin, Zap, Sparkles,
@@ -14,7 +14,7 @@ import {
   ChevronDown, ExternalLink, Banknote, Package, Loader2
 } from 'lucide-react';
 import NavbarAuth from '@/components/NavbarAuth';
-import { fetchProjectBySlug, fetchAllProjects } from '@/lib/catalogApi';
+import { fetchProjectBySlug, fetchAllProjects, fetchProjectPricing } from '@/lib/catalogApi';
 
 // ── MOCK EXPERT POOL ──────────────────────────────────────────────────
 const EXPERT_POOL = [
@@ -233,27 +233,82 @@ const DIFFICULTY_COLORS = {
   Advanced: 'bg-orange-100 text-orange-700',
 };
 
+// ── TIER UI THEME MAP (display-only, keyed by tierId) ────────────────
+const TIER_THEME = {
+  credit: {
+    badgeColor: 'bg-gray-100 text-gray-600 border-gray-200',
+    textColor: 'text-gray-700',
+    selectedBg: 'bg-gray-50',
+    selectedBorder: 'border-gray-400',
+    btnSelected: 'bg-gray-700 text-white border-transparent',
+  },
+  bronze: {
+    badgeColor: 'bg-orange-100 text-orange-700 border-orange-200',
+    textColor: 'text-orange-700',
+    selectedBg: 'bg-orange-50',
+    selectedBorder: 'border-orange-500',
+    btnSelected: 'bg-orange-500 text-white border-transparent',
+  },
+  silver: {
+    badgeColor: 'bg-blue-100 text-blue-700 border-blue-200',
+    textColor: 'text-blue-700',
+    selectedBg: 'bg-blue-50',
+    selectedBorder: 'border-blue-600',
+    btnSelected: 'bg-blue-600 text-white border-transparent',
+  },
+  gold: {
+    badgeColor: 'bg-amber-100 text-amber-700 border-amber-200',
+    textColor: 'text-amber-700',
+    selectedBg: 'bg-amber-50',
+    selectedBorder: 'border-amber-500',
+    btnSelected: 'bg-amber-500 text-white border-transparent',
+  },
+};
+
+// ── FEATURE → TABLE ROW MAPPING ──────────────────────────────────────
+const FEATURE_ROWS = [
+  { key: 'crmExport',             label: 'Verified contact list (CSV / CRM format)',          type: 'Quantitative', typeColor: 'bg-green-100 text-green-700' },
+  { key: 'linkedinProfiles',      label: 'Decision-maker profiles with titles & LinkedIn',     type: 'Qualitative',  typeColor: 'bg-blue-100 text-blue-700' },
+  { key: 'emailVerified',         label: 'Email verification & deliverability check',          type: 'Qualitative',  typeColor: 'bg-blue-100 text-blue-700' },
+  { key: 'companyIntelligence',   label: 'Company intelligence (size, revenue, tech stack)',   type: 'Qualitative',  typeColor: 'bg-blue-100 text-blue-700' },
+  { key: 'decisionMakerProfiles', label: 'Custom outreach sequence templates (3 variants)',   type: 'Qualitative',  typeColor: 'bg-blue-100 text-blue-700' },
+  { key: 'icpScoring',            label: 'ICP score & fit rating for each contact',            type: 'AI',           typeColor: 'bg-violet-100 text-violet-700' },
+  { key: 'intentData',            label: 'Revenue intelligence & buying intent signals',       type: 'AI',           typeColor: 'bg-violet-100 text-violet-700' },
+  { key: 'dedicatedPM',           label: 'Dedicated account manager',                          type: 'Support',      typeColor: 'bg-orange-100 text-orange-700' },
+  { key: 'abTesting',             label: 'A/B testing & weekly optimisation reports',          type: 'Support',      typeColor: 'bg-orange-100 text-orange-700' },
+];
+
 // ── MAIN PAGE ─────────────────────────────────────────────────────────
 export default function ProjectDetailPage() {
   const { projectId } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlTier = searchParams.get('tier');
 
   const [project, setProject] = useState(null);
   const [loadingProject, setLoadingProject] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedHireMode, setSelectedHireMode] = useState('agency');
+  const [selectedPriceTier, setSelectedPriceTier] = useState(urlTier || 'silver');
   const [selectedTeam, setSelectedTeam] = useState(null);
+  const [pricingTiersFromApi, setPricingTiersFromApi] = useState([]);
   const [userRole, setUserRole] = useState('owner');
   const [userCity, setUserCity] = useState('');
   const [applySubmitted, setApplySubmitted] = useState(false);
   const [pitch, setPitch] = useState('');
   const [showApplyForm, setShowApplyForm] = useState(false);
 
-  // Fetch project from backend
+  // Fetch project + pricing tiers from backend
   useEffect(() => {
     if (!projectId) return;
-    fetchProjectBySlug(projectId)
-      .then(setProject)
+    Promise.all([
+      fetchProjectBySlug(projectId),
+      fetchProjectPricing(projectId),
+    ])
+      .then(([proj, tiers]) => {
+        setProject(proj);
+        setPricingTiersFromApi(tiers || []);
+      })
       .catch(() => setProject(null))
       .finally(() => setLoadingProject(false));
   }, [projectId]);
@@ -289,10 +344,14 @@ export default function ProjectDetailPage() {
 
   const Icon = project.icon;
   const experts = getRelevantExperts(project);
-  // Use pricing tiers from API if available, otherwise fall back to static function
-  const pricingTiers = project.pricingTiers?.length > 0 ? project.pricingTiers : getPricingTiers(project);
+  const pricingTiers = getPricingTiers(project);
   const teamPackages = getTeamPackages(project, experts);
   const selectedTier = pricingTiers.find(t => t.id === selectedHireMode);
+  // DB-driven credit/bronze/silver/gold tiers — augmented with display theme
+  const dbPriceTiers = pricingTiersFromApi.map(t => ({
+    ...t,
+    ...(TIER_THEME[t.tierId] || TIER_THEME.silver),
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -382,11 +441,15 @@ export default function ProjectDetailPage() {
                 <Trophy className={`w-5 h-5 ${project.textColor} flex-shrink-0 mt-0.5`} />
                 <div>
                   <p className={`text-xs font-bold ${project.textColor} uppercase tracking-wide mb-0.5`}>Proven Result</p>
-                  <p className={`text-sm ${project.textColor} font-medium`}>{project.successHighlight}</p>
+                  <p className={`text-sm ${project.textColor} font-medium`}>
+                    {project.successHighlight || '22 hours/week saved — content, emails & community managed end-to-end'}
+                  </p>
                 </div>
-                <span className={`ml-auto text-sm font-bold px-3 py-1 rounded-full ${project.bgLight} ${project.textColor} border ${project.borderColor} flex-shrink-0`}>
-                  {project.successROI}
-                </span>
+                {(project.successROI) && (
+                  <span className={`ml-auto text-sm font-bold px-3 py-1 rounded-full ${project.bgLight} ${project.textColor} border ${project.borderColor} flex-shrink-0`}>
+                    {project.successROI}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -511,20 +574,14 @@ export default function ProjectDetailPage() {
                   </div>
                 </section>
 
-                {/* Deliverables */}
-                <section>
-                  <h2 className="text-lg font-bold text-gray-900 mb-4">Deliverables</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {project.deliverables.map((d) => (
-                      <div key={d} className="flex items-start gap-3 bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                        <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-3.5 h-3.5 text-green-600" />
-                        </div>
-                        <span className="text-sm text-gray-700 font-medium">{d}</span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
+                {/* Pricing Tier Selector */}
+                <PricingTierSelector
+                  selectedHireMode={selectedHireMode}
+                  selectedPriceTier={selectedPriceTier}
+                  setSelectedPriceTier={setSelectedPriceTier}
+                  project={project}
+                  dbPriceTiers={dbPriceTiers}
+                />
 
                 {/* Tools */}
                 <section>
@@ -686,11 +743,11 @@ export default function ProjectDetailPage() {
                         </div>
 
                         <div className="mt-5">
-                          <Link href={`/project-marketplace/${projectId}/overview`}
+                          <Link href={`/project-marketplace/${projectId}/overview?tier=${selectedPriceTier}&mode=${tier.id}`}
                             className={`w-full block py-2.5 text-center rounded-xl text-sm font-semibold transition-all ${
                               tier.popular ? 'bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white shadow-md' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
                             }`}>
-                            Get Started →
+                            Accept & Proceed →
                           </Link>
                         </div>
                       </div>
@@ -900,8 +957,11 @@ export default function ProjectDetailPage() {
               <HireCard
                 project={project}
                 pricingTiers={pricingTiers}
+                dbPriceTiers={dbPriceTiers}
                 selectedHireMode={selectedHireMode}
                 setSelectedHireMode={setSelectedHireMode}
+                selectedPriceTier={selectedPriceTier}
+                setSelectedPriceTier={setSelectedPriceTier}
                 userRole={userRole}
                 selectedTier={selectedTier}
                 onApply={() => setShowApplyForm(true)}
@@ -962,16 +1022,199 @@ export default function ProjectDetailPage() {
   );
 }
 
+// ── PRICING TIER SELECTOR ─────────────────────────────────────────────
+function PricingTierSelector({ selectedHireMode, selectedPriceTier, setSelectedPriceTier, project, dbPriceTiers }) {
+  if (selectedHireMode === 'platform') {
+    return (
+      <section>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">What's Included</h2>
+        <div className="bg-gradient-to-br from-violet-50 to-blue-50 border-2 border-violet-200 rounded-2xl p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-md">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900">Platform Managed — All Inclusive</h3>
+              <p className="text-sm text-gray-500">Everything handled by Karya-AI. No tiers, no limits.</p>
+            </div>
+            <div className="ml-auto text-right flex-shrink-0">
+              <p className="text-lg font-bold text-violet-700">{project.budgetRange || 'Custom Quote'}</p>
+              <p className="text-[10px] text-violet-500 font-semibold uppercase tracking-wide">all-inclusive</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            {FEATURE_ROWS.map((row) => (
+              <div key={row.key} className="flex items-start gap-3 bg-white rounded-xl p-3.5 border border-violet-100 shadow-sm">
+                <div className="w-5 h-5 bg-violet-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check className="w-3 h-3 text-violet-600" />
+                </div>
+                <span className="text-sm text-gray-700 font-medium">{row.label}</span>
+              </div>
+            ))}
+            <div className="flex items-start gap-3 bg-white rounded-xl p-3.5 border border-violet-100 shadow-sm">
+              <div className="w-5 h-5 bg-violet-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Check className="w-3 h-3 text-violet-600" />
+              </div>
+              <span className="text-sm text-gray-700 font-medium">Unlimited output quantity</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pt-4 border-t border-violet-200">
+            <Shield className="w-4 h-4 text-violet-600 flex-shrink-0" />
+            <p className="text-sm text-violet-700 font-semibold">SLA-backed · Dedicated success manager · Weekly reporting</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!dbPriceTiers.length) return null;
+
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold text-gray-900">Select Your Package</h2>
+        <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full border border-gray-200">Click a tier to select</span>
+      </div>
+      <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm">
+        <table className="w-full min-w-[620px] border-collapse">
+          <thead>
+            <tr>
+              <th className="text-left px-5 py-4 bg-gray-50 border-b border-r border-gray-200 text-sm font-semibold text-gray-500 w-[38%]">
+                Deliverables
+              </th>
+              {dbPriceTiers.map((tier) => {
+                const isSelected = selectedPriceTier === tier.tierId;
+                return (
+                  <th
+                    key={tier.tierId}
+                    onClick={() => setSelectedPriceTier(tier.tierId)}
+                    className={`px-4 py-0 border-b border-r last:border-r-0 border-gray-200 text-center cursor-pointer transition-all relative ${
+                      isSelected ? `${tier.selectedBg} border-b-2 ${tier.selectedBorder}` : 'bg-white hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="py-4">
+                      {tier.popular && (
+                        <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wide mb-1">Most Popular</div>
+                      )}
+                      <p className={`text-sm font-bold ${isSelected ? tier.textColor : 'text-gray-900'}`}>{tier.name}</p>
+                      <p className={`text-sm font-bold mt-0.5 ${isSelected ? tier.textColor : 'text-gray-700'}`}>{tier.priceLabel}</p>
+                      {tier.badge && (
+                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border mt-1.5 ${tier.badgeColor}`}>{tier.badge}</span>
+                      )}
+                      {isSelected && (
+                        <div className="mt-2">
+                          <span className="text-[10px] font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full">Selected ✓</span>
+                        </div>
+                      )}
+                    </div>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {FEATURE_ROWS.map((row, i) => (
+              <tr key={i} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50 transition-colors">
+                <td className="px-5 py-3.5 border-r border-gray-100">
+                  <div className="flex items-start gap-2">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${row.typeColor}`}>{row.type}</span>
+                    <span className="text-sm text-gray-700 font-medium">{row.label}</span>
+                  </div>
+                </td>
+                {dbPriceTiers.map((tier) => {
+                  const isSelected = selectedPriceTier === tier.tierId;
+                  const included = !!tier.features?.[row.key];
+                  return (
+                    <td
+                      key={tier.tierId}
+                      onClick={() => setSelectedPriceTier(tier.tierId)}
+                      className={`px-4 py-3.5 text-center border-r last:border-r-0 border-gray-100 cursor-pointer transition-all ${isSelected ? tier.selectedBg : ''}`}
+                    >
+                      {included ? (
+                        <span className="inline-flex items-center justify-center w-6 h-6 bg-green-100 rounded-full mx-auto">
+                          <Check className="w-3.5 h-3.5 text-green-600" />
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full mx-auto">
+                          <X className="w-3.5 h-3.5 text-gray-400" />
+                        </span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+            {/* Output quantity row */}
+            <tr className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50 transition-colors">
+              <td className="px-5 py-3.5 border-r border-gray-100">
+                <div className="flex items-start gap-2">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 bg-teal-100 text-teal-700">Output</span>
+                  <span className="text-sm text-gray-700 font-medium">Output quantity (contacts)</span>
+                </div>
+              </td>
+              {dbPriceTiers.map((tier) => {
+                const isSelected = selectedPriceTier === tier.tierId;
+                const val = tier.contacts != null
+                  ? tier.contacts === 0 ? 'Unlimited' : tier.contacts.toLocaleString('en-IN')
+                  : '—';
+                return (
+                  <td
+                    key={tier.tierId}
+                    onClick={() => setSelectedPriceTier(tier.tierId)}
+                    className={`px-4 py-3.5 text-center border-r last:border-r-0 border-gray-100 cursor-pointer transition-all ${isSelected ? tier.selectedBg : ''}`}
+                  >
+                    <span className={`text-sm font-bold ${val === 'Unlimited' ? 'text-amber-600' : isSelected ? tier.textColor : 'text-gray-800'}`}>
+                      {val}
+                    </span>
+                  </td>
+                );
+              })}
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr className="bg-gray-50 border-t-2 border-gray-200">
+              <td className="px-5 py-4 text-sm font-semibold text-gray-500 border-r border-gray-200">Choose this plan</td>
+              {dbPriceTiers.map((tier) => {
+                const isSelected = selectedPriceTier === tier.tierId;
+                return (
+                  <td key={tier.tierId} className="px-4 py-4 text-center border-r last:border-r-0 border-gray-200">
+                    <button
+                      onClick={() => setSelectedPriceTier(tier.tierId)}
+                      className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                        isSelected ? tier.btnSelected + ' shadow-sm' : 'border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 bg-white'
+                      }`}
+                    >
+                      {isSelected ? 'Selected ✓' : 'Select'}
+                    </button>
+                  </td>
+                );
+              })}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <p className="text-xs text-gray-400 mt-2 ml-1">* Prices are indicative. Final pricing confirmed on the overview page.</p>
+    </section>
+  );
+}
+
 // ── HIRE CARD ─────────────────────────────────────────────────────────
-function HireCard({ project, pricingTiers, selectedHireMode, setSelectedHireMode, userRole, selectedTier, onApply, projectId }) {
+function HireCard({ project, pricingTiers, dbPriceTiers, selectedHireMode, setSelectedHireMode, selectedPriceTier, setSelectedPriceTier, userRole, selectedTier, onApply, projectId }) {
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
       {/* Header */}
-      <div className={`${project.bgLight} border-b ${project.borderColor} px-5 py-4`}>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Starting From</p>
-        <p className="text-2xl font-bold text-gray-900">{project.budgetRange}</p>
-        <p className="text-xs text-gray-500 mt-1">{project.duration} · {project.difficulty}</p>
-      </div>
+      {(() => {
+        const activeTier = dbPriceTiers.find(t => t.tierId === selectedPriceTier);
+        const displayPrice = selectedHireMode === 'platform' ? (project.budgetRange || 'Custom Quote') : (activeTier?.priceLabel || project.budgetRange);
+        const displayLabel = selectedHireMode === 'platform' ? 'Platform Managed' : `${activeTier?.name || ''} Plan Selected`;
+        return (
+          <div className={`${project.bgLight} border-b ${project.borderColor} px-5 py-4`}>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{displayLabel}</p>
+            <p className="text-2xl font-bold text-gray-900">{displayPrice}</p>
+            <p className="text-xs text-gray-500 mt-1">{project.duration} · {project.difficulty}</p>
+          </div>
+        );
+      })()}
 
       <div className="px-5 py-4">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Choose How to Hire</p>
@@ -1003,9 +1246,9 @@ function HireCard({ project, pricingTiers, selectedHireMode, setSelectedHireMode
             <Send className="w-4 h-4" /> Apply to This Project
           </button>
         ) : (
-          <Link href={`/project-marketplace/${projectId}/overview`}
+          <Link href={`/project-marketplace/${projectId}/overview?tier=${selectedPriceTier}&mode=${selectedHireMode}`}
             className="w-full block py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-semibold rounded-xl transition-all shadow-md text-sm text-center flex items-center justify-center gap-2">
-            <Rocket className="w-4 h-4" /> Get Started
+            <CheckCircle className="w-4 h-4" /> Accept & Proceed
           </Link>
         )}
         <button className="w-full py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center justify-center gap-2">

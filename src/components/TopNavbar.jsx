@@ -333,7 +333,7 @@ export default function TopNavbar() {
                 <p className="text-xs text-gray-500 capitalize">{user?.activeRole}</p>
               </div>
               <div className="flex items-center space-x-1">
-                <div className="w-8 h-8 bg-linear-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                   <span className="text-xs font-semibold text-white">
                     {getUserInitials(user?.fullName)}
                   </span>

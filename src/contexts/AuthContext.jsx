@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
-      } else {
+      } else if(response.status === 500) {
         // Other errors (500, network issues, etc.)
         console.error('Auth check failed with status:', response.status);
         const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
@@ -71,8 +71,15 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
+      } else {
+        // Server error (5xx) or other — restore from localStorage so user stays logged in
+        const cached = localStorage.getItem('user');
+        if (cached) {
+          try { setUser(JSON.parse(cached)); } catch { setUser(null); }
+        }
       }
     } catch (err) {
+      // Network error (backend unreachable) — restore from localStorage
       console.error('Auth check failed:', err);
       if (err.name === 'AbortError') {
         console.error('Auth request timed out after 10 seconds');

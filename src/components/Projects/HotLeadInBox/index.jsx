@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import TopNavbar from '@/components/TopNavbar';
 import SideLeftBar from './SideLeftBar';
 import {
   Mail,
@@ -68,7 +69,7 @@ export default function HotLeadInBox({ projectMetadata }) {
         return (
           <div className="space-y-6">
             {/* Welcome Header */}
-            <div className="bg-linear-to-r from-indigo-600 to-purple-600 rounded-lg p-6 text-white">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg p-6 text-white">
               <h1 className="text-2xl font-bold mb-2">Welcome to HotLead InBox</h1>
               <p className="text-indigo-100">Your AI-powered lead generation and management platform</p>
             </div>
@@ -162,8 +163,8 @@ export default function HotLeadInBox({ projectMetadata }) {
   };
 
   return (
-    <div className="w-full bg-gray-50 overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
-      {/* Sidebar - Fixed position to cover TopNavbar */}
+    <div className="w-full bg-gray-50 overflow-hidden" style={{ height: '100vh' }}>
+      {/* Sidebar - Fixed position (unchanged) */}
       <div className="fixed top-0 left-0 h-full z-50">
         <SideLeftBar
           collapsed={sidebarCollapsed}
@@ -180,49 +181,55 @@ export default function HotLeadInBox({ projectMetadata }) {
       <div className={`flex flex-col h-full overflow-hidden transition-all duration-300 ${
         sidebarCollapsed ? 'ml-16' : 'ml-64'
       }`}>
-        {/* Mobile Header */}
-        <div className="lg:hidden bg-white border-b border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900">HotLead InBox</h1>
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
-            >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
-        </div>
+        {/* TopNavbar - spans the remaining width after sidebar */}
+        <TopNavbar />
 
-        {/* Content Area with Tabs */}
-        <div className="flex-1 overflow-hidden" style={{ maxHeight: 'calc(100vh - 120px)' }}>
-          {/* Navigation Tabs */}
-          <div className="mb-6 px-4 lg:px-6">
-            <div className="border-b border-gray-200">
-              <nav className="-mb-px flex space-x-4 lg:space-x-8 overflow-x-auto">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 whitespace-nowrap ${
-                        activeTab === tab.id
-                          ? 'border-indigo-500 text-indigo-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      <Icon size={16} />
-                      <span className="hidden sm:inline">{tab.name}</span>
-                    </button>
-                  );
-                })}
-              </nav>
+        {/* Content Area - pushed down below TopNavbar */}
+        <div className="flex-1 overflow-hidden">
+          {/* Mobile Header */}
+          <div className="lg:hidden bg-white border-b border-gray-200 p-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-semibold text-gray-900">HotLead InBox</h1>
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+              >
+                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
             </div>
           </div>
 
-          {/* Tab Content */}
-          <div className="px-4 lg:px-6">
-            {renderTabContent()}
+          {/* Content Area with Tabs */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Navigation Tabs */}
+            <div className="mb-6 px-4 lg:px-6">
+              <div className="border-b border-gray-200">
+                <nav className="-mb-px flex space-x-4 lg:space-x-8 overflow-x-auto">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 whitespace-nowrap ${
+                          activeTab === tab.id
+                            ? 'border-indigo-500 text-indigo-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                      >
+                        <Icon size={16} />
+                        <span className="hidden sm:inline">{tab.name}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+            </div>
+
+            {/* Tab Content */}
+            <div className="px-4 lg:px-6">
+              {renderTabContent()}
+            </div>
           </div>
         </div>
       </div>

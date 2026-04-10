@@ -20,19 +20,24 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  FolderKanban,
+  PlusCircle,
+  ClipboardList,
 } from 'lucide-react';
 
 const navigationItems = [
   { id: 'home', label: 'Home', icon: Home, href: '/business-dashboard' },
-  { id: 'my-projects', label: 'My Projects', icon: Package, href: '/business-dashboard' },
   { id: 'karya-ai', label: 'Karya AI', icon: Sparkles, href: '/business-dashboard/karya-ai' },
   { id: 'messages', label: 'Messages', icon: MessageCircle, href: '/business-dashboard/messages' },
 ];
 
 const teamSection = [
-  { id: 'my-experts', label: 'My Experts', icon: Users, href: '/business-dashboard/experts' },
-  { id: 'intros', label: 'Intros', icon: Handshake, href: '/business-dashboard/intros' },
-  { id: 'marketplace', label: 'Marketplace', icon: Store, href: '/business-dashboard/marketplace' },
+  { id: 'my-projects',     label: 'My Projects',      icon: FolderKanban,   href: '/business-dashboard/my-projects' },
+  { id: 'my-experts',      label: 'My Experts',       icon: Users,          href: '/business-dashboard/experts' },
+  { id: 'submit-project',  label: 'Submit Project',   icon: PlusCircle,     href: '/business-dashboard/submit-project' },
+  { id: 'my-submissions',  label: 'My Submissions',   icon: ClipboardList,  href: '/business-dashboard/my-submissions' },
+  { id: 'intros',          label: 'Intros',           icon: Handshake,      href: '/business-dashboard/intros' },
+  { id: 'marketplace',     label: 'Marketplace',      icon: Store,          href: '/business-dashboard/marketplace' },
 ];
 
 const knowledgeSection = [

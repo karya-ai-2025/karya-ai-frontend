@@ -182,13 +182,10 @@ function FeaturedSpotlight({ project, userRole, onApply }) {
               </div>
 
               <button
-                onClick={() => router.push(userRole === 'expert' ? `/project-marketplace/${project.id}` : `/project-marketplace/${project.id}/overview`)}
-                className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-bold rounded-xl transition-all shadow-md text-sm flex items-center justify-center gap-2 mb-2"
+                onClick={() => router.push(userRole === 'expert' ? `/project-marketplace/${project.id}` : `/project-marketplace/${project.id}`)}
+                className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-bold rounded-xl transition-all shadow-md text-sm flex items-center justify-center gap-2"
               >
                 <Rocket className="w-4 h-4" /> {userRole === 'expert' ? 'Apply Now' : 'Get Started'}
-              </button>
-              <button onClick={() => router.push(`/project-marketplace/${project.id}`)} className="w-full py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors text-sm">
-                View Full Details
               </button>
             </div>
           </div>
@@ -338,15 +335,11 @@ function ProjectRow({ project, userRole, discoveryMode, userCity, userIndustry, 
                 <Send className="w-4 h-4" /> Apply Now
               </button>
             ) : (
-              <button onClick={() => router.push(`/project-marketplace/${project.id}/overview`)}
+              <button onClick={() => router.push(`/project-marketplace/${project.id}`)}
                 className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white text-sm font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5">
                 <Rocket className="w-4 h-4" /> Get Started
               </button>
             )}
-            <button onClick={() => router.push(`/project-marketplace/${project.id}`)}
-              className="w-full py-2.5 border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50 hover:border-blue-200 transition-all flex items-center justify-center gap-1.5">
-              View Details <ChevronRight className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </div>

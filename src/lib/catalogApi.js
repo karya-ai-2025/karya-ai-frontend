@@ -1,28 +1,14 @@
 import {
   Target, Send, Mail, Megaphone, TrendingUp, Globe,
-  BarChart3, Radio, Headphones, Handshake, Bot, Sparkles, Network,
+  BarChart3, Radio, Headphones, Bot, Sparkles, Network,
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Icons + budget ranges cannot come from the database.
-// These maps let us attach UI-only data after fetching from the API.
+// Icons cannot come from the database (React components).
+// Budget ranges and pricing data come from the API.
 // ─────────────────────────────────────────────────────────────────────────────
-const SLUG_TO_BUDGET = {
-  'outbound-list-builder':            '₹15,000 – ₹75,000',
-  'sales-outreach-automation':        '₹20,000 – ₹90,000',
-  'ai-email-sales-agency':            '₹40,000 – ₹1,50,000/mo',
-  'brand-voice-thought-leadership':   '₹15,000 – ₹60,000/mo',
-  'traffic-abm-agency':               '₹50,000 – ₹2,00,000/mo',
-  'inbound-aggregation':              '₹20,000 – ₹80,000/mo',
-  'intent-social-listening':          '₹15,000 – ₹60,000/mo',
-  'connection-relationship-manager':  '₹10,000 – ₹35,000/mo',
-  'demo-prep-crm-research':           '₹8,000 – ₹35,000/mo',
-  'call-intelligence-crm':            '₹20,000 – ₹75,000',
-  'virtual-assistant-marketing':      '₹25,000 – ₹80,000/mo',
-  'ai-expert-matching':               'Free + 10% on hire',
-};
 
 export const SLUG_TO_ICON = {
   'outbound-list-builder':        Target,
@@ -61,7 +47,7 @@ export function normalizeProject(p) {
     // flags
     trending:      p.isTrending || false,
     // budget range display string
-    budgetRange:   p.budgetRange || SLUG_TO_BUDGET[p.slug] || 'Contact for pricing',
+    budgetRange:   p.budgetRange || 'Contact for pricing',
     // ensure arrays are never undefined
     expertSkills:  p.expertSkills  || [],
     targetFor:     p.targetFor     || [],
@@ -115,4 +101,47 @@ export async function fetchCategories() {
   if (!res.ok) throw new Error('Failed to fetch categories');
   const json = await res.json();
   return json.data.categories;
+}
+
+// Records a marketplace project purchase for the logged-in user.
+// Returns the saved purchase data from the backend.
+export async function purchaseCatalogProject(slug, tierId) {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const res = await fetch(`${API_URL}/catalog/${slug}/purchase`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ tierId }),
+  });
+  if (!res.ok) throw new Error('Failed to record purchase');
+  return res.json();
+}
+
+// Removes a catalog project purchase for the logged-in user.
+export async function removeCatalogProject(slug) {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const res = await fetch(`${API_URL}/catalog/${slug}/purchase`, {
+    method: 'DELETE',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  if (!res.ok) throw new Error('Failed to remove project');
+  return res.json();
+}
+
+// Fetches all catalog projects purchased by the logged-in user.
+export async function fetchMyProjects() {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const res = await fetch(`${API_URL}/catalog/user/my-projects`, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error('Failed to fetch my projects');
+  const json = await res.json();
+  return json.data.projects; // array of { slug, title, tagline, tierId, status, purchasedAt, ... }
 }

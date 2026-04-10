@@ -635,7 +635,7 @@ function SettingsContent() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Company Website</label>
                   <div className="relative">
                     <Globe className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <input type="url" name="companyWebsite" value={formData.companyWebsite} onChange={handleInputChange}
+                    <input type="text" name="companyWebsite" value={formData.companyWebsite} onChange={handleInputChange}
                       className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="https://yourcompany.com" />
                   </div>
