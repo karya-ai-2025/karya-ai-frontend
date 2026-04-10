@@ -27,15 +27,6 @@ export default function HotLeadInBox({ projectMetadata }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Mock data for the demo
-  const stats = {
-    totalLeads: 1247,
-    qualifiedLeads: 342,
-    emailsSent: 5643,
-    responseRate: 12.4,
-    conversionRate: 8.7,
-    activeCampaigns: 3
-  };
 
   const campaigns = [
     {
@@ -88,7 +79,6 @@ export default function HotLeadInBox({ projectMetadata }) {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Total Leads</p>
-                    <p className="text-3xl font-bold text-gray-900">{}</p>
                   </div>
                   <div className="p-3 bg-blue-50 rounded-lg">
                     <Database className="w-6 h-6 text-blue-600" />
@@ -100,7 +90,6 @@ export default function HotLeadInBox({ projectMetadata }) {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Qualified Leads</p>
-                    <p className="text-3xl font-bold text-gray-900">{}</p>
                   </div>
                   <div className="p-3 bg-green-50 rounded-lg">
                     <CheckCircle className="w-6 h-6 text-green-600" />
@@ -173,7 +162,7 @@ export default function HotLeadInBox({ projectMetadata }) {
   };
 
   return (
-    <div className="relative h-screen bg-gray-50">
+    <div className="w-full bg-gray-50 overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
       {/* Sidebar - Fixed position to cover TopNavbar */}
       <div className="fixed top-0 left-0 h-full z-50">
         <SideLeftBar
@@ -188,7 +177,7 @@ export default function HotLeadInBox({ projectMetadata }) {
       </div>
 
       {/* Main Content Area with left margin for sidebar */}
-      <div className={`flex flex-col h-full transition-all duration-300 ${
+      <div className={`flex flex-col h-full overflow-hidden transition-all duration-300 ${
         sidebarCollapsed ? 'ml-16' : 'ml-64'
       }`}>
         {/* Mobile Header */}
@@ -205,9 +194,9 @@ export default function HotLeadInBox({ projectMetadata }) {
         </div>
 
         {/* Content Area with Tabs */}
-        <div className="flex-1 overflow-auto p-4 lg:p-6">
+        <div className="flex-1 overflow-hidden" style={{ maxHeight: 'calc(100vh - 120px)' }}>
           {/* Navigation Tabs */}
-          <div className="mb-6">
+          <div className="mb-6 px-4 lg:px-6">
             <div className="border-b border-gray-200">
               <nav className="-mb-px flex space-x-4 lg:space-x-8 overflow-x-auto">
                 {tabs.map((tab) => {
@@ -232,7 +221,9 @@ export default function HotLeadInBox({ projectMetadata }) {
           </div>
 
           {/* Tab Content */}
-          {renderTabContent()}
+          <div className="px-4 lg:px-6">
+            {renderTabContent()}
+          </div>
         </div>
       </div>
     </div>

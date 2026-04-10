@@ -87,14 +87,33 @@ export default function TopNavbar() {
       fetchPlanData();
     };
 
+    const handleCreditsUpdated = (event) => {
+      // Update credits in real-time when credits are consumed
+      if (planData && planData.data) {
+        const updatedPlanData = {
+          ...planData,
+          data: {
+            ...planData.data,
+            limits: {
+              ...planData.data.limits,
+              remainingCredits: event.detail.remainingCredits
+            }
+          }
+        };
+        setPlanData(updatedPlanData);
+      }
+    };
+
     window.addEventListener('planUpdated', handlePlanUpdate);
     window.addEventListener('projectCreated', handleProjectCreated);
+    window.addEventListener('creditsUpdated', handleCreditsUpdated);
 
     return () => {
       window.removeEventListener('planUpdated', handlePlanUpdate);
       window.removeEventListener('projectCreated', handleProjectCreated);
+      window.removeEventListener('creditsUpdated', handleCreditsUpdated);
     };
-  }, []);
+  }, [planData]);
 
   // Close dropdown when clicking outside
   useEffect(() => {

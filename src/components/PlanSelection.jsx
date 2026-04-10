@@ -381,16 +381,6 @@ const PlanSelection = () => {
           )}
         </div>
       )}
-
-      {/* Free Plan Info */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <div className="flex items-center justify-center space-x-2 text-gray-600">
-          <Zap className="h-4 w-4" />
-          <span className="text-sm font-medium">
-            Currently on Free Plan • Upgrade to unlock advanced features and higher limits
-          </span>
-        </div>
-      </div>
     </div>
   );
 };

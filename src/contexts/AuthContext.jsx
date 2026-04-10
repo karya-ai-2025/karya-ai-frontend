@@ -19,9 +19,12 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check if user is logged in on mount
+  // Check if user is logged in on mount (with small delay to avoid race conditions)
   useEffect(() => {
-    checkAuth();
+    const timer = setTimeout(() => {
+      checkAuth();
+    }, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   // Check authentication status
@@ -33,25 +36,54 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
+      // Debug: Check auth with existing token
+      console.log('Checking auth with existing token...');
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${API_URL}/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        credentials: 'include'
+        credentials: 'include',
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
+      } else if (response.status === 401) {
+        // Token is invalid/expired - clear storage and allow fresh login
+        console.log('Token invalid/expired, clearing auth data');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
       } else {
+        // Other errors (500, network issues, etc.)
+        console.error('Auth check failed with status:', response.status);
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        console.error('Error details:', errorData);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
       }
     } catch (err) {
       console.error('Auth check failed:', err);
+      if (err.name === 'AbortError') {
+        console.error('Auth request timed out after 10 seconds');
+      } else if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        console.error('Network error - server may be down:', err.message);
+      } else {
+        console.error('Unexpected error during auth check:', err.message);
+      }
+      // Clear auth data on any error
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       setUser(null);
     } finally {
       setLoading(false);
@@ -69,11 +101,12 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ email, password, role })
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        const data = await response.json().catch(() => ({ message: 'Login failed' }));
+        throw new Error(data.message || `Login failed (${response.status})`);
       }
+
+      const data = await response.json();
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));

@@ -59,6 +59,14 @@ function SettingsContent() {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
+  // Credit usage state
+  const [creditStats, setCreditStats] = useState({});
+  const [creditLoading, setCreditLoading] = useState(false);
+
+  // Buy credits state
+  const [creditsToBuy, setCreditsToBuy] = useState(50);
+  const [buyCreditsLoading, setBuyCreditsLoading] = useState(false);
+
   // Form state — user fields
   const [formData, setFormData] = useState({
     fullName: user?.fullName || '',
@@ -149,10 +157,17 @@ function SettingsContent() {
   // Sync section from URL
   React.useEffect(() => {
     const section = searchParams?.get('section');
-    if (section && ['profile', 'account', 'upgrade', 'billing'].includes(section)) {
+    if (section && ['profile', 'account', 'upgrade', 'billing', 'credits'].includes(section)) {
       setActiveSection(section);
     }
   }, [searchParams]);
+
+  // Load credit data when credits section is active
+  React.useEffect(() => {
+    if (activeSection === 'credits') {
+      fetchCreditStats();
+    }
+  }, [activeSection]);
 
   const showSuccess = (msg) => {
     setSuccess(msg);
@@ -317,6 +332,73 @@ function SettingsContent() {
     }
   };
 
+  // Fetch credit usage statistics
+  const fetchCreditStats = async () => {
+    setCreditLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/credits/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setCreditStats(data);
+      } else {
+        showError(data.message || 'Failed to fetch credit statistics');
+      }
+    } catch (err) {
+      showError('Error fetching credit statistics');
+    } finally {
+      setCreditLoading(false);
+    }
+  };
+
+  // Handle buy credits
+  const handleBuyCredits = async () => {
+    if (!creditsToBuy || creditsToBuy < 1) {
+      showError('Please enter a valid number of credits');
+      return;
+    }
+
+    setBuyCreditsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/credits/purchase`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          credits: parseInt(creditsToBuy),
+          amount: (creditsToBuy / 50) // 50 credits = $1
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        showSuccess(`Successfully purchased ${creditsToBuy} credits!`);
+        setCreditsToBuy(50); // Reset to default
+        // Refresh credit stats and user data
+        await fetchCreditStats();
+        // Trigger user data refresh if available
+        if (typeof updateProfile === 'function') {
+          await updateProfile({});
+        }
+      } else {
+        showError(data.message || 'Failed to purchase credits');
+      }
+    } catch (err) {
+      showError('Error purchasing credits');
+    } finally {
+      setBuyCreditsLoading(false);
+    }
+  };
+
+
   const handleSectionChange = (section) => {
     setActiveSection(section);
     setError('');
@@ -335,10 +417,11 @@ function SettingsContent() {
   }
 
   const sidebarItems = [
-    { id: 'profile', name: 'Edit Profile', icon: User, description: 'Personal & business information' },
+    { id: 'profile', name: 'Edit Profile', icon: User, description: 'Personal & business data' },
     { id: 'account', name: 'Account Settings', icon: Settings, description: 'Security and preferences' },
     { id: 'upgrade', name: 'Upgrade Plan', icon: Crown, description: 'View and upgrade your plan' },
-    { id: 'billing', name: 'Billing', icon: Receipt, description: 'Manage billing and invoices' }
+    { id: 'billing', name: 'Billing', icon: Receipt, description: 'Manage billing and invoices' },
+    { id: 'credits', name: 'Credit Usage', icon: Zap, description: 'View your credit consumption' }
   ];
 
   const getUserInitials = (name) => {
@@ -794,13 +877,183 @@ function SettingsContent() {
     </div>
   );
 
+  // ─── CREDIT USAGE SECTION ─────────────────────────────────────────────────────
+  const renderCreditUsage = () => {
+
+    return (
+      <div className="space-y-6">
+        {/* Buy Credits Section */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+          <div className="mb-4 sm:mb-6">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900">Buy Additional Credits</h3>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+            {/* Left Side - Purchase Controls */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Number of Credits
+                </label>
+                <div className="relative">
+                  <Zap className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <input
+                    type="number"
+                    min="1"
+                    max="10000"
+                    step="1"
+                    value={creditsToBuy}
+                    onChange={(e) => setCreditsToBuy(parseInt(e.target.value) || 0)}
+                    className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter number of credits"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-blue-700">Total Cost:</span>
+                  <span className="text-lg sm:text-xl font-bold text-blue-700">
+                    ${((creditsToBuy || 0) / 50).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleBuyCredits}
+                disabled={buyCreditsLoading || !creditsToBuy || creditsToBuy < 1}
+                className="w-full flex items-center justify-center space-x-2 px-4 sm:px-6 py-2.5 sm:py-2 cursor-pointer bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm sm:text-base"
+              >
+                {buyCreditsLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="h-4 w-4" />
+                    <span>Buy Credits</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Right Side - Current Plan Credits */}
+            <div className="space-y-3 sm:space-y-2">
+              <h4 className="text-sm sm:text-md font-medium text-gray-700">Current Plan Credits</h4>
+
+              {/* Credits Breakdown */}
+              <div className="grid grid-cols-1 gap-2 sm:gap-3">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs sm:text-sm text-gray-600">Credits Remaining</span>
+                    <span className="text-sm sm:text-lg font-semibold text-gray-900">{(creditStats.totalCreditsAvailable - creditStats.totalCreditsUsed) || 0}</span>
+                  </div>
+                </div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs sm:text-sm text-gray-600">Total Credits</span>
+                    <span className="text-sm sm:text-lg font-semibold text-gray-900">{creditStats.totalCreditsAvailable || 0}</span>
+                  </div>
+                </div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs sm:text-sm text-gray-600">Used Credits</span>
+                    <span className="text-sm sm:text-lg font-semibold text-gray-900">{creditStats.totalCreditsUsed || 0}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Usage Overview */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+          <div className="mb-4 sm:mb-6">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900">Usage Overview</h3>
+          </div>
+
+          {creditLoading && !creditStats.totalCreditsUsed ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-600 mx-auto" />
+                <p className="mt-2 text-sm text-gray-600">Loading credit usage...</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                {/* Total Credits Used */}
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-3 sm:p-4 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs sm:text-sm font-medium text-blue-600">Total Credits</p>
+                      <p className="text-lg sm:text-2xl font-bold text-blue-700">
+                        {creditStats.totalCreditsUsed || 0} / {creditStats.totalCreditsAvailable || 0}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Email Credits */}
+                <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs sm:text-sm font-medium text-gray-900">Email Credits</p>
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900">{creditStats.breakdown?.VIEW_EMAIL?.totalCredits || 0}</p>
+                    </div>
+                    <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
+                  </div>
+                </div>
+
+                {/* Phone Credits */}
+                <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs sm:text-sm font-medium text-gray-900">Phone Credits</p>
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900">{creditStats.breakdown?.VIEW_PHONE?.totalCredits || 0}</p>
+                    </div>
+                    <Phone className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
+                  </div>
+                </div>
+
+                {/* Download Credits */}
+                <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs sm:text-sm font-medium text-gray-900">Download Credits</p>
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900">{creditStats.breakdown?.DOWNLOAD_LEADS?.totalCredits || 0}</p>
+                    </div>
+                    <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+
+              {!creditStats.totalCreditsUsed && !creditLoading && (
+                <div className="text-center py-12">
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100">
+                    <Zap className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <h3 className="mt-4 text-sm font-medium text-gray-900">No credit usage yet</h3>
+                  <p className="mt-2 text-sm text-gray-500">Start using credits by viewing emails, phone numbers, or downloading leads.</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+      </div>
+    );
+  };
+
   const renderSection = () => {
     switch (activeSection) {
       case 'profile': return renderEditProfile();
       case 'account': return renderAccountSettings();
       case 'upgrade': return <PlanSelection />;
-      case 'billing':
-        return <BillingDashboard />;
+      case 'billing': return <BillingDashboard />;
+      case 'credits': return renderCreditUsage();
       default:
         return renderEditProfile();
     }
@@ -814,26 +1067,26 @@ function SettingsContent() {
       <div className="flex-1 flex flex-col">
         <TopNavbar />
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex gap-8">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
+            <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
               {/* Settings sidebar nav */}
-              <div className="w-64 shrink-0">
-                <nav className="bg-white rounded-xl border border-gray-200 p-4">
-                  <ul className="space-y-2">
+              <div className="w-full lg:w-64 lg:shrink-0">
+                <nav className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
+                  <ul className="space-y-1 sm:space-y-2">
                     {sidebarItems.map((item) => {
                       const Icon = item.icon;
                       return (
                         <li key={item.id}>
                           <button onClick={() => handleSectionChange(item.id)}
-                            className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
+                            className={`w-full flex items-center px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                               activeSection === item.id
                                 ? 'bg-blue-50 text-blue-600 border border-blue-200'
                                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}>
-                            <Icon className="h-4 w-4 mr-3 flex-shrink-0" />
+                            <Icon className="h-3 w-3 sm:h-4 sm:w-4 mr-2 sm:mr-3 flex-shrink-0" />
                             <div className="text-left">
                               <div>{item.name}</div>
-                              <div className="text-xs opacity-70 mt-0.5">{item.description}</div>
+                              <div className="text-xs opacity-70 mt-0.5 hidden sm:block">{item.description}</div>
                             </div>
                           </button>
                         </li>
