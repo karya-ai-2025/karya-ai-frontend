@@ -133,15 +133,36 @@ export async function removeCatalogProject(slug) {
 }
 
 // Fetches all catalog projects purchased by the logged-in user.
+// Merges backend results with any locally-cached purchases (saved when backend was offline).
 export async function fetchMyProjects() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const res = await fetch(`${API_URL}/catalog/user/my-projects`, {
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    cache: 'no-store',
-  });
-  if (!res.ok) throw new Error('Failed to fetch my projects');
-  const json = await res.json();
-  return json.data.projects; // array of { slug, title, tagline, tierId, status, purchasedAt, ... }
+
+  const getLocal = () => {
+    try {
+      return JSON.parse(localStorage.getItem('myProjects') || '[]');
+    } catch {
+      return [];
+    }
+  };
+
+  try {
+    const res = await fetch(`${API_URL}/catalog/user/my-projects`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error('Failed to fetch my projects');
+    const json = await res.json();
+    const backendProjects = json.data.projects || [];
+
+    // Append any locally-cached purchases not yet saved in the backend
+    const backendSlugs = new Set(backendProjects.map(p => p.slug));
+    const pendingLocal = getLocal().filter(p => !backendSlugs.has(p.slug));
+
+    return [...backendProjects, ...pendingLocal];
+  } catch {
+    // Backend unavailable — fall back entirely to localStorage
+    return getLocal().slice().reverse();
+  }
 }

@@ -264,51 +264,103 @@ function RegisterContent() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      {/* Animated Background */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-blue-300 rounded-full filter blur-xl animate-blob"></div>
-        <div className="absolute top-40 right-20 w-72 h-72 bg-blue-300 rounded-full filter blur-xl animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-20 left-40 w-72 h-72 bg-violet-300 rounded-full filter blur-xl animate-blob animation-delay-4000"></div>
+    <div className="min-h-screen bg-white flex">
+      {/* LEFT: Brand Panel */}
+      <div className="hidden lg:flex w-[45%] bg-gray-950 relative overflow-hidden flex-col p-12">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1d4ed815_1px,transparent_1px),linear-gradient(to_bottom,#1d4ed815_1px,transparent_1px)] bg-[size:3rem_3rem]" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-600/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl" />
+
+        <div className="relative flex flex-col h-full">
+          <Link href="/" className="flex items-center gap-3 mb-auto">
+            <Image src="/karya-ai-logo.png" alt="Karya AI" width={44} height={44} className="rounded-xl object-contain" />
+            <span className="text-xl font-black text-white">Karya-AI</span>
+          </Link>
+
+          <div className="my-auto">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 border border-blue-500/30 rounded-full mb-6">
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              <span className="text-blue-300 text-xs font-semibold">Join 743+ growing teams today</span>
+            </div>
+            <h2 className="text-4xl font-black text-white leading-[1.1] mb-4">
+              Start growing<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-orange-400">faster today.</span>
+            </h2>
+            <p className="text-gray-400 text-lg leading-relaxed mb-10">From your first prompt to your first 100 customers — AI handles the planning, experts handle execution.</p>
+
+            {/* Steps */}
+            <div className="space-y-4 mb-10">
+              {[
+                { n:'1', t:'Sign up free', d:'No credit card required. Setup in 5 minutes.' },
+                { n:'2', t:'AI builds your roadmap', d:'90-day GTM plan generated instantly.' },
+                { n:'3', t:'Match with experts', d:'Pre-vetted talent, ready to execute.' },
+              ].map(s=>(
+                <div key={s.n} className="flex items-start gap-4">
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-black flex-shrink-0 mt-0.5">{s.n}</div>
+                  <div>
+                    <p className="text-white font-bold text-sm">{s.t}</p>
+                    <p className="text-gray-500 text-xs">{s.d}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+              <div className="flex gap-1 mb-3">{[1,2,3,4,5].map(i=><span key={i} className="text-yellow-400 text-sm">★</span>)}</div>
+              <p className="text-gray-300 text-sm leading-relaxed mb-4">"We scaled from ₹30L to ₹1.2Cr/month in under 3 months. Worth every rupee."</p>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full" />
+                <div>
+                  <p className="text-white text-sm font-bold">Amit Patel</p>
+                  <p className="text-gray-500 text-xs">Founder, E-Grow</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-gray-700 text-xs mt-auto">&copy; 2026 Karya-AI. All rights reserved.</p>
+        </div>
       </div>
 
-      <div className="relative max-w-md w-full animate-fade-in-up">
-        {/* Logo/Brand */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
-            <Image src="/karya-ai-logo.png" alt="Karya AI" width={48} height={48} className="rounded-xl object-contain group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/20" />
-            <span className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">Karya-AI</span>
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{currentRole.title}</h1>
-          <p className="text-gray-500">{currentRole.subtitle}</p>
-
-          {/* Role Switcher */}
-          <div className="mt-4 flex items-center justify-center gap-2">
-            <button
-              onClick={() => router.push(`/register?role=${ROLES.OWNER}`)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                role === ROLES.OWNER
-                  ? 'bg-blue-50 text-blue-700 border border-blue-300'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              Business Owner
-            </button>
-            <button
-              onClick={() => router.push(`/register?role=${ROLES.EXPERT}`)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                role === ROLES.EXPERT
-                  ? 'bg-blue-50 text-blue-700 border border-blue-300'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              Expert
-            </button>
+      {/* RIGHT: Form Panel */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-white overflow-y-auto">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="lg:hidden text-center mb-8">
+            <Link href="/" className="inline-flex items-center gap-2">
+              <Image src="/karya-ai-logo.png" alt="Karya AI" width={44} height={44} className="rounded-xl object-contain" />
+              <span className="text-xl font-black text-gray-900">Karya-AI</span>
+            </Link>
           </div>
-        </div>
+
+          {/* Heading */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-black text-gray-900 mb-2">{currentRole.title}</h1>
+            <p className="text-gray-500">{currentRole.subtitle}</p>
+
+            {/* Role Switcher */}
+            <div className="mt-5 flex items-center gap-2 p-1 bg-gray-100 rounded-xl w-fit">
+              <button
+                onClick={() => router.push(`/register?role=${ROLES.OWNER}`)}
+                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                  role === ROLES.OWNER ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Business Owner
+              </button>
+              <button
+                onClick={() => router.push(`/register?role=${ROLES.EXPERT}`)}
+                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                  role === ROLES.EXPERT ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Expert
+              </button>
+            </div>
+          </div>
 
         {/* Register Form */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
+        <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm">
           {/* Success Message */}
           {success && (
             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
@@ -563,7 +615,7 @@ function RegisterContent() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-3 ${currentRole.gradient} hover:opacity-90 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
+              className={`w-full py-3.5 ${currentRole.gradient} hover:opacity-90 rounded-2xl text-white font-black transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
             >
               {isLoading ? (
                 <>
@@ -584,7 +636,7 @@ function RegisterContent() {
                 <div className="w-full border-t border-gray-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-gray-50 text-gray-500">Or sign up with</span>
+                <span className="px-4 bg-white text-gray-500">Or sign up with</span>
               </div>
             </div>
 
@@ -620,9 +672,9 @@ function RegisterContent() {
 
           {/* Sign In Link */}
           <div className="mt-6 text-center">
-            <p className="text-gray-500">
+            <p className="text-gray-500 text-sm">
               Already have an account?{' '}
-              <Link href={`/login?role=${role}`} className="text-blue-600 hover:text-blue-600 font-medium transition-colors">
+              <Link href={`/login?role=${role}`} className="text-blue-600 font-bold transition-colors hover:text-blue-700">
                 Sign in
               </Link>
             </p>
@@ -630,30 +682,13 @@ function RegisterContent() {
         </div>
 
         {/* Back to Home */}
-        <div className="mt-6 text-center">
-          <Link href="/" className="text-gray-500 hover:text-gray-900 transition-colors text-sm">
+        <div className="mt-5 text-center">
+          <Link href="/" className="text-gray-400 hover:text-gray-600 transition-colors text-sm">
             ← Back to home
           </Link>
         </div>
-      </div>
-
-      {/* CSS for animations */}
-      <style>{`
-        @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-      `}</style>
+        </div>{/* end max-w-md */}
+      </div>{/* end right panel */}
     </div>
   );
 }

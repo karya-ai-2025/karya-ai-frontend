@@ -5,7 +5,9 @@ export const metadata = {
   title: 'Karya AI',
   description: 'AI-powered GTM workspace - From Idea to Customers in 90 Days',
   icons: {
-    icon: '/favicon.svg',
+    icon: '/karya-ai-logo.png',
+    shortcut: '/karya-ai-logo.png',
+    apple: '/karya-ai-logo.png',
   },
 };
 

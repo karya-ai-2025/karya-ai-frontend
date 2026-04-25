@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 function LeadsSearch() {
   const router = useRouter();
@@ -327,10 +328,8 @@ function LeadsSearch() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/25">
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-bold text-gray-900">EasyProspect</span>
+                <Image src="/karya-ai-logo.png" alt="Karya AI" width={32} height={32} className="rounded-lg object-contain" />
+                <span className="font-bold text-gray-900">Karya-AI</span>
               </Link>
               <span className="text-gray-600">/</span>
               <span className="text-gray-400">Search Results</span>

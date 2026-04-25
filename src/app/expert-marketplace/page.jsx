@@ -3,7 +3,7 @@
 // pages/ExpertMarketplace.jsx
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Search, Filter, Grid, List, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
@@ -119,6 +119,7 @@ const defaultTimezones = [
 // ============================================
 function ExpertMarketplace() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // View states
   const [viewMode, setViewMode] = useState('grid');
@@ -156,6 +157,9 @@ function ExpertMarketplace() {
 
   // Business user's industry for personalized matching
   const [businessIndustry, setBusinessIndustry] = useState('');
+
+  // Project context — set when navigating from a project page
+  const [projectContext, setProjectContext] = useState(null); // { title, expertise[] }
 
   // Get filter options from API or defaults
   const expertiseCategories = filterOptions?.expertise || defaultExpertiseCategories;
@@ -266,6 +270,21 @@ function ExpertMarketplace() {
     fetchFeaturedExpert();
     fetchBusinessIndustry();
   }, [fetchFilterOptions, fetchFeaturedExpert, fetchBusinessIndustry]);
+
+  // Read project context from URL params (when navigated from a project page)
+  useEffect(() => {
+    const from = searchParams.get('from');
+    if (from !== 'project') return;
+
+    const expertiseParam = searchParams.get('expertise');
+    const projectTitle   = searchParams.get('projectTitle');
+
+    if (expertiseParam) {
+      const expertiseList = expertiseParam.split(',').map(e => e.trim()).filter(Boolean);
+      setFilters(prev => ({ ...prev, expertise: expertiseList }));
+      setProjectContext({ title: projectTitle || 'your project', expertise: expertiseList });
+    }
+  }, [searchParams]);
 
   // Fetch experts when filters/sort/page changes
   useEffect(() => {
@@ -387,12 +406,18 @@ function ExpertMarketplace() {
       </nav>
 
       {/* Page Header */}
-      <div className="bg-gradient-to-br from-blue-50 to-violet-50 border border-blue-100 border-b border-gray-200">
-        <div className="max-w-[1920px] mx-auto px-6 py-8">
+      <div className="relative bg-white border-b border-gray-100 overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:3rem_3rem] pointer-events-none" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-100/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="max-w-[1920px] mx-auto px-6 py-10 relative">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Expert Marketplace</h1>
-              <p className="text-gray-500">Find the perfect specialist for your marketing & growth needs</p>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-full mb-4">
+                <Users className="w-3.5 h-3.5 text-blue-600" />
+                <span className="text-blue-700 text-xs font-semibold">180+ Vetted Experts</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-black text-gray-900 mb-2">Expert Marketplace</h1>
+              <p className="text-gray-500 text-lg">Find the perfect specialist for your marketing & growth needs</p>
             </div>
 
             {/* Search Bar */}
@@ -403,32 +428,29 @@ function ExpertMarketplace() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search experts, skills, or industries..."
-                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+                className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-sm"
               />
             </div>
           </div>
 
           {/* Trust Elements */}
-          <div className="flex flex-wrap gap-6 mt-6 text-sm">
-            <div className="flex items-center gap-2 text-gray-500">
-              <Shield className="w-4 h-4 text-green-500" />
-              <span>All experts vetted through 5-step process</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-500">
-              <Star className="w-4 h-4 text-yellow-400" />
-              <span>Average project satisfaction: 4.8/5</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-500">
-              <DollarSign className="w-4 h-4 text-blue-500" />
-              <span>Money-back guarantee on first milestone</span>
-            </div>
+          <div className="flex flex-wrap gap-4 mt-6">
+            {[
+              { icon: <Shield className="w-4 h-4 text-green-500" />, text: 'All experts vetted through 5-step process', bg: 'bg-green-50 border-green-200' },
+              { icon: <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />, text: 'Average project satisfaction: 4.8/5', bg: 'bg-yellow-50 border-yellow-200' },
+              { icon: <DollarSign className="w-4 h-4 text-blue-500" />, text: 'Money-back guarantee on first milestone', bg: 'bg-blue-50 border-blue-200' },
+            ].map((item, i) => (
+              <div key={i} className={`flex items-center gap-2 px-4 py-2 ${item.bg} border rounded-xl text-sm font-medium text-gray-700`}>
+                {item.icon}{item.text}
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Personalization Banner */}
       {businessIndustry && (
-        <div className="bg-gradient-to-r from-blue-50 to-orange-50 border-b border-blue-100">
+        <div className="bg-blue-50 border-b border-blue-100">
           <div className="max-w-[1920px] mx-auto px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
               <Zap className="w-4 h-4 text-orange-500" />
@@ -451,12 +473,43 @@ function ExpertMarketplace() {
         </div>
       )}
 
+      {/* Project context banner */}
+      {projectContext && (
+        <div className="bg-gray-950 border-b border-gray-800">
+          <div className="max-w-[1920px] mx-auto px-6 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-2 px-3 py-1 bg-blue-600/20 border border-blue-500/30 rounded-full">
+                <Search className="w-3.5 h-3.5 text-blue-400" />
+                <span className="text-blue-300 font-semibold text-xs">Smart Match</span>
+              </div>
+              <span className="text-gray-300">
+                Showing experts matched to <span className="font-bold text-white">"{projectContext.title}"</span>
+              </span>
+              <div className="flex gap-1.5 flex-wrap">
+                {projectContext.expertise.map(e => (
+                  <span key={e} className="px-2 py-0.5 bg-white/10 border border-white/20 rounded-full text-xs text-gray-300">{e}</span>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setProjectContext(null);
+                setFilters(prev => ({ ...prev, expertise: [] }));
+              }}
+              className="text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-1 text-xs"
+            >
+              <X className="w-3.5 h-3.5" /> Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="max-w-[1920px] mx-auto px-6 py-8">
         <div className="flex gap-8">
           {/* Sidebar Filters */}
           <aside className={`${showFilters ? 'w-72' : 'w-0'} flex-shrink-0 transition-all duration-300 overflow-hidden`}>
-            <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5 sticky top-24">
+            <div className="bg-white border border-gray-200 rounded-3xl p-5 sticky top-24 shadow-sm">
               {/* Filter Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
@@ -898,10 +951,10 @@ function ExpertMarketplace() {
 
           {/* Right Sidebar - Featured Expert */}
           <aside className="hidden 2xl:block w-72 flex-shrink-0">
-            <div className="bg-gradient-to-br from-blue-50 to-violet-50 border border-blue-100 rounded-2xl p-5 sticky top-24">
+            <div className="bg-gray-950 border border-gray-800 rounded-3xl p-5 sticky top-24">
               <div className="flex items-center gap-2 mb-4">
                 <Award className="w-5 h-5 text-yellow-400" />
-                <h3 className="font-semibold text-gray-900">Featured Expert</h3>
+                <h3 className="font-bold text-white">Featured Expert</h3>
               </div>
 
               {featuredExpert ? (
@@ -915,8 +968,8 @@ function ExpertMarketplace() {
                       )}
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900">{featuredExpert.name}</h4>
-                      <p className="text-sm text-blue-600">{featuredExpert.title}</p>
+                      <h4 className="font-bold text-white">{featuredExpert.name}</h4>
+                      <p className="text-sm text-blue-400">{featuredExpert.title}</p>
                     </div>
                   </div>
 
@@ -928,11 +981,11 @@ function ExpertMarketplace() {
                     <span className="text-gray-500">{featuredExpert.projectsCompleted} projects</span>
                   </div>
 
-                  <p className="text-sm text-gray-600 line-clamp-3">{featuredExpert.bio}</p>
+                  <p className="text-sm text-gray-400 line-clamp-3">{featuredExpert.bio}</p>
 
                   <div className="flex flex-wrap gap-1">
                     {featuredExpert.expertise?.slice(0, 3).map(skill => (
-                      <span key={skill} className="px-2 py-1 bg-white border border-gray-200 rounded text-xs text-gray-600">{skill}</span>
+                      <span key={skill} className="px-2 py-1 bg-white/10 border border-white/20 rounded text-xs text-gray-300">{skill}</span>
                     ))}
                   </div>
 
@@ -951,13 +1004,13 @@ function ExpertMarketplace() {
               )}
 
               {/* Special Offer */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="mt-6 pt-6 border-t border-gray-800">
                 <div className="flex items-center gap-2 mb-2">
                   <Zap className="w-4 h-4 text-yellow-400" />
-                  <span className="text-sm font-medium text-yellow-600">Limited Offer</span>
+                  <span className="text-sm font-bold text-yellow-400">Limited Offer</span>
                 </div>
-                <p className="text-sm text-gray-600">
-                  Get 20% off your first project with featured experts. Use code: <span className="text-blue-600 font-mono">EXPERT20</span>
+                <p className="text-sm text-gray-400">
+                  Get 20% off your first project with featured experts. Use code: <span className="text-blue-400 font-mono font-bold">EXPERT20</span>
                 </p>
               </div>
             </div>
@@ -966,13 +1019,13 @@ function ExpertMarketplace() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-8 px-6 mt-12">
+      <footer className="bg-gray-950 border-t border-gray-800 py-10 px-6 mt-12">
         <div className="max-w-[1920px] mx-auto text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Image src="/karya-ai-logo.png" alt="Karya AI" width={40} height={40} className="rounded-xl object-contain" />
-            <span className="text-xl font-bold text-gray-900">Karya-AI</span>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Image src="/karya-ai-logo.png" alt="Karya AI" width={36} height={36} className="rounded-xl object-contain" />
+            <span className="text-xl font-black text-white">Karya-AI</span>
           </div>
-          <p className="text-gray-500">&copy; 2026 Karya-AI. All rights reserved.</p>
+          <p className="text-gray-600 text-sm">&copy; 2026 Karya-AI. All rights reserved.</p>
         </div>
       </footer>
 
@@ -1121,7 +1174,7 @@ function ExpertCard({ expert, viewMode, isSaved, onToggleSave, onViewProfile }) 
 
   // Grid View Card
   return (
-    <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 hover:shadow-md hover:border-blue-300 hover:scale-[1.02] transition-all group">
+    <div className="relative bg-white border border-gray-200 rounded-2xl p-6 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-1 transition-all duration-300 group">
       {/* Top Section */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex gap-2">
@@ -1244,4 +1297,14 @@ function ExpertCard({ expert, viewMode, isSaved, onToggleSave, onViewProfile }) 
   );
 }
 
-export default ExpertMarketplace;
+import { Suspense } from 'react';
+
+function ExpertMarketplacePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 text-blue-500 animate-spin" /></div>}>
+      <ExpertMarketplace />
+    </Suspense>
+  );
+}
+
+export default ExpertMarketplacePage;

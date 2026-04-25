@@ -10,8 +10,40 @@ import { getProjectComponent, getProjectMetadata } from '@/components/Projects';
 import {
   ArrowLeft, Loader2, CheckCircle2, Circle,
   Users, FileText, MessageSquare, Zap, BarChart3,
-  PhoneCall, Package, AlertCircle, CalendarClock,
+  PhoneCall, Package, AlertCircle, CalendarClock, Search,
 } from 'lucide-react';
+
+// Map project keywords → expertise filters used by the marketplace API
+function getProjectExpertise(project) {
+  if (!project) return [];
+  const title = (project.title || '').toLowerCase();
+  const tags  = Array.isArray(project.tags) ? project.tags : [];
+  const cat   = (project.category || '').toLowerCase();
+
+  // If the project already has structured tags, use them directly
+  if (tags.length) return tags;
+
+  // Keyword-based fallback
+  if (title.includes('lead') || title.includes('prospecting') || cat.includes('lead'))
+    return ['Sales Development', 'Growth Marketing'];
+  if (title.includes('gtm') || title.includes('go-to-market') || cat.includes('gtm'))
+    return ['Growth Marketing', 'Product Marketing'];
+  if (title.includes('talent') || title.includes('hire') || cat.includes('talent'))
+    return ['Growth Marketing', 'Sales Development'];
+  if (title.includes('content') || cat.includes('content'))
+    return ['Content Strategy'];
+  if (title.includes('seo') || cat.includes('seo'))
+    return ['SEO & Performance Marketing'];
+  if (title.includes('social') || cat.includes('social'))
+    return ['Social Media & Community'];
+  if (title.includes('email') || cat.includes('email'))
+    return ['Email Marketing & Automation'];
+  if (title.includes('brand') || cat.includes('brand'))
+    return ['Product Marketing', 'Content Strategy'];
+
+  // Generic fallback
+  return ['Growth Marketing'];
+}
 
 const TIER_THEME = {
   credit: { badge: 'bg-gray-100 text-gray-700 border-gray-200',      dot: 'bg-gray-500'   },
@@ -320,12 +352,32 @@ export default function ProjectWorkspacePage() {
               {/* Team */}
               <div className="bg-white rounded-2xl border border-gray-200 p-5">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Your Team</p>
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center mb-3">
                   <div className="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center mx-auto mb-2">
                     <Users className="w-5 h-5 text-blue-600" />
                   </div>
                   <p className="text-xs font-semibold text-blue-800">Manager being assigned</p>
                   <p className="text-xs text-blue-500 mt-1">Within 2 business hours</p>
+                </div>
+
+                {/* Find Expert CTA */}
+                <div className="border border-dashed border-gray-200 rounded-xl p-4 text-center">
+                  <p className="text-xs text-gray-400 mb-3">Need a specialist for this project?</p>
+                  <button
+                    onClick={() => {
+                      const expertise = getProjectExpertise(project);
+                      const params = new URLSearchParams({
+                        expertise: expertise.join(','),
+                        projectTitle: project?.title || '',
+                        from: 'project',
+                      });
+                      router.push(`/expert-marketplace?${params.toString()}`);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-gray-900 hover:bg-gray-800 rounded-xl text-white text-xs font-bold transition-all hover:scale-105"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                    Find Expert for this Project
+                  </button>
                 </div>
               </div>
 

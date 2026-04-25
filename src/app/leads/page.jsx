@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import {
   Search, Users, UserPlus, ChevronRight, Play,
   Chrome, Phone, FileSpreadsheet, Zap, Database, Bot, Receipt,
-  Settings, HelpCircle, Sparkles, TrendingUp, Target, Download, Upload,
+  Settings, HelpCircle, TrendingUp, Target, Download, Upload,
   BarChart3, PieChart, Activity
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 function LeadsDashboard() {
   const router = useRouter();
@@ -62,9 +63,7 @@ function LeadsDashboard() {
         {/* Logo */}
         <div className="p-6 border-b border-gray-200">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
+            <Image src="/karya-ai-logo.png" alt="Karya AI" width={36} height={36} className="rounded-xl object-contain" />
             <div>
               <span className="text-lg font-bold text-gray-900">Karya</span>
               <span className="text-lg font-bold text-blue-600">Leads</span>

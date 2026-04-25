@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Search, Target, Mail, Megaphone, Globe, TrendingUp, Zap, Users,
   BarChart3, Briefcase, ChevronRight, X, Star, Clock, CheckCircle,
@@ -473,7 +474,10 @@ function BottomCTA({ userRole }) {
 // ============================================
 export default function ProjectMarketplace() {
   const [projects, setProjects] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loadingProjects, setLoadingProjects] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [userRole, setUserRole] = useState('owner');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -486,14 +490,65 @@ export default function ProjectMarketplace() {
   const [manualCity, setManualCity] = useState('');
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const sentinelRef = useRef(null);
 
-  // Fetch projects from backend
+  // Refs so the stable loadMore callback always reads fresh values
+  const pageRef       = useRef(1);
+  const loadingRef    = useRef(false);
+  const hasMoreRef    = useRef(true);
+
+  const PAGE_SIZE = 10;
+
+  // Initial load — first page
   useEffect(() => {
-    fetchAllProjects()
-      .then(({ projects }) => setProjects(projects))
+    fetchAllProjects({ limit: PAGE_SIZE, page: 1 })
+      .then(({ projects: p, pagination }) => {
+        setProjects(p);
+        setTotalCount(pagination?.total ?? p.length);
+        const total = pagination?.totalPages ?? pagination?.pages ?? 1;
+        const more = total > 1;
+        setHasMore(more);
+        hasMoreRef.current = more;
+      })
       .catch(console.error)
       .finally(() => setLoadingProjects(false));
   }, []);
+
+  // Stable callback — reads from refs so the observer never needs to re-attach
+  const loadMore = useCallback(() => {
+    if (loadingRef.current || !hasMoreRef.current) return;
+    loadingRef.current = true;
+    setLoadingMore(true);
+    const nextPage = pageRef.current + 1;
+    fetchAllProjects({ limit: PAGE_SIZE, page: nextPage })
+      .then(({ projects: more, pagination }) => {
+        setProjects(prev => [...prev, ...more]);
+        pageRef.current = nextPage;
+        const total = pagination?.totalPages ?? pagination?.pages ?? nextPage;
+        const stillMore = nextPage < total;
+        hasMoreRef.current = stillMore;
+        setHasMore(stillMore);
+      })
+      .catch(console.error)
+      .finally(() => {
+        loadingRef.current = false;
+        setLoadingMore(false);
+      });
+  }, []); // intentionally empty — uses refs, never stale
+
+  // Set up observer AFTER initial load so the sentinel is actually in the DOM.
+  // rootMargin '400px' fires ~2 projects before the user hits the bottom.
+  useEffect(() => {
+    if (loadingProjects) return; // sentinel not rendered yet
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMore(); },
+      { rootMargin: '400px', threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadingProjects]); // runs once when loadingProjects flips to false
 
   useEffect(() => {
     const userData = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
@@ -546,9 +601,7 @@ export default function ProjectMarketplace() {
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-[1920px] mx-auto px-6 h-16 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center shadow-sm">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
+            <Image src="/karya-ai-logo.png" alt="Karya AI" width={32} height={32} className="rounded-lg object-contain" />
             <span className="font-bold text-gray-900 text-lg">Karya<span className="text-blue-600">AI</span></span>
           </Link>
           <div className="flex items-center gap-4">
@@ -723,7 +776,7 @@ export default function ProjectMarketplace() {
         {/* Results count */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-gray-500">
-            <span className="font-black text-gray-900 text-base">{filteredProjects.length}</span> project{filteredProjects.length !== 1 ? 's' : ''} found
+            <span className="font-black text-gray-900 text-base">{totalCount || filteredProjects.length}</span> project{(totalCount || filteredProjects.length) !== 1 ? 's' : ''} found
             {discoveryMode !== 'all' && <span className="ml-2 font-semibold text-gray-700">· {discoveryMode === 'trending' ? '🔥 Trending' : discoveryMode === 'success' ? '🏆 Success Stories' : discoveryMode === 'nearby' && activeCity ? `📍 Near ${activeCity}` : discoveryMode === 'foryou' && userIndustry ? `✨ For ${userIndustry}` : ''}</span>}
           </p>
           {userRole === 'expert' && (
@@ -781,6 +834,21 @@ export default function ProjectMarketplace() {
                 {index === 7 && <PromoCallout type="agency" />}
               </div>
             ))}
+
+            {/* Infinite scroll sentinel */}
+            <div ref={sentinelRef} className="flex items-center justify-center py-6">
+              {loadingMore && (
+                <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                  Loading more projects...
+                </div>
+              )}
+              {!hasMore && projects.length > 0 && (
+                <p className="text-sm text-gray-400 font-medium">
+                  All {projects.length} projects loaded
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>

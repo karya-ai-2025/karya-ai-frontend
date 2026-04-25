@@ -52,7 +52,14 @@ export default function DashboardHome() {
       fetchMySubmissions(),
       token ? checkUserPlanAccess(token) : Promise.resolve(null),
     ]).then(([projRes, subRes, planRes]) => {
-      if (projRes.status === 'fulfilled') setProjects(projRes.value || []);
+      if (projRes.status === 'fulfilled') {
+        setProjects(projRes.value || []);
+      } else {
+        try {
+          const stored = JSON.parse(localStorage.getItem('myProjects') || '[]');
+          setProjects(stored.slice().reverse());
+        } catch { setProjects([]); }
+      }
       if (subRes.status  === 'fulfilled') setSubmissions(subRes.value || []);
       if (planRes.status === 'fulfilled') setPlanStatus(planRes.value);
     }).finally(() => setLoading(false));
