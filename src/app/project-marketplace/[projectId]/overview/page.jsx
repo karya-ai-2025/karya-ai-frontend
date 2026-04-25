@@ -59,8 +59,6 @@ export default function ProjectOverviewPage() {
   const [negotiateOpen, setNegotiateOpen]   = useState(false);
   const [negotiateMsg, setNegotiateMsg]     = useState('');
   const [negotiateSent, setNegotiateSent]   = useState(false);
-  const [counterOffer, setCounterOffer]     = useState('');
-  const [activeNegTab, setActiveNegTab]     = useState('message');
   const [accepting, setAccepting]       = useState(false);
   const [accepted, setAccepted]         = useState(false);
 
@@ -106,7 +104,7 @@ export default function ProjectOverviewPage() {
 
     const tierId = selectedTier?.tierId || tierParam;
 
-    // 1. Check if user has an active plan before allowing purchase
+    //1. Check if user has an active plan before allowing purchase
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       if (!token) {
@@ -151,13 +149,12 @@ export default function ProjectOverviewPage() {
   };
 
   const handleNegotiate = () => {
-    if (!negotiateMsg && !counterOffer) return;
+    if (!negotiateMsg) return;
     setNegotiateSent(true);
     setTimeout(() => {
       setNegotiateOpen(false);
       setNegotiateSent(false);
       setNegotiateMsg('');
-      setCounterOffer('');
     }, 2500);
   };
 
@@ -259,21 +256,6 @@ export default function ProjectOverviewPage() {
                   </span>
                 )}
               </div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 min-w-[200px] text-center border border-white/20">
-              <p className="text-xs text-white/70 mb-1 uppercase tracking-wide font-semibold">
-                {modeParam === 'platform' ? 'Platform Managed' : `${tierParam.charAt(0).toUpperCase() + tierParam.slice(1)} Plan`}
-              </p>
-              <p className="text-2xl font-bold">
-                {selectedTier
-                  ? selectedTier.priceLabel
-                  : modeParam === 'platform'
-                  ? 'Custom Quote'
-                  : project.budgetRange}
-              </p>
-              <p className="text-xs text-white/60 mt-1">
-                {modeParam === 'agency' ? 'via Agency' : modeParam === 'expert' ? 'via Expert' : 'All Inclusive'}
-              </p>
             </div>
           </div>
         </div>
@@ -582,44 +564,6 @@ export default function ProjectOverviewPage() {
                   </div>
                 </div>
 
-                {/* Tier selector */}
-                {pricingTiers.length > 0 && modeParam !== 'platform' && (
-                  <div className="px-4 pt-4 space-y-2">
-                    {pricingTiers.map(tier => {
-                      const theme = TIER_THEME[tier.tierId] || TIER_THEME.silver;
-                      const isActive = selectedTier?.tierId === tier.tierId;
-                      return (
-                        <button
-                          key={tier.tierId}
-                          onClick={() => setSelectedTier(tier)}
-                          className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
-                            isActive
-                              ? `${theme.upgradeBg} ${theme.badge.split(' ').find(c => c.startsWith('border-')) || 'border-blue-500'}`
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <span className="text-sm font-semibold text-gray-900">{tier.name}</span>
-                              {tier.popular && (
-                                <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">
-                                  Popular
-                                </span>
-                              )}
-                            </div>
-                            <span className={`text-sm font-bold ${isActive ? theme.accent : 'text-gray-900'}`}>
-                              {tier.priceLabel}
-                            </span>
-                          </div>
-                          {tier.deliverableSummary && (
-                            <p className="text-xs text-gray-500 mt-0.5">{tier.deliverableSummary}</p>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
                 {/* Selected tier features from DB */}
                 {selectedTier?.features && (
                   <div className="px-5 py-3 border-t border-gray-100 mt-2">
@@ -668,7 +612,7 @@ export default function ProjectOverviewPage() {
                     className="w-full py-2.5 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center justify-center gap-2"
                   >
                     <Scale className="w-4 h-4" />
-                    Negotiate Terms
+                    Customise Deliverables
                     {negotiateOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
                 </div>
@@ -679,9 +623,9 @@ export default function ProjectOverviewPage() {
                 <div className="bg-white rounded-2xl border border-blue-200 shadow-lg overflow-hidden">
                   <div className="px-5 py-4 border-b border-blue-100 bg-blue-50">
                     <h3 className="font-bold text-blue-900 flex items-center gap-2">
-                      <Scale className="w-4 h-4" /> Negotiate Terms
+                      <Scale className="w-4 h-4" /> Customise Deliverables
                     </h3>
-                    <p className="text-xs text-blue-600 mt-0.5">We'll get back to you within 2 business hours</p>
+                    <p className="text-xs text-blue-600 mt-0.5">Tell us how you'd like to adjust the scope — we'll respond within 2 business hours</p>
                   </div>
 
                   {negotiateSent ? (
@@ -692,84 +636,40 @@ export default function ProjectOverviewPage() {
                     </div>
                   ) : (
                     <div className="p-5 space-y-4">
-                      <div className="flex border border-gray-200 rounded-xl overflow-hidden">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-2">What deliverable mix would you prefer?</label>
+                        <textarea
+                          value={negotiateMsg}
+                          onChange={e => setNegotiateMsg(e.target.value)}
+                          rows={4}
+                          className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                          placeholder="e.g., I'd prefer more qualitative insights and fewer raw contacts"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-medium text-gray-500 flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5" /> What others have asked for:
+                        </p>
                         {[
-                          { id: 'message', label: 'Request Changes' },
-                          { id: 'counter', label: 'Counter Offer' },
-                        ].map(tab => (
+                          'Focus more on qualitative insights over raw contact volume',
+                          'Prioritise decision-maker profiles over company-level data',
+                          'Include more outreach templates instead of extra contacts',
+                          'Swap intent signals for deeper ICP scoring on fewer leads',
+                          'Replace A/B testing with a dedicated onboarding call',
+                        ].map(q => (
                           <button
-                            key={tab.id}
-                            onClick={() => setActiveNegTab(tab.id)}
-                            className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                              activeNegTab === tab.id ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'
-                            }`}
+                            key={q}
+                            onClick={() => setNegotiateMsg(q)}
+                            className="w-full text-left text-xs px-3 py-2 bg-gray-50 hover:bg-blue-50 hover:text-blue-700 rounded-lg border border-gray-200 hover:border-blue-200 transition-colors"
                           >
-                            {tab.label}
+                            {q}
                           </button>
                         ))}
                       </div>
 
-                      {activeNegTab === 'message' ? (
-                        <>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-2">What would you like to change?</label>
-                            <textarea
-                              value={negotiateMsg}
-                              onChange={e => setNegotiateMsg(e.target.value)}
-                              rows={4}
-                              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                              placeholder="e.g., Can we reduce the scope? Or extend the timeline?"
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <p className="text-xs font-medium text-gray-500">Quick requests:</p>
-                            {[
-                              'Reduce scope to fit ₹50K budget',
-                              'Extend timeline by 2 weeks',
-                              'Include more deliverables for same price',
-                              'Start in 2 weeks instead of immediately',
-                            ].map(q => (
-                              <button
-                                key={q}
-                                onClick={() => setNegotiateMsg(q)}
-                                className="w-full text-left text-xs px-3 py-2 bg-gray-50 hover:bg-blue-50 hover:text-blue-700 rounded-lg border border-gray-200 hover:border-blue-200 transition-colors"
-                              >
-                                {q}
-                              </button>
-                            ))}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="space-y-3">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-2">Your counter offer (budget)</label>
-                            <div className="relative">
-                              <DollarSign className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
-                              <input
-                                type="text"
-                                value={counterOffer}
-                                onChange={e => setCounterOffer(e.target.value)}
-                                className="pl-9 w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="e.g., ₹60,000/month"
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-2">Reason / justification</label>
-                            <textarea
-                              value={negotiateMsg}
-                              onChange={e => setNegotiateMsg(e.target.value)}
-                              rows={3}
-                              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                              placeholder="Why is this your budget? Any trade-offs?"
-                            />
-                          </div>
-                        </div>
-                      )}
-
                       <button
                         onClick={handleNegotiate}
-                        disabled={!negotiateMsg && !counterOffer}
+                        disabled={!negotiateMsg}
                         className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                       >
                         <Send className="w-4 h-4" /> Send Request

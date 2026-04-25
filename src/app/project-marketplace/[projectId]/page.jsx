@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   ArrowLeft, Star, Clock, Users, CheckCircle, MapPin, Zap, Sparkles,
   Target, Send, Mail, Megaphone, TrendingUp, Globe, BarChart3,
@@ -359,9 +360,7 @@ export default function ProjectDetailPage() {
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-[1920px] mx-auto px-6 h-16 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center shadow-sm">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
+            <Image src="/karya-ai-logo.png" alt="Karya AI" width={32} height={32} className="rounded-lg object-contain" />
             <span className="font-bold text-gray-900 text-lg">Karya<span className="text-blue-600">AI</span></span>
           </Link>
           <div className="flex items-center gap-4">

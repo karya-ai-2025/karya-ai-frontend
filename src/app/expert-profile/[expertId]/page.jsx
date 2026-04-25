@@ -1,6 +1,7 @@
 'use client';
 // pages/ExpertProfile.jsx
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -209,9 +210,7 @@ function ExpertProfile() {
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <Link href="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
+                <Image src="/karya-ai-logo.png" alt="Karya AI" width={36} height={36} className="rounded-xl object-contain" />
                 <span className="text-lg font-bold text-gray-900 hidden sm:block">Karya-AI</span>
               </Link>
             </div>
@@ -894,6 +893,18 @@ function ExpertProfile() {
               </div>
               <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-purple-600 hover:to-pink-600 rounded-xl text-white font-medium transition-all">
                 Send Message
+              </button>
+              <div className="relative flex items-center gap-3">
+                <div className="flex-1 h-px bg-gray-200"></div>
+                <span className="text-xs text-gray-400 whitespace-nowrap">or</span>
+                <div className="flex-1 h-px bg-gray-200"></div>
+              </div>
+              <button
+                onClick={() => { setShowContactModal(false); router.push(`/expert-profile/${expertId}/hire`); }}
+                className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl text-white font-bold transition-all flex items-center justify-center gap-2 text-sm"
+              >
+                Proceed to Hire
+                <ChevronRight className="w-4 h-4" />
               </button>
               <p className="text-center text-xs text-gray-500">
                 {expert.name} typically responds within {expert.responseTime}
