@@ -704,68 +704,6 @@ function HomePage() {
             </p>
           </div>
 
-          {/* Section 1: Top Projects */}
-          <div className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Top Projects</h3>
-              <button className="text-blue-500 hover:text-blue-600 font-medium flex items-center gap-2 transition-all hover:gap-3 group text-sm sm:text-base">
-                View All <ChevronRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-            </div>
-
-            {/* Value Pills - Moved here below Top Projects heading */}
-            <div className="mb-8">
-              <div className="flex flex-wrap justify-start gap-2 sm:gap-3">
-                {values.map((value, index) => (
-                  <div
-                    key={index}
-                    className="group px-3 sm:px-4 py-1.5 sm:py-2 bg-white border border-gray-200 shadow-sm rounded-full hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 cursor-pointer hover:scale-105 animate-fadeInUp"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <div className="flex items-center gap-1.5 sm:gap-2 text-gray-900 whitespace-nowrap">
-                      <span className="text-blue-500 group-hover:text-blue-600 transition-all">{React.cloneElement(value.icon, { className: 'w-4 h-4 sm:w-5 sm:h-5' })}</span>
-                      <span className="font-medium text-xs sm:text-sm">{value.label}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-              {topProjects.map((project, index) => (
-                <div
-                  key={project.id}
-                  className="group relative animate-fadeInUp"
-                  style={{ animationDelay: `${index * 150}ms` }}
-                >
-                  <div className="absolute -inset-1 bg-blue-500/10 rounded-2xl sm:rounded-3xl opacity-0 group-hover:opacity-100 blur-xl transition-all duration-500"></div>
-                  <div className="relative bg-white border border-gray-200 shadow-sm rounded-2xl sm:rounded-3xl p-5 sm:p-6 hover:border-blue-300 transition-all duration-300 h-full group-hover:translate-y-[-8px]">
-                    <div className={`w-12 sm:w-14 h-12 sm:h-14 bg-gradient-to-br ${project.color} rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 text-white group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg`}>
-                      {React.cloneElement(project.icon, { className: 'w-6 sm:w-8 h-6 sm:h-8' })}
-                    </div>
-                    <h4 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">{project.title}</h4>
-                    <p className="text-gray-500 text-xs sm:text-sm mb-3 sm:mb-4">{project.description}</p>
-                    <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
-                      {project.features.map((feature, idx) => (
-                        <span key={idx} className="px-2 py-0.5 sm:py-1 bg-gray-50 border border-gray-200 text-gray-600 text-xs rounded-full">{feature}</span>
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (project.id === 1) {
-                          router.push('/leads');
-                        }
-                      }}
-                      className="w-full py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 rounded-lg sm:rounded-xl text-white font-semibold text-sm sm:text-base transition-all hover:shadow-lg hover:shadow-blue-500/20 flex items-center justify-center gap-2"
-                    >
-                      <Rocket className="w-4 h-4" />
-                      Launch
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Section 2: Top Regional Talent */}
           <div>

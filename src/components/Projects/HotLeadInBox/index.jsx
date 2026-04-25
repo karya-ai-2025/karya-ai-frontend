@@ -21,6 +21,26 @@ import {
   X
 } from 'lucide-react';
 import LeadGeneration from './LeadGeneration';
+import Campaign from './Campaign';
+
+const hotLeadScrollbarStyles = `
+  .hotlead-page-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .hotlead-page-scroll::-webkit-scrollbar-track {
+    background: #f3f4f6;
+  }
+
+  .hotlead-page-scroll::-webkit-scrollbar-thumb {
+    background: #9ca3af;
+    border-radius: 9999px;
+  }
+
+  .hotlead-page-scroll::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+`;
 
 export default function HotLeadInBox({ projectMetadata }) {
   const { user } = useAuth();
@@ -29,32 +49,6 @@ export default function HotLeadInBox({ projectMetadata }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
 
-  const campaigns = [
-    {
-      id: 1,
-      name: 'Tech Startup Founders',
-      status: 'active',
-      leads: 156,
-      responses: 23,
-      responseRate: 14.7
-    },
-    {
-      id: 2,
-      name: 'Marketing Directors',
-      status: 'paused',
-      leads: 89,
-      responses: 8,
-      responseRate: 9.0
-    },
-    {
-      id: 3,
-      name: 'SaaS Sales Leaders',
-      status: 'active',
-      leads: 97,
-      responses: 15,
-      responseRate: 15.5
-    }
-  ];
 
   const tabs = [
     { id: 'dashboard', name: 'Dashboard', icon: BarChart3 },
@@ -100,7 +94,7 @@ export default function HotLeadInBox({ projectMetadata }) {
             </div>
 
             {/* Main Action Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
               {/* Get Leads Card - Active */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div className="p-6">
@@ -127,27 +121,28 @@ export default function HotLeadInBox({ projectMetadata }) {
                 </div>
               </div>
 
-              {/* Upload Leads Card - Disabled */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden opacity-60">
+              {/* Email Campaigns Card - Active */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div className="p-6">
                   <div className="flex items-center mb-4">
-                    <div className="p-3 bg-gray-50 rounded-lg mr-4">
-                      <Database className="w-8 h-8 text-gray-400" />
+                    <div className="p-3 bg-purple-50 rounded-lg mr-4">
+                      <Target className="w-8 h-8 text-purple-600" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-gray-500">Upload Leads</h3>
-                      <p className="text-gray-400">Import your existing leads</p>
+                      <h3 className="text-xl font-semibold text-gray-900">Email Campaigns</h3>
+                      <p className="text-gray-600">Reach out to your leads</p>
                     </div>
                   </div>
 
-                  <p className="text-gray-500 mb-6">
-                    Upload your existing lead database in CSV format. Our AI will enrich and qualify
-                    your leads automatically.
+                  <p className="text-gray-700 mb-6">
+                    Create personalized email campaigns to engage with your leads. Track opens, clicks,
+                    and replies to optimize your outreach.
                   </p>
                   <button
-                    disabled
-                    className="w-full bg-gray-300 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                    Coming Soon
+                    onClick={() => setActiveTab('campaigns')}
+                    className="w-full bg-purple-600 text-white px-4 sm:px-6 py-3 rounded-lg font-medium hover:bg-purple-700 hover:shadow-lg cursor-pointer duration-200 active:scale-95 text-sm sm:text-base"
+                  >
+                    Create Campaign
                   </button>
                 </div>
               </div>
@@ -159,11 +154,20 @@ export default function HotLeadInBox({ projectMetadata }) {
           onCollapseSidebar={() => setSidebarCollapsed(true)}
           onExpandSidebar={() => setSidebarCollapsed(false)}
         />;
+      case 'campaigns':
+        return <Campaign
+          onCollapseSidebar={() => setSidebarCollapsed(true)}
+          onExpandSidebar={() => setSidebarCollapsed(false)}
+        />;
+      default:
+        return <div className="text-center py-12 text-gray-500">Feature coming soon...</div>;
     }
   };
 
   return (
-    <div className="w-full bg-gray-50 overflow-hidden" style={{ height: '100vh' }}>
+    <>
+      <style dangerouslySetInnerHTML={{ __html: hotLeadScrollbarStyles }} />
+      <div className="w-full h-screen min-h-0 bg-gray-50 overflow-hidden">
       {/* Sidebar - Fixed position (unchanged) */}
       <div className="fixed top-0 left-0 h-full z-50">
         <SideLeftBar
@@ -178,14 +182,14 @@ export default function HotLeadInBox({ projectMetadata }) {
       </div>
 
       {/* Main Content Area with left margin for sidebar */}
-      <div className={`flex flex-col h-full overflow-hidden transition-all duration-300 ${
+      <div className={`flex flex-col h-full min-h-0 overflow-hidden transition-all duration-300 ${
         sidebarCollapsed ? 'ml-16' : 'ml-64'
       }`}>
         {/* TopNavbar - spans the remaining width after sidebar */}
         <TopNavbar />
 
         {/* Content Area - pushed down below TopNavbar */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {/* Mobile Header */}
           <div className="lg:hidden bg-white border-b border-gray-200 p-4">
             <div className="flex items-center justify-between">
@@ -200,7 +204,13 @@ export default function HotLeadInBox({ projectMetadata }) {
           </div>
 
           {/* Content Area with Tabs */}
-          <div className="flex-1 overflow-y-auto">
+          <div
+            className="flex-1 min-h-0 overflow-y-auto hotlead-page-scroll"
+            style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#9CA3AF #F3F4F6'
+            }}
+          >
             {/* Navigation Tabs */}
             <div className="mb-6 px-4 lg:px-6">
               <div className="border-b border-gray-200">
@@ -227,13 +237,14 @@ export default function HotLeadInBox({ projectMetadata }) {
             </div>
 
             {/* Tab Content */}
-            <div className="px-4 lg:px-6">
+            <div className="px-4 lg:px-6 pb-8">
               {renderTabContent()}
             </div>
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 }
 

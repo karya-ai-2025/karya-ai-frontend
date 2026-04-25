@@ -24,7 +24,8 @@ import { getIndustries } from '../../../services/industriesApi';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
-  const { user } = useAuth();
+  const { user, getAuthHeader } = useAuth();
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
   const [searchCriteria, setSearchCriteria] = useState({
     industry: '',
@@ -97,6 +98,11 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
     totalAvailable: 0,
     currentlyShowing: 0
   });
+  const [showCrmNameInput, setShowCrmNameInput] = useState(false);
+  const [crmObjectName, setCrmObjectName] = useState('');
+  const [crmSaveLoading, setCrmSaveLoading] = useState(false);
+  const [crmStatus, setCrmStatus] = useState(null);
+  const [savedCrmSelectionKey, setSavedCrmSelectionKey] = useState(null);
 
   // Industries state
   const [industries, setIndustries] = useState([]);
@@ -170,7 +176,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
   // Fetch credit costs from API
   const fetchCreditCosts = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads/credits/costs`);
+      const response = await fetch(`${apiBaseUrl}/leads/credits/costs`);
       const data = await response.json();
 
       if (data.success) {
@@ -188,7 +194,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
     if (!user?.id) return;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads/credits/balance/${user.id}`);
+      const response = await fetch(`${apiBaseUrl}/leads/credits/balance/${user.id}`);
       const data = await response.json();
 
       if (data.success) {
@@ -335,6 +341,46 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
     };
   };
 
+  const getCurrentSelectionKey = () => JSON.stringify({
+    searchCriteria,
+    format: downloadFormat,
+    requestedCount: getDownloadCount()
+  });
+
+  const saveLeadsToCRM = async ({ leadsArray, crmName = '', source = 'export', creditsConsumed = 0, remainingCreditsAfter }) => {
+    const response = await fetch(`${apiBaseUrl}/user-crm`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        crmObjectName: crmName,
+        exportFormat: downloadFormat,
+        source,
+        searchCriteria,
+        leads: leadsArray,
+        metadata: {
+          requestedCount: getDownloadCount(),
+          matchedCount: searchStats.matched,
+          creditsConsumed,
+          remainingCreditsAfter,
+          exportedAt: new Date().toISOString(),
+          exportedBy: 'hotlead-inbox'
+        }
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to save CRM object');
+    }
+
+    return result;
+  };
+
   // Handle download leads button click
   const handleDownloadLeads = () => {
     if (leads.length === 0 || searchStats.matched === 0) {
@@ -346,6 +392,10 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
     setDownloadCount('all');
     setCustomCount('');
     setDownloadFormat('email_only');
+    setShowCrmNameInput(false);
+    setCrmObjectName('');
+    setCrmStatus(null);
+    setSavedCrmSelectionKey(null);
     setShowDownloadModal(true);
   };
 
@@ -353,9 +403,17 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
   const confirmDownload = async () => {
     try {
       setDownloadLoading(true);
+      setCrmStatus(null);
 
       const totalCost = downloadFormat === 'email_only' ? downloadCostBreakdown.emailOnlyCost : downloadCostBreakdown.emailPhoneCost;
       const downloadCount = getDownloadCount();
+      const currentSelectionKey = getCurrentSelectionKey();
+      let updatedRemainingCredits = remainingCredits;
+
+      if (!user?.id) {
+        alert('Please log in to export leads.');
+        return;
+      }
 
       // Check if user has sufficient credits
       if (totalCost > remainingCredits) {
@@ -366,7 +424,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
       // If there are credits to consume
       if (totalCost > 0) {
         // Consume credits for bulk download
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads/credits/consume-bulk`, {
+        const response = await fetch(`${apiBaseUrl}/leads/credits/consume-bulk`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -386,6 +444,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
         if (result.success) {
           // Update remaining credits
           setRemainingCredits(result.remainingCredits);
+          updatedRemainingCredits = result.remainingCredits;
 
           // Emit event to update navbar credits
           window.dispatchEvent(new CustomEvent('creditsUpdated', {
@@ -399,8 +458,20 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
         }
       }
 
-      // Generate and download CSV (this will need to fetch actual data)
-      await generateAndDownloadLeads();
+      const leadsToExport = await fetchLeadsForExport();
+
+      if (savedCrmSelectionKey !== currentSelectionKey) {
+        await saveLeadsToCRM({
+          leadsArray: leadsToExport,
+          crmName: crmObjectName.trim(),
+          source: 'export',
+          creditsConsumed: totalCost,
+          remainingCreditsAfter: updatedRemainingCredits
+        });
+        setSavedCrmSelectionKey(currentSelectionKey);
+      }
+
+      downloadCSV(leadsToExport);
 
       setShowDownloadModal(false);
 
@@ -412,13 +483,63 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
     }
   };
 
-  // Generate and download leads based on count and format
-  const generateAndDownloadLeads = async () => {
-    try {
-      const downloadCount = getDownloadCount();
+  const handleSaveToCRM = async () => {
+    if (!showCrmNameInput) {
+      setShowCrmNameInput(true);
+      setCrmStatus(null);
+      return;
+    }
 
-      // Fetch leads for download (this should call a new API endpoint)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads/generate-for-download`, {
+    if (!crmObjectName.trim()) {
+      setCrmStatus({
+        type: 'error',
+        message: 'First please name your CRM object.'
+      });
+      return;
+    }
+
+    if (!user?.id) {
+      setCrmStatus({
+        type: 'error',
+        message: 'Please log in to save this CRM object.'
+      });
+      return;
+    }
+
+    try {
+      setCrmSaveLoading(true);
+      setCrmStatus(null);
+
+      const leadsToSave = await fetchLeadsForExport();
+      await saveLeadsToCRM({
+        leadsArray: leadsToSave,
+        crmName: crmObjectName.trim(),
+        source: 'manual',
+        remainingCreditsAfter: remainingCredits
+      });
+
+      setSavedCrmSelectionKey(getCurrentSelectionKey());
+      setCrmStatus({
+        type: 'success',
+        message: `Saved to CRM as "${crmObjectName.trim()}".`
+      });
+    } catch (error) {
+      console.error('Error saving CRM object:', error);
+      setCrmStatus({
+        type: 'error',
+        message: error.message || 'Failed to save CRM object.'
+      });
+    } finally {
+      setCrmSaveLoading(false);
+    }
+  };
+
+  // Fetch the exact leads payload for CRM save and export
+  const fetchLeadsForExport = async () => {
+    try {
+      const requestedCount = getDownloadCount();
+
+      const response = await fetch(`${apiBaseUrl}/leads/generate-for-download`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -426,26 +547,21 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
         body: JSON.stringify({
           ...searchCriteria,
           downloadFormat: downloadFormat,
-          downloadCount: downloadCount,
+          downloadCount: requestedCount,
           userId: user.id
         })
       });
 
       const data = await response.json();
 
-      if (data.success) {
-        downloadCSV(data.data);
-      } else {
-        // Fallback: use current leads if API fails
-        const leadsToDownload = leads.slice(0, Math.min(downloadCount, leads.length));
-        downloadCSV(leadsToDownload);
+      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+        return data.data;
       }
     } catch (error) {
       console.error('Error fetching leads for download:', error);
-      // Fallback: use current leads
-      const leadsToDownload = leads.slice(0, Math.min(getDownloadCount(), leads.length));
-      downloadCSV(leadsToDownload);
     }
+
+    return leads.slice(0, Math.min(getDownloadCount(), leads.length));
   };
 
   // Generate and download CSV file
@@ -1254,7 +1370,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
           <div className="text-center py-12">
             <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Search for leads</h3>
-            <p className="text-gray-600">Select your criteria and click "Search Leads" to get started</p>
+            <p className="text-gray-600">Select your criteria and click &quot;Search Leads&quot; to get started</p>
           </div>
         </div>
       )}
@@ -1262,254 +1378,228 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
       </div>
 
 
-      {/* Enhanced Export Leads Modal */}
+      {/* Modern Export Leads Modal */}
       {showDownloadModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex min-h-screen items-center justify-center p-4">
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-              onClick={() => setShowDownloadModal(false)}
-            ></div>
-
-            {/* Modal */}
-            <div className="relative bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 transform transition-all">
-              {/* Header with gradient */}
-              <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white px-6 py-4 rounded-t-xl">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-white bg-opacity-20 rounded-lg p-2">
-                      <Download className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold">Export Leads</h2>
-                      <p className="text-sm text-emerald-100">Download your lead data</p>
-                    </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+          {/* Modal */}
+          <div className="relative bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl w-96 mx-4 transform transition-all pointer-events-auto border border-gray-100 overflow-hidden hover:shadow-3xl">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-between px-3 py-3">
+                <div className="flex items-center space-x-2">
+                  <div className="p-1.5 bg-white/20 rounded-lg">
+                    <Download className="w-4 h-4 text-white" />
                   </div>
-                  <button
-                    onClick={() => setShowDownloadModal(false)}
-                    className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  <h3 className="text-sm font-semibold text-white">Export Leads</h3>
                 </div>
+                <button
+                  onClick={() => setShowDownloadModal(false)}
+                  className="p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
               {/* Content */}
-              <div className="p-6 space-y-6">
-                {/* Search Results Summary */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <Target className="w-5 h-5 text-blue-600" />
-                    <h3 className="text-sm font-semibold text-gray-900">Search Results</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {downloadCostBreakdown.totalAvailable.toLocaleString()}
-                      </div>
-                      <div className="text-xs text-gray-600 font-medium">Total Found</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-indigo-600">
-                        {downloadCostBreakdown.currentlyShowing}
-                      </div>
-                      <div className="text-xs text-gray-600 font-medium">Currently Showing</div>
-                    </div>
+              <div className="p-4 space-y-4">
+                {/* Results Summary */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl px-3 py-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-blue-700 font-medium">Available Leads:</span>
+                    <span className="font-semibold text-blue-900">{downloadCostBreakdown.totalAvailable.toLocaleString()}</span>
                   </div>
                 </div>
 
-                {/* Download Quantity Selection */}
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Users className="w-5 h-5 text-gray-600" />
-                    <h3 className="text-sm font-semibold text-gray-900">Select Quantity</h3>
+                {/* Quantity & Format in 2 columns */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Quantity Selection */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-gray-700 flex items-center space-x-1">
+                      <Users className="w-3 h-3" />
+                      <span>Quantity</span>
+                    </label>
+                    <div className="space-y-1.5">
+                      <label className="flex items-center space-x-1 p-2 rounded-lg border border-gray-200 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/50 transition-all duration-200">
+                        <input
+                          type="radio"
+                          name="downloadCount"
+                          checked={downloadCount === 'all'}
+                          onChange={() => setDownloadCount('all')}
+                          className="text-indigo-600 w-3 h-3 cursor-pointer"
+                        />
+                        <span className="text-xs text-gray-900 font-medium cursor-pointer">All</span>
+                      </label>
+
+                      <label className="flex items-center space-x-1 p-2 rounded-lg border border-gray-200 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/50 transition-all duration-200">
+                        <input
+                          type="radio"
+                          name="downloadCount"
+                          checked={downloadCount === 'custom'}
+                          onChange={() => setDownloadCount('custom')}
+                          className="text-indigo-600 w-3 h-3 cursor-pointer"
+                        />
+                        <input
+                          type="number"
+                          min="1"
+                          max={downloadCostBreakdown.totalAvailable}
+                          value={customCount}
+                          onChange={(e) => {
+                            setCustomCount(e.target.value);
+                            setDownloadCount('custom');
+                          }}
+                          placeholder="Custom"
+                          className="flex-1 px-1 py-0.5 border-0 bg-transparent text-xs focus:outline-none placeholder-gray-400 font-medium cursor-text"
+                        />
+                      </label>
+                    </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <label className="flex items-center space-x-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border-2 border-transparent cursor-pointer transition-all duration-200 hover:border-indigo-200">
-                      <input
-                        type="radio"
-                        name="downloadCount"
-                        checked={downloadCount === 'all'}
-                        onChange={() => setDownloadCount('all')}
-                        className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                      />
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-gray-900">
-                          Export All Leads
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Download all {downloadCostBreakdown.totalAvailable.toLocaleString()} available leads
-                        </div>
-                      </div>
+                  {/* Format Selection */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-gray-700 flex items-center space-x-1">
+                      <Download className="w-3 h-3" />
+                      <span>Format</span>
                     </label>
-
-                    <label className="flex items-center space-x-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border-2 border-transparent cursor-pointer transition-all duration-200 hover:border-indigo-200">
-                      <input
-                        type="radio"
-                        name="downloadCount"
-                        checked={downloadCount === 'custom'}
-                        onChange={() => setDownloadCount('custom')}
-                        className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                      />
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-gray-900 mb-2">
-                          Custom Amount
-                        </div>
-                        <div className="flex items-center space-x-2">
+                    <div className="space-y-1.5">
+                      <label className="flex items-center justify-between p-2 rounded-lg border cursor-pointer hover:scale-105 transition-all duration-200 border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100">
+                        <div className="flex items-center space-x-1">
                           <input
-                            type="number"
-                            min="1"
-                            max={downloadCostBreakdown.totalAvailable}
-                            value={customCount}
-                            onChange={(e) => {
-                              setCustomCount(e.target.value);
-                              setDownloadCount('custom');
-                            }}
-                            placeholder="Enter number"
-                            className="w-24 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            type="radio"
+                            name="downloadFormat"
+                            value="email_only"
+                            checked={downloadFormat === 'email_only'}
+                            onChange={(e) => setDownloadFormat(e.target.value)}
+                            className="text-emerald-600 w-3 h-3 cursor-pointer"
                           />
-                          <span className="text-sm text-gray-600">leads</span>
+                          <span className="text-xs font-semibold text-emerald-900 cursor-pointer">Email</span>
                         </div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
+                        <span className="text-xs bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded-full font-bold">1⚡</span>
+                      </label>
 
-                {/* Download Format Selection */}
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Download className="w-5 h-5 text-gray-600" />
-                    <h3 className="text-sm font-semibold text-gray-900">Choose Format</h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3">
-                    <label className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 rounded-lg border-2 border-transparent cursor-pointer transition-all duration-200 hover:border-green-200">
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="radio"
-                          name="downloadFormat"
-                          value="email_only"
-                          checked={downloadFormat === 'email_only'}
-                          onChange={(e) => setDownloadFormat(e.target.value)}
-                          className="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
-                        />
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">Email Only</div>
-                          <div className="text-xs text-gray-600">Names, companies & email addresses</div>
+                      <label className="flex items-center justify-between p-2 rounded-lg border cursor-pointer hover:scale-105 transition-all duration-200 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100">
+                        <div className="flex items-center space-x-1">
+                          <input
+                            type="radio"
+                            name="downloadFormat"
+                            value="email_phone"
+                            checked={downloadFormat === 'email_phone'}
+                            onChange={(e) => setDownloadFormat(e.target.value)}
+                            className="text-blue-600 w-3 h-3 cursor-pointer"
+                          />
+                          <span className="text-xs font-semibold text-blue-900 cursor-pointer">Email+Phone</span>
                         </div>
-                      </div>
-                      <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
-                        1⚡/lead
-                      </div>
-                    </label>
-
-                    <label className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 rounded-lg border-2 border-transparent cursor-pointer transition-all duration-200 hover:border-blue-200">
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="radio"
-                          name="downloadFormat"
-                          value="email_phone"
-                          checked={downloadFormat === 'email_phone'}
-                          onChange={(e) => setDownloadFormat(e.target.value)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                        />
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">Email + Phone</div>
-                          <div className="text-xs text-gray-600">Complete contact information</div>
-                        </div>
-                      </div>
-                      <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
-                        4⚡/lead
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Cost Breakdown */}
-                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg p-4 border border-amber-200">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <Zap className="w-5 h-5 text-amber-600" />
-                    <h3 className="text-sm font-semibold text-gray-900">Credit Summary</h3>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="text-lg font-bold text-indigo-600">
-                        {downloadCostBreakdown.totalToDownload.toLocaleString()}
-                      </div>
-                      <div className="text-xs text-gray-600 font-medium">Leads</div>
+                        <span className="text-xs bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded-full font-bold">4⚡</span>
+                      </label>
                     </div>
-                    <div>
-                      <div className="text-lg font-bold text-orange-600">
+                  </div>
+                </div>
+
+                {/* Cost Summary - Modern */}
+                <div className="bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border border-amber-200 rounded-xl p-3">
+                  <div className="flex items-center space-x-1 mb-2">
+                    <Zap className="w-3 h-3 text-amber-600" />
+                    <span className="text-xs font-bold text-amber-800">Cost Summary</span>
+                  </div>
+                  <div className="text-xs space-y-1.5">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 font-medium">Export:</span>
+                      <span className="font-bold text-gray-900">{downloadCostBreakdown.totalToDownload.toLocaleString()} leads</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 font-medium">Cost:</span>
+                      <span className="font-bold text-amber-700 bg-amber-200 px-2 py-0.5 rounded-full">
                         {downloadFormat === 'email_only' ? downloadCostBreakdown.emailOnlyCost : downloadCostBreakdown.emailPhoneCost}⚡
-                      </div>
-                      <div className="text-xs text-gray-600 font-medium">Cost</div>
+                      </span>
                     </div>
-                    <div>
-                      <div className={`text-lg font-bold ${
+                    <div className="flex justify-between items-center pt-1 border-t border-amber-200">
+                      <span className="text-gray-600 font-medium">Remaining:</span>
+                      <span className={`font-bold px-2 py-0.5 rounded-full ${
                         remainingCredits - (downloadFormat === 'email_only' ? downloadCostBreakdown.emailOnlyCost : downloadCostBreakdown.emailPhoneCost) >= 0
-                          ? 'text-green-600' : 'text-red-600'
+                          ? 'text-green-700 bg-green-200' : 'text-red-700 bg-red-200'
                       }`}>
                         {remainingCredits - (downloadFormat === 'email_only' ? downloadCostBreakdown.emailOnlyCost : downloadCostBreakdown.emailPhoneCost)}⚡
-                      </div>
-                      <div className="text-xs text-gray-600 font-medium">Remaining</div>
+                      </span>
                     </div>
                   </div>
+                </div>
 
-                  {/* Insufficient credits warning */}
-                  {remainingCredits < (downloadFormat === 'email_only' ? downloadCostBreakdown.emailOnlyCost : downloadCostBreakdown.emailPhoneCost) && (
-                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <div className="flex items-center space-x-2">
-                        <AlertCircle className="w-4 h-4 text-red-600" />
-                        <span className="text-sm text-red-700 font-medium">Insufficient Credits</span>
+                {/* Insufficient credits warning - Modern */}
+                {remainingCredits < (downloadFormat === 'email_only' ? downloadCostBreakdown.emailOnlyCost : downloadCostBreakdown.emailPhoneCost) && (
+                  <div className="p-3 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl">
+                    <div className="flex items-center space-x-2">
+                      <div className="p-1 bg-red-100 rounded-full">
+                        <AlertCircle className="w-3 h-3 text-red-600" />
                       </div>
-                      <p className="text-xs text-red-600 mt-1">
-                        You need {(downloadFormat === 'email_only' ? downloadCostBreakdown.emailOnlyCost : downloadCostBreakdown.emailPhoneCost) - remainingCredits} more credits to complete this export.
-                      </p>
+                      <div>
+                        <span className="text-xs text-red-700 font-bold block">Insufficient Credits</span>
+                        <span className="text-xs text-red-600">Need {(downloadFormat === 'email_only' ? downloadCostBreakdown.emailOnlyCost : downloadCostBreakdown.emailPhoneCost) - remainingCredits} more</span>
+                      </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                {/* Action Buttons */}
-                <div className="flex space-x-3 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={() => setShowDownloadModal(false)}
-                    className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={confirmDownload}
-                    disabled={
-                      downloadLoading ||
-                      downloadCostBreakdown.totalToDownload === 0 ||
-                      (downloadFormat === 'email_only'
-                        ? downloadCostBreakdown.emailOnlyCost > remainingCredits
-                        : downloadCostBreakdown.emailPhoneCost > remainingCredits
-                      )
-                    }
-                    className="flex-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium rounded-lg transition-all transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-2"
-                  >
-                    {downloadLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Processing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4" />
-                        <span>
-                          Export ({downloadFormat === 'email_only' ? downloadCostBreakdown.emailOnlyCost : downloadCostBreakdown.emailPhoneCost}⚡)
-                        </span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                {showCrmNameInput && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-gray-700 block">
+                      First please name your CRM object
+                    </label>
+                    <input
+                      type="text"
+                      value={crmObjectName}
+                      onChange={(e) => setCrmObjectName(e.target.value)}
+                      placeholder="List1"
+                      maxLength={100}
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                )}
+
+                {crmStatus && (
+                  <div className={`p-3 rounded-xl border text-xs font-medium ${
+                    crmStatus.type === 'success'
+                      ? 'bg-green-50 border-green-200 text-green-700'
+                      : 'bg-red-50 border-red-200 text-red-700'
+                  }`}>
+                    {crmStatus.message}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex space-x-3 p-4 bg-gray-50/50 border-t border-gray-100">
+                <button
+                  onClick={handleSaveToCRM}
+                  disabled={crmSaveLoading}
+                  className="flex-1 px-3 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 hover:border-gray-300 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:hover:scale-100 cursor-pointer"
+                >
+                  {crmSaveLoading ? 'Saving...' : showCrmNameInput ? 'Save List' : 'Save to CRM'}
+                </button>
+                <button
+                  onClick={confirmDownload}
+                  disabled={
+                    downloadLoading ||
+                    crmSaveLoading ||
+                    downloadCostBreakdown.totalToDownload === 0 ||
+                    (downloadFormat === 'email_only'
+                      ? downloadCostBreakdown.emailOnlyCost > remainingCredits
+                      : downloadCostBreakdown.emailPhoneCost > remainingCredits
+                    )
+                  }
+                  className="flex-1 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-1 hover:scale-105 active:scale-95 disabled:hover:scale-100 shadow-lg hover:shadow-xl cursor-pointer"
+                >
+                  {downloadLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-3 h-3" />
+                      <span>Export</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
-          </div>
         </div>
       )}
     </div>
