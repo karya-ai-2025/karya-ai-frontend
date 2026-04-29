@@ -209,17 +209,25 @@ function AgentChat({ sidebarOpen, onToggleSidebar, conversationId, onTitleUpdate
   });
 
   const handleStartSession = async () => {
-    if (!AGENT_ID) return;
+    if (!AGENT_ID) {
+      setMessages(prev => [
+        ...prev,
+        { role: 'system', message: 'Agent configuration is missing. Please contact support.' }
+      ]);
+      return;
+    }
     try {
-      console.log('ElevenLabs: starting session with agent', AGENT_ID);
       await conversation.startSession({ agentId: AGENT_ID, textOnly: true });
-      console.log('ElevenLabs: session started');
       if (messagesRef.current.length > 0) {
         const summary = buildContextSummary(messagesRef.current);
         conversation.sendContextualUpdate(summary);
       }
     } catch (err) {
       console.error('ElevenLabs: failed to start session', err);
+      setMessages(prev => [
+        ...prev,
+        { role: 'system', message: 'Failed to connect to the agent. Please try again.' }
+      ]);
     }
   };
 
