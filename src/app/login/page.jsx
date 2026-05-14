@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertCircle, CheckCircle } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Constants
 const ROLES = {
@@ -31,14 +32,12 @@ const ROLE_CONFIG = {
   }
 };
 
-// API Base URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL 
-
 
 function Login() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const role = searchParams.get('role') || ROLES.OWNER;
+  const { login: authLogin } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,57 +85,20 @@ function Login() {
     setError('');
     setSuccess('');
     setIsLoading(true);
-    console.log(formData.email, formData.password)
 
     try {
-      console.log("1")
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: formData.email.toLowerCase().trim(),
-          password: formData.password,
-          role // Send selected role to set activeRole
-        })
-      })
-      console.log("2")
-      const data = await response.json();
-      console.log("data",data)
+      const result = await authLogin(formData.email.toLowerCase().trim(), formData.password, role);
 
-      if (!response.ok) {
-        // Handle specific error cases
-        if (data.message?.includes("don't have a")) {
-          // User doesn't have this profile type
-          setError(data.message);
+      if (!result.success) {
+        if (result.error?.includes("don't have a")) {
+          setError(result.error);
           return;
         }
-        throw new Error(data.message || 'Invalid credentials');
-      }
-
-      // Store token in localStorage
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        throw new Error(result.error || 'Invalid credentials');
       }
 
       setSuccess('Login successful! Redirecting...');
-
-      // Determine redirect based on user's profile and onboarding status
-      const user = data.user;
-      const activeRole = user.activeRole;
-      const roleConfig = ROLE_CONFIG[activeRole];
-
-      // Check if onboarding is complete for this role
-      const onboardingComplete = user.onboarding?.[activeRole]?.completed;
-
-      setTimeout(() => {
-        if (onboardingComplete) {
-          router.push(roleConfig.dashboardRoute);
-        } else {
-          router.push(roleConfig.onboardingRoute);
-        }
-      }, 1000);
+      router.push('/');
 
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');

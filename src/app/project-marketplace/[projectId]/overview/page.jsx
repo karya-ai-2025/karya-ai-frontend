@@ -5,11 +5,12 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, Check, CheckCircle, Star, Clock, Users, DollarSign,
-  ChevronDown, ChevronUp, Send, Rocket, Shield, Zap,
+  ChevronDown, ChevronUp, Shield, Zap,
   Loader2, Award, ChevronRight, Package, Flag, Scale,
-  Phone, RefreshCw, Wrench, Lock, Sparkles,
+  Phone, RefreshCw, Wrench, Lock, Sparkles, Pencil, X,
 } from 'lucide-react';
-import { fetchProjectBySlug, fetchProjectPricing, purchaseCatalogProject } from '@/lib/catalogApi';
+import { fetchProjectBySlug, fetchProjectPricing, purchaseCatalogProject, fetchProjectExperts } from '@/lib/catalogApi';
+import { submitNegotiation, getMyNegotiation } from '@/lib/negotiationApi';
 import { checkUserPlanAccess } from '@/services/planService';
 
 // UI-only theme per tierId — no prices here
@@ -56,24 +57,36 @@ export default function ProjectOverviewPage() {
   const [pricingTiers, setPricingTiers] = useState([]);
   const [loadingProject, setLoading]    = useState(true);
   const [selectedTier, setSelectedTier] = useState(null);
-  const [negotiateOpen, setNegotiateOpen]   = useState(false);
-  const [negotiateMsg, setNegotiateMsg]     = useState('');
-  const [negotiateSent, setNegotiateSent]   = useState(false);
-  const [accepting, setAccepting]       = useState(false);
-  const [accepted, setAccepted]         = useState(false);
+  const [projectExperts, setProjectExperts] = useState([]);
+  const [myNegotiation, setMyNegotiation]         = useState(null);
+  const [editMode, setEditMode]                   = useState(false);
+  const [deliverableEdits, setDeliverableEdits]   = useState({}); // { originalKey: customText }
+  const [activeEditKey, setActiveEditKey]         = useState(null);
+  const [editInputText, setEditInputText]         = useState('');
+  const [submittingNeg, setSubmittingNeg]         = useState(false);
+  const [negError, setNegError]                   = useState('');
+  const [accepting, setAccepting]                 = useState(false);
+  const [accepted, setAccepted]                   = useState(false);
 
   useEffect(() => {
     if (!projectId) return;
     Promise.all([
       fetchProjectBySlug(projectId),
       fetchProjectPricing(projectId),
+      fetchProjectExperts(projectId).catch(() => []),
     ])
-      .then(([p, tiers]) => {
+      .then(([p, tiers, experts]) => {
         setProject(p);
         setPricingTiers(tiers || []);
+        setProjectExperts(experts || []);
         if (tiers?.length > 0) {
           const match = tiers.find(t => t.tierId === tierParam) || tiers.find(t => t.popular) || tiers[0];
           setSelectedTier(match);
+        }
+        // Fetch any existing negotiation for this user+project
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (token) {
+          getMyNegotiation(p.slug).then(setMyNegotiation).catch(() => {});
         }
       })
       .catch(() => setProject(null))
@@ -148,14 +161,68 @@ export default function ProjectOverviewPage() {
     setAccepted(true);
   };
 
-  const handleNegotiate = () => {
-    if (!negotiateMsg) return;
-    setNegotiateSent(true);
-    setTimeout(() => {
-      setNegotiateOpen(false);
-      setNegotiateSent(false);
-      setNegotiateMsg('');
-    }, 2500);
+  const editCount = Object.keys(deliverableEdits).length;
+
+  const handleToggleEditMode = () => {
+    setEditMode(prev => !prev);
+    setActiveEditKey(null);
+    setDeliverableEdits({});
+    setEditInputText('');
+    setNegError('');
+  };
+
+  const applyCustomText = (originalKey, text) => {
+    if (!text.trim()) return;
+    setDeliverableEdits(prev => ({ ...prev, [originalKey]: text.trim() }));
+    setActiveEditKey(null);
+    setEditInputText('');
+  };
+
+  const undoSwap = (originalKey) => {
+    setDeliverableEdits(prev => {
+      const next = { ...prev };
+      delete next[originalKey];
+      return next;
+    });
+  };
+
+  const handleNegotiate = async () => {
+    if (!selectedTier || editCount === 0) return;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+    setSubmittingNeg(true);
+    setNegError('');
+    try {
+      const tierKeys = ALL_TIER_DELIVERABLES
+        .filter(d => selectedTier.features?.[d.key])
+        .map(d => d.key);
+      // Apply swaps: replace each edited key with its chosen replacement
+      const modifiedDeliverables = tierKeys.map(k => deliverableEdits[k] || k);
+      const result = await submitNegotiation({
+        projectSlug: project.slug,
+        tierId: selectedTier.tierId,
+        originalDeliverables: tierKeys,
+        modifiedDeliverables,
+        userNote: '',
+      });
+      setMyNegotiation(result.data.negotiation);
+      setEditMode(false);
+      setDeliverableEdits({});
+    } catch (err) {
+      if (err.status === 409) {
+        setMyNegotiation(err.data?.negotiation || { status: 'pending' });
+        setEditMode(false);
+      } else if (err.status === 401) {
+        router.push('/login');
+      } else {
+        setNegError('Failed to submit. Please try again.');
+      }
+    } finally {
+      setSubmittingNeg(false);
+    }
   };
 
   if (accepted) {
@@ -270,11 +337,24 @@ export default function ProjectOverviewPage() {
               const theme = TIER_THEME[effectiveTier] || TIER_THEME.silver;
               const tierData = pricingTiers.find(t => t.tierId === effectiveTier);
               const nextTier = NEXT_TIER_MAP[effectiveTier];
-              // Compute included deliverables from DB features
+              // Compute included deliverables from DB features (always tier-based)
+              const hasApprovedNeg = myNegotiation?.status === 'approved';
               const includedCount = tierData
                 ? ALL_TIER_DELIVERABLES.filter(d => tierData.features?.[d.key]).length
                 : ALL_TIER_DELIVERABLES.length;
               const lockedCount = ALL_TIER_DELIVERABLES.length - includedCount;
+
+              // Build a map of approved swaps: { originalKey: customText }
+              // Positionally compare original vs modified arrays to find what changed
+              const approvedSwaps = {};
+              if (hasApprovedNeg) {
+                (myNegotiation.originalDeliverables || []).forEach((origKey, idx) => {
+                  const modVal = (myNegotiation.modifiedDeliverables || [])[idx];
+                  if (modVal && modVal !== origKey) {
+                    approvedSwaps[origKey] = modVal;
+                  }
+                });
+              }
               // Output quantity from DB
               const contactsVal = tierData?.contacts;
               const outputLabel = contactsVal == null
@@ -283,7 +363,9 @@ export default function ProjectOverviewPage() {
                 ? 'Unlimited contacts'
                 : `${contactsVal.toLocaleString('en-IN')} contacts`;
               return (
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all ${
+                  editMode && !myNegotiation ? 'border-blue-300 ring-2 ring-blue-100' : 'border-gray-200'
+                }`}>
                   {/* Header */}
                   <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
                     <div>
@@ -302,6 +384,16 @@ export default function ProjectOverviewPage() {
                     </span>
                   </div>
 
+                  {/* Approved negotiation banner */}
+                  {hasApprovedNeg && Object.keys(approvedSwaps).length > 0 && (
+                    <div className="mx-6 mt-5 flex items-center gap-3 px-4 py-3 rounded-xl border bg-green-50 border-green-200">
+                      <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <p className="text-sm font-semibold text-green-800">
+                        {Object.keys(approvedSwaps).length} deliverable{Object.keys(approvedSwaps).length > 1 ? 's' : ''} customised for your account
+                      </p>
+                    </div>
+                  )}
+
                   {/* Output quantity banner */}
                   {outputLabel && (
                     <div className={`mx-6 mt-5 flex items-center gap-3 px-4 py-3 rounded-xl border ${theme.upgradeBg}`}>
@@ -312,39 +404,146 @@ export default function ProjectOverviewPage() {
                     </div>
                   )}
 
+                  {/* Edit mode banner */}
+                  {editMode && !myNegotiation && !hasApprovedNeg && (
+                    <div className="mx-6 mt-5 flex items-center justify-between gap-3 px-4 py-3 rounded-xl border bg-blue-50 border-blue-200">
+                      <div className="flex items-center gap-2">
+                        <Pencil className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <p className="text-sm font-semibold text-blue-800">Click pencil to swap — max 3 changes</p>
+                      </div>
+                      <span className="text-xs font-bold bg-blue-600 text-white px-2 py-1 rounded-full">{editCount}/3</span>
+                    </div>
+                  )}
+
                   {/* Deliverable list */}
-                  <div className="p-6 space-y-2.5">
+                  <div className="p-6 space-y-2">
                     {ALL_TIER_DELIVERABLES.map((item, i) => {
+                      // Always based on tier — negotiation never changes who's included/locked
                       const isIncluded = tierData ? !!tierData.features?.[item.key] : i < includedCount;
+                      // If this key was approved-swapped, show the custom label instead
+                      const approvedCustomText = approvedSwaps[item.key] || null;
+
+                      const customText    = deliverableEdits[item.key];
+                      const hasSwap      = !!customText;
+                      const isActiveEdit = activeEditKey === item.key;
+                      const canEdit      = editMode && isIncluded && !myNegotiation && (editCount < 3 || hasSwap);
+
                       return (
-                        <div
-                          key={i}
-                          className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all duration-200 ${
-                            isIncluded
-                              ? 'bg-green-50 border-green-100 hover:border-green-200 hover:shadow-sm'
-                              : 'bg-gray-50 border-gray-100 opacity-55'
-                          }`}
-                        >
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-transform duration-200 ${
-                            isIncluded ? `${theme.checkBg} scale-100` : 'bg-gray-200'
+                        <div key={item.key}>
+                          <div className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all duration-200 ${
+                            hasSwap      ? 'bg-amber-50 border-amber-200' :
+                            isActiveEdit ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-100' :
+                            isIncluded   ? (editMode ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-100 hover:border-green-200 hover:shadow-sm') :
+                                           'bg-gray-50 border-gray-100 opacity-55'
                           }`}>
-                            {isIncluded
-                              ? <Check className="w-3.5 h-3.5 text-white" />
-                              : <Lock className="w-3 h-3 text-gray-400" />
-                            }
+                            {/* Status dot */}
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                              hasSwap    ? 'bg-amber-500' :
+                              isIncluded ? theme.checkBg : 'bg-gray-200'
+                            }`}>
+                              {isIncluded || hasSwap
+                                ? <Check className="w-3.5 h-3.5 text-white" />
+                                : <Lock className="w-3 h-3 text-gray-400" />}
+                            </div>
+
+                            {/* Label */}
+                            <div className="flex-1 min-w-0">
+                              {hasSwap ? (
+                                // Edit-mode pending swap (before submission)
+                                <>
+                                  <p className="text-xs text-gray-400 line-through leading-tight">{item.label}</p>
+                                  <p className="text-sm font-semibold text-amber-800 mt-0.5 flex items-center gap-1">
+                                    <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />{customText}
+                                  </p>
+                                  <p className="text-xs text-amber-600 mt-0.5">Custom deliverable requested</p>
+                                </>
+                              ) : approvedCustomText ? (
+                                // Approved negotiation — show custom text, original crossed out
+                                <>
+                                  <p className="text-xs text-gray-400 line-through leading-tight">{item.label}</p>
+                                  <p className="text-sm font-semibold text-green-800 mt-0.5">{approvedCustomText}</p>
+                                  <span className="inline-block text-[10px] font-bold text-green-700 bg-green-100 border border-green-200 px-1.5 py-0.5 rounded-full mt-1">
+                                    Customised
+                                  </span>
+                                </>
+                              ) : (
+                                // Normal display
+                                <>
+                                  <p className={`text-sm font-semibold ${isIncluded ? 'text-gray-900' : 'text-gray-400'}`}>{item.label}</p>
+                                  <p className={`text-xs mt-0.5 leading-relaxed ${isIncluded ? 'text-gray-500' : 'text-gray-400'}`}>{item.desc}</p>
+                                </>
+                              )}
+                            </div>
+
+                            {/* Edit / undo button */}
+                            {canEdit && (
+                              hasSwap ? (
+                                <button
+                                  onClick={() => undoSwap(item.key)}
+                                  className="flex-shrink-0 w-7 h-7 rounded-full bg-red-100 text-red-500 flex items-center justify-center hover:bg-red-200 transition-colors"
+                                  title="Undo swap"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => setActiveEditKey(isActiveEdit ? null : item.key)}
+                                  className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                                    isActiveEdit ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                                  }`}
+                                  title="Swap this deliverable"
+                                >
+                                  <Pencil className="w-3 h-3" />
+                                </button>
+                              )
+                            )}
+
+                            {!isIncluded && nextTier && !editMode && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200 flex-shrink-0 whitespace-nowrap self-start mt-0.5">
+                                Unlock in {nextTier}
+                              </span>
+                            )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-semibold ${isIncluded ? 'text-gray-900' : 'text-gray-400'}`}>
-                              {item.label}
-                            </p>
-                            <p className={`text-xs mt-0.5 leading-relaxed ${isIncluded ? 'text-gray-500' : 'text-gray-400'}`}>
-                              {item.desc}
-                            </p>
-                          </div>
-                          {!isIncluded && nextTier && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200 flex-shrink-0 whitespace-nowrap self-start mt-0.5">
-                              Unlock in {nextTier}
-                            </span>
+
+                          {/* Inline text input for custom deliverable */}
+                          {isActiveEdit && (
+                            <div className="ml-9 mt-1.5 bg-white border border-blue-200 rounded-xl shadow-md overflow-hidden">
+                              <p className="text-xs font-semibold text-blue-700 px-3 py-2 bg-blue-50 border-b border-blue-100">
+                                Describe your custom deliverable:
+                              </p>
+                              <div className="p-3 space-y-2">
+                                <textarea
+                                  autoFocus
+                                  value={editInputText}
+                                  onChange={e => setEditInputText(e.target.value)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      applyCustomText(item.key, editInputText);
+                                    }
+                                  }}
+                                  rows={2}
+                                  maxLength={200}
+                                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                  placeholder="e.g., Competitor analysis report with pricing benchmarks"
+                                />
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => applyCustomText(item.key, editInputText)}
+                                    disabled={!editInputText.trim()}
+                                    className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                  >
+                                    Apply
+                                  </button>
+                                  <button
+                                    onClick={() => { setActiveEditKey(null); setEditInputText(''); }}
+                                    className="px-3 py-1.5 border border-gray-200 text-gray-500 text-xs rounded-lg hover:bg-gray-50 transition-colors"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
                           )}
                         </div>
                       );
@@ -525,11 +724,82 @@ export default function ProjectOverviewPage() {
               </div>
             )}
 
+            {/* Experts who've done this */}
+            {projectExperts.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <h2 className="font-bold text-gray-900 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-blue-600" /> Experts Who've Done This
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Verified experts with hands-on experience in this type of work
+                  </p>
+                </div>
+                <div className="p-6 space-y-4">
+                  {projectExperts.map((expert) => (
+                    <div
+                      key={expert.expertProfileId}
+                      className="flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:border-blue-200 hover:shadow-sm transition-all"
+                    >
+                      {/* Avatar */}
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-orange-400 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 overflow-hidden">
+                        {expert.avatar
+                          ? <img src={expert.avatar} alt={expert.name} className="w-full h-full object-cover" />
+                          : expert.name?.charAt(0)?.toUpperCase() || 'E'
+                        }
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-gray-900 text-sm">{expert.name}</p>
+                          {expert.isVerified && (
+                            <span className="text-xs bg-green-100 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-medium">
+                              Verified
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5 truncate">{expert.headline}</p>
+                        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                          {expert.rating > 0 && (
+                            <span className="flex items-center gap-1 text-xs text-amber-600">
+                              <Star className="w-3 h-3 fill-current" />
+                              {expert.rating.toFixed(1)}
+                              {expert.totalReviews > 0 && (
+                                <span className="text-gray-400">({expert.totalReviews})</span>
+                              )}
+                            </span>
+                          )}
+                          {expert.city && (
+                            <span className="text-xs text-gray-400">{expert.city}</span>
+                          )}
+                          {expert.availability === 'available' && (
+                            <span className="text-xs text-green-600 font-medium">Available</span>
+                          )}
+                        </div>
+                        {expert.contribution && (
+                          <p className="text-xs text-blue-600 mt-1 italic">"{expert.contribution}"</p>
+                        )}
+                      </div>
+
+                      {/* Hire button */}
+                      <Link
+                        href={`/expert-profile/${expert.expertProfileId}/hire`}
+                        className="flex-shrink-0 px-4 py-2 bg-gradient-to-r from-blue-600 to-orange-500 text-white text-xs font-bold rounded-xl hover:from-blue-700 hover:to-orange-600 transition-all shadow-sm"
+                      >
+                        Hire
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
           </div>
 
-          {/* ── RIGHT: Sticky action panel ───────────────────────── */}
+          {/* ── RIGHT: Action panel ───────────────────────── */}
           <div className="w-full lg:w-80 shrink-0">
-            <div className="sticky top-24 space-y-4">
+            <div className="space-y-4">
 
               {/* Pricing Card */}
               <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
@@ -607,87 +877,44 @@ export default function ProjectOverviewPage() {
                     {accepting ? 'Processing Payment...' : 'Pay Now'}
                   </button>
 
-                  <button
-                    onClick={() => setNegotiateOpen(!negotiateOpen)}
-                    className="w-full py-2.5 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center justify-center gap-2"
-                  >
-                    <Scale className="w-4 h-4" />
-                    Customise Deliverables
-                    {negotiateOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Negotiation Panel */}
-              {negotiateOpen && (
-                <div className="bg-white rounded-2xl border border-blue-200 shadow-lg overflow-hidden">
-                  <div className="px-5 py-4 border-b border-blue-100 bg-blue-50">
-                    <h3 className="font-bold text-blue-900 flex items-center gap-2">
-                      <Scale className="w-4 h-4" /> Customise Deliverables
-                    </h3>
-                    <p className="text-xs text-blue-600 mt-0.5">Tell us how you'd like to adjust the scope — we'll respond within 2 business hours</p>
-                  </div>
-
-                  {negotiateSent ? (
-                    <div className="p-6 text-center">
-                      <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-3" />
-                      <p className="font-semibold text-gray-900">Request Sent!</p>
-                      <p className="text-sm text-gray-500 mt-1">Our team will review and respond shortly.</p>
+                  {myNegotiation ? (
+                    <div className={`w-full py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 border ${
+                      myNegotiation.status === 'approved'  ? 'bg-green-50 border-green-200 text-green-700' :
+                      myNegotiation.status === 'rejected'  ? 'bg-red-50 border-red-200 text-red-600' :
+                                                             'bg-amber-50 border-amber-200 text-amber-700'
+                    }`}>
+                      {myNegotiation.status === 'approved' && <><CheckCircle className="w-4 h-4" /> Custom Package Approved</>}
+                      {myNegotiation.status === 'rejected' && <><Scale className="w-4 h-4" /> Negotiation Not Approved</>}
+                      {myNegotiation.status === 'pending'  && <><Scale className="w-4 h-4" /> Negotiation Under Review</>}
                     </div>
-                  ) : (
-                    <div className="p-5 space-y-4">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-2">What deliverable mix would you prefer?</label>
-                        <textarea
-                          value={negotiateMsg}
-                          onChange={e => setNegotiateMsg(e.target.value)}
-                          rows={4}
-                          className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                          placeholder="e.g., I'd prefer more qualitative insights and fewer raw contacts"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <p className="text-xs font-medium text-gray-500 flex items-center gap-1.5">
-                          <Users className="w-3.5 h-3.5" /> What others have asked for:
-                        </p>
-                        {[
-                          'Focus more on qualitative insights over raw contact volume',
-                          'Prioritise decision-maker profiles over company-level data',
-                          'Include more outreach templates instead of extra contacts',
-                          'Swap intent signals for deeper ICP scoring on fewer leads',
-                          'Replace A/B testing with a dedicated onboarding call',
-                        ].map(q => (
-                          <button
-                            key={q}
-                            onClick={() => setNegotiateMsg(q)}
-                            className="w-full text-left text-xs px-3 py-2 bg-gray-50 hover:bg-blue-50 hover:text-blue-700 rounded-lg border border-gray-200 hover:border-blue-200 transition-colors"
-                          >
-                            {q}
-                          </button>
-                        ))}
-                      </div>
-
+                  ) : editMode ? (
+                    <div className="space-y-2">
+                      {negError && <p className="text-xs text-red-600 text-center font-medium">{negError}</p>}
                       <button
                         onClick={handleNegotiate}
-                        disabled={!negotiateMsg}
+                        disabled={submittingNeg || editCount === 0}
                         className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                       >
-                        <Send className="w-4 h-4" /> Send Request
+                        {submittingNeg ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scale className="w-4 h-4" />}
+                        {submittingNeg ? 'Submitting…' : editCount > 0 ? `Submit ${editCount} Change${editCount > 1 ? 's' : ''}` : 'No Changes Yet'}
                       </button>
-
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1 border-t border-gray-200" />
-                        <span className="text-xs text-gray-400">or prefer a call?</span>
-                        <div className="flex-1 border-t border-gray-200" />
-                      </div>
-
-                      <button className="w-full py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center justify-center gap-2">
-                        <Phone className="w-4 h-4" /> Schedule a Call
+                      <button
+                        onClick={handleToggleEditMode}
+                        className="w-full py-2 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        Cancel editing
                       </button>
                     </div>
+                  ) : (
+                    <button
+                      onClick={handleToggleEditMode}
+                      className="w-full py-2.5 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center justify-center gap-2"
+                    >
+                      <Scale className="w-4 h-4" /> Customise Deliverables
+                    </button>
                   )}
                 </div>
-              )}
+              </div>
 
               {/* Trust signals */}
               <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-3">

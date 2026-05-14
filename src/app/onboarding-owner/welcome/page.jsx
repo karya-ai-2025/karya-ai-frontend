@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { bookCall } from '@/lib/schedulingApi';
 import {
   Play,
   ArrowRight,
@@ -12,7 +13,9 @@ import {
   FileEdit,
   Clock,
   Video,
-  X
+  X,
+  Loader2,
+  Mail,
 } from 'lucide-react';
 
 function WelcomeOnboard() {
@@ -23,6 +26,9 @@ function WelcomeOnboard() {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookingError, setBookingError] = useState('');
+  const [bookedCall, setBookedCall] = useState(null); // set on success
 
   const getDashboardPath = () =>
     activeRole === 'expert' ? '/expert-dashboard' : '/business-dashboard';
@@ -44,13 +50,32 @@ function WelcomeOnboard() {
     setShowScheduler(true);
   };
 
-  const handleConfirmSchedule = () => {
-    if (selectedDate && selectedTime) {
-      // TODO: Save scheduled call to backend
-      alert(`Call scheduled for ${selectedDate} at ${selectedTime}`);
-      router.push(getDashboardPath());
-    } else {
-      alert('Please select both date and time');
+  // Converts "9:00 AM" + "2026-05-10" → ISO string
+  const toISODateTime = (dateStr, timeStr) => {
+    const [time, period] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    return `${dateStr}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+  };
+
+  const handleConfirmSchedule = async () => {
+    if (!selectedDate || !selectedTime) return;
+    setBookingError('');
+    setBookingLoading(true);
+    try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const dateTime = toISODateTime(selectedDate, selectedTime);
+      const result = await bookCall({ dateTime, timezone, source: 'onboarding-owner' });
+      setBookedCall({
+        dateTime,
+        meetLink: result.data.meetLink,
+        isMock: result.data.isMock,
+      });
+    } catch (err) {
+      setBookingError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setBookingLoading(false);
     }
   };
 
@@ -315,6 +340,53 @@ function WelcomeOnboard() {
         {/* Scheduler Modal */}
         {showScheduler && (
           <div className="bg-white border border-gray-200 shadow-lg rounded-2xl p-8 max-w-4xl mx-auto">
+
+            {/* ── SUCCESS STATE ── */}
+            {bookedCall ? (
+              <div className="text-center py-8">
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="w-10 h-10 text-green-500" />
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Call Confirmed!</h2>
+                <p className="text-gray-500 mb-6">
+                  {new Date(bookedCall.dateTime).toLocaleDateString('en-IN', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+                  })}{' '}
+                  at {selectedTime}
+                </p>
+
+                {bookedCall.meetLink ? (
+                  <a
+                    href={bookedCall.meetLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-orange-500 text-white font-semibold rounded-xl hover:opacity-90 transition mb-6"
+                  >
+                    <Video className="w-5 h-5" />
+                    Join Google Meet
+                  </a>
+                ) : (
+                  <div className="inline-flex items-center gap-2 px-5 py-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl mb-6 text-sm font-medium">
+                    <Clock className="w-4 h-4" />
+                    Meet link will be shared once our team confirms the slot
+                  </div>
+                )}
+
+                <div className="flex items-center justify-center gap-2 text-sm text-gray-400 mb-8">
+                  <Mail className="w-4 h-4" />
+                  A confirmation email has been sent to your registered email address
+                </div>
+
+                <button
+                  onClick={() => router.push(getDashboardPath())}
+                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:opacity-90 rounded-xl text-white font-semibold transition flex items-center gap-2 mx-auto"
+                >
+                  Go to Dashboard
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-3xl font-bold text-gray-900">Schedule Your Onboarding Call</h2>
               <button
@@ -349,8 +421,8 @@ function WelcomeOnboard() {
                   </div>
 
                   <div className="grid grid-cols-7 gap-2">
-                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
-                      <div key={day} className="text-center text-xs font-medium text-gray-600 py-2">
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                      <div key={i} className="text-center text-xs font-medium text-gray-600 py-2">
                         {day}
                       </div>
                     ))}
@@ -422,23 +494,36 @@ function WelcomeOnboard() {
               </div>
             )}
 
+            {/* Error */}
+            {bookingError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                {bookingError}
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="flex gap-4 mt-8">
               <button
                 onClick={() => setShowScheduler(false)}
-                className="flex-1 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold hover:bg-gray-50 transition-all"
+                disabled={bookingLoading}
+                className="flex-1 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold hover:bg-gray-50 transition-all disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmSchedule}
-                disabled={!selectedDate || !selectedTime}
+                disabled={!selectedDate || !selectedTime || bookingLoading}
                 className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-lg text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Confirm Schedule
-                <CheckCircle className="w-5 h-5" />
+                {bookingLoading ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> Booking...</>
+                ) : (
+                  <><CheckCircle className="w-5 h-5" /> Confirm Schedule</>
+                )}
               </button>
             </div>
+            </>
+            )}
           </div>
         )}
 

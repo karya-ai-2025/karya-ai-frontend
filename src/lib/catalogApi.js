@@ -132,6 +132,14 @@ export async function removeCatalogProject(slug) {
   return res.json();
 }
 
+// Fetches experts attached to a catalog project.
+export async function fetchProjectExperts(slug) {
+  const res = await fetch(`${API_URL}/catalog/${slug}/experts`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to fetch project experts');
+  const json = await res.json();
+  return json.data.experts || [];
+}
+
 // Fetches all catalog projects purchased by the logged-in user.
 // Merges backend results with any locally-cached purchases (saved when backend was offline).
 export async function fetchMyProjects() {
