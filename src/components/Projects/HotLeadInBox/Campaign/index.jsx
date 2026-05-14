@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import {
   Mail,
   Users,
   BarChart3,
   Plus,
   Settings,
-  Zap
+  Zap,
+  Database
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import CampaignDashboard from './CampaignDashboard';
@@ -15,34 +16,33 @@ import CreateCampaign from './CreateCampaign';
 import EmailTemplateBuilder from './EmailTemplateBuilder';
 import CampaignStats from './CampaignStats';
 import EditCampaign from './EditCampaign';
+import CRMListManager from './CRMListManager';
+
+const initialCampaignStats = {
+  totalCampaigns: 0,
+  activeCampaigns: 0,
+  totalEmailsSent: 0,
+  totalCreditsUsed: 0,
+  averageOpenRate: 0,
+  averageClickRate: 0
+};
 
 export default function Campaign({ onCollapseSidebar, onExpandSidebar }) {
   const { user } = useAuth();
 
   // Active component state
-  const [activeComponent, setActiveComponent] = useState('dashboard'); // dashboard, create, templates, stats
+  const [activeComponent, setActiveComponent] = useState('dashboard'); // dashboard, create, templates, crmLists, stats
   const [selectedCampaign, setSelectedCampaign] = useState(null);
 
   // Dashboard data state
-  const [campaignStats, setCampaignStats] = useState({
-    totalCampaigns: 0,
-    activeCampaigns: 0,
-    totalEmailsSent: 0,
-    totalCreditsUsed: 0,
-    averageOpenRate: 0,
-    averageClickRate: 0
-  });
+  const [campaignStats, setCampaignStats] = useState(initialCampaignStats);
 
   // Loading states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Fetch dashboard data on component mount
-  useEffect(() => {
-    fetchDashboardData();
-  }, [user]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -57,7 +57,7 @@ export default function Campaign({ onCollapseSidebar, onExpandSidebar }) {
       const data = await response.json();
 
       if (data.success) {
-        setCampaignStats(data.data.summary || campaignStats);
+        setCampaignStats(data.data.summary || initialCampaignStats);
       } else {
         setError(data.message || 'Failed to fetch dashboard data');
       }
@@ -67,7 +67,11 @@ export default function Campaign({ onCollapseSidebar, onExpandSidebar }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [user, fetchDashboardData]);
 
   // Component navigation
   const navigateToComponent = (component, campaignData = null) => {
@@ -106,6 +110,14 @@ export default function Campaign({ onCollapseSidebar, onExpandSidebar }) {
       case 'templates':
         return (
           <EmailTemplateBuilder
+            onBack={() => setActiveComponent('dashboard')}
+            onCollapseSidebar={onCollapseSidebar}
+          />
+        );
+
+      case 'crmLists':
+        return (
+          <CRMListManager
             onBack={() => setActiveComponent('dashboard')}
             onCollapseSidebar={onCollapseSidebar}
           />
@@ -200,7 +212,7 @@ export default function Campaign({ onCollapseSidebar, onExpandSidebar }) {
             <div className="flex items-center space-x-1 text-sm text-gray-500">
               <button
                 onClick={() => setActiveComponent('dashboard')}
-                className="hover:text-indigo-600 transition-colors"
+                className="hover:text-indigo-600 transition-colors cursor-pointer"
               >
                 Dashboard
               </button>
@@ -213,16 +225,24 @@ export default function Campaign({ onCollapseSidebar, onExpandSidebar }) {
         {activeComponent === 'dashboard' && (
           <div className="flex items-center space-x-3">
             <button
+              onClick={() => navigateToComponent('crmLists')}
+              className="flex items-center space-x-2 px-3 py-2 text-sm bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
+            >
+              <Database className="w-4 h-4" />
+              <span>CRM Lists</span>
+            </button>
+
+            <button
               onClick={() => navigateToComponent('templates')}
-              className="flex items-center space-x-2 px-3 py-2 text-sm bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
+              className="flex items-center space-x-2 px-3 py-2 text-sm bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
             >
               <Settings className="w-4 h-4" />
-              <span>Templates</span>
+              <span>Campaign Templates</span>
             </button>
 
             <button
               onClick={() => navigateToComponent('create')}
-              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition-all transform hover:scale-105"
+              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition-all transform hover:scale-105 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>New Campaign</span>
@@ -245,7 +265,7 @@ export default function Campaign({ onCollapseSidebar, onExpandSidebar }) {
             <span className="text-sm font-medium">Error: {error}</span>
             <button
               onClick={fetchDashboardData}
-              className="text-xs text-red-600 hover:text-red-800 underline ml-2"
+              className="text-xs text-red-600 hover:text-red-800 underline ml-2 cursor-pointer"
             >
               Try Again
             </button>

@@ -17,8 +17,9 @@ import {
   RefreshCw,
   Trash2,
   Upload,
-  UserPlus,
-  FileSpreadsheet
+  ShieldCheck,
+  Loader2,
+  XCircle
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import EmailTemplateBuilder from './EmailTemplateBuilder';
@@ -82,6 +83,9 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
   const [showAddLeadForm, setShowAddLeadForm] = useState(false);
   const [newLead, setNewLead] = useState({ firstName: '', email: '', lastName: '', company: '', jobTitle: '', industry: '' });
   const [leadErrors, setLeadErrors] = useState({});
+  const [emailValidationLoading, setEmailValidationLoading] = useState(false);
+  const [emailValidationSummary, setEmailValidationSummary] = useState(null);
+  const [emailValidationError, setEmailValidationError] = useState('');
 
   useEffect(() => {
     if (onCollapseSidebar) onCollapseSidebar();
@@ -182,10 +186,44 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
     };
   };
 
+  const getNormalizedEmail = (email = '') => String(email).trim().toLowerCase();
+
+  const applyEmailValidationResults = (leads, resultsByEmail) => (
+    leads.map((lead) => {
+      const result = resultsByEmail[getNormalizedEmail(lead.email)];
+      return {
+        ...lead,
+        emailValidation: result || lead.emailValidation || null
+      };
+    })
+  );
+
+  const getValidationBadge = (lead) => {
+    const validation = lead.emailValidation;
+
+    if (!validation?.isValidated) return null;
+
+    if (validation.isValid) {
+      return (
+        <span className="inline-flex items-center text-green-700" title="Email validated">
+          <Check className="w-4 h-4" />
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex items-center text-red-600" title={validation.status || 'Email not valid'}>
+        <XCircle className="w-4 h-4" />
+      </span>
+    );
+  };
+
   const handleCrmObjectSelect = (crmObject) => {
     const formattedLeads = (crmObject.leads || []).map(formatCrmLead);
     setSelectedCrmObject(crmObject);
     setCampaignData((prev) => ({ ...prev, selectedLeads: formattedLeads }));
+    setEmailValidationSummary(null);
+    setEmailValidationError('');
     setShowLeadSourcePicker(false);
   };
 
@@ -194,6 +232,8 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
       ...prev,
       selectedLeads: prev.selectedLeads.filter((_, i) => i !== leadIndex)
     }));
+    setEmailValidationSummary(null);
+    setEmailValidationError('');
   };
 
   const handleAddLead = () => {
@@ -226,6 +266,64 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
     }));
     setNewLead({ firstName: '', email: '', lastName: '', company: '', jobTitle: '', industry: '' });
     setLeadErrors({});
+    setEmailValidationSummary(null);
+    setEmailValidationError('');
+  };
+
+  const handleValidateSelectedEmails = async () => {
+    const leadsToValidate = campaignData.selectedLeads.filter(
+      (lead) => lead.email && lead.email.includes('@')
+    );
+
+    if (leadsToValidate.length === 0) {
+      setEmailValidationError('No email addresses available to validate.');
+      return;
+    }
+
+    try {
+      setEmailValidationLoading(true);
+      setEmailValidationError('');
+      setEmailValidationSummary(null);
+
+      const response = await fetch(`${apiBaseUrl}/campaigns/validate-emails`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader()
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          leads: leadsToValidate.map((lead) => ({
+            id: lead.id,
+            leadId: lead.leadId,
+            email: lead.email,
+            firstName: lead.firstName,
+            lastName: lead.lastName,
+            fullName: lead.fullName,
+            company: lead.company
+          }))
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setEmailValidationError(data.message || 'Failed to validate emails.');
+        return;
+      }
+
+      const results = data.data?.results || {};
+      setCampaignData((prev) => ({
+        ...prev,
+        selectedLeads: applyEmailValidationResults(prev.selectedLeads, results)
+      }));
+      setEmailValidationSummary(data.data?.summary || null);
+    } catch (error) {
+      console.error('Error validating emails:', error);
+      setEmailValidationError('Failed to validate emails. Please try again.');
+    } finally {
+      setEmailValidationLoading(false);
+    }
   };
 
   const selectTemplate = (template) => {
@@ -239,7 +337,10 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
   const handleSave = async () => {
     const newErrors = {};
     if (!campaignData.name.trim()) newErrors.name = 'Campaign name is required';
-    const validLeads = campaignData.selectedLeads.filter((l) => l.email && l.email.includes('@'));
+    const leadsForSave = emailValidationSummary
+      ? campaignData.selectedLeads.filter((lead) => lead.emailValidation?.isValid)
+      : campaignData.selectedLeads;
+    const validLeads = leadsForSave.filter((l) => l.email && l.email.includes('@'));
     if (validLeads.length === 0) newErrors.leads = 'At least one lead with a valid email is required';
     if (!campaignData.emailTemplateId) newErrors.template = 'An email template is required';
 
@@ -256,7 +357,7 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
           name: campaignData.name,
           description: campaignData.description,
           emailTemplateId: campaignData.emailTemplateId,
-          selectedLeads: campaignData.selectedLeads
+          selectedLeads: leadsForSave
             .filter((lead) => lead.email && lead.email.includes('@'))
             .map((lead) => ({
               leadId: lead.leadId || lead.id,
@@ -293,7 +394,7 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
     { key: 'info', label: 'Basic Info', icon: Edit3 },
     { key: 'leads', label: 'Leads', icon: Users },
     { key: 'template', label: 'Template', icon: Mail },
-    { key: 'settings', label: 'Settings', icon: Settings }
+    { key: 'settings', label: 'Settings & Review', icon: Settings }
   ];
 
   if (fetchLoading) {
@@ -369,14 +470,15 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
         </div>
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => {
-              setShowAddLeadForm((prev) => !prev);
-              setShowLeadSourcePicker(false);
-            }}
-            className="flex items-center space-x-2 px-3 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+            disabled
+            title="Upload leads is coming soon"
+            className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 text-gray-400 border border-gray-200 rounded-lg cursor-not-allowed"
           >
-            <UserPlus className="w-4 h-4" />
-            <span>Add Lead</span>
+            <Upload className="w-4 h-4" />
+            <span>Upload Leads</span>
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+              Coming Soon
+            </span>
           </button>
           <button
             onClick={() => {
@@ -535,9 +637,43 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
       {/* Current Leads List */}
       {campaignData.selectedLeads.length > 0 && (
         <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
-            <span className="text-sm font-medium text-gray-700">Current Leads</span>
+          <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-medium text-gray-700">Current Leads</div>
+              <div className="text-xs text-gray-500 mt-0.5">
+                Email validation consumes credits per email.
+              </div>
+            </div>
+            <button
+              onClick={handleValidateSelectedEmails}
+              disabled={emailValidationLoading || validEmailCount === 0}
+              className="inline-flex items-center gap-2 px-3 py-2 text-base cursor-pointer font-medium bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:text-gray-500 text-white rounded-lg transition-colors"
+            >
+              {emailValidationLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
+              ) : (
+                <ShieldCheck className="w-4 h-4" />
+              )}
+              <span>{emailValidationLoading ? 'Validating...' : 'Run Email Validation'}</span>
+            </button>
           </div>
+          {emailValidationSummary && (
+            <div className="px-4 py-2.5 bg-green-50 border-b border-green-100 text-sm text-green-800">
+              {emailValidationSummary.verifiedCount} verified.
+              {' '}{emailValidationSummary.validCount} valid.
+              {emailValidationSummary.notValidCount > 0 && (
+                <>{' '}{emailValidationSummary.notValidCount} not valid.</>
+              )}
+              {' '}Cost: {emailValidationSummary.creditCostPerEmail} credit{emailValidationSummary.creditCostPerEmail === 1 ? '' : 's'} per email.
+              {' '}Credits used: {emailValidationSummary.creditsConsumed}.
+              {' '}Remaining credits: {emailValidationSummary.remainingCredits}.
+            </div>
+          )}
+          {emailValidationError && (
+            <div className="px-4 py-2 bg-red-50 border-b border-red-100 text-xs text-red-700">
+              {emailValidationError}
+            </div>
+          )}
           <div className="max-h-64 overflow-y-auto edit-campaign-scroll">
             {campaignData.selectedLeads.map((lead, index) => (
               <div
@@ -548,7 +684,10 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
                   <div className="font-medium text-gray-900 text-sm truncate">
                     {lead.firstName} {lead.lastName}
                   </div>
-                  <div className="text-xs text-gray-500 truncate">{lead.email}</div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500 truncate">
+                    <span>{lead.email}</span>
+                    {getValidationBadge(lead)}
+                  </div>
                 </div>
                 <div className="text-xs text-gray-500 mx-3 hidden sm:block">{lead.company || 'N/A'}</div>
                 <button
@@ -726,132 +865,65 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
     );
   };
 
-  const renderSettingsSection = () => (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Sending Rate (emails per hour)
-        </label>
-        <input
-          type="number"
-          value={campaignData.settings.sendingRate}
-          onChange={(e) =>
-            setCampaignData((prev) => ({
-              ...prev,
-              settings: { ...prev.settings, sendingRate: Math.min(500, Math.max(1, parseInt(e.target.value) || 1)) }
-            }))
-          }
-          min={1}
-          max={500}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-        <p className="text-xs text-gray-500 mt-1">Min: 1, Max: 500 emails per hour</p>
-      </div>
+  const renderSettingsSection = () => {
+    const reviewLeads = emailValidationSummary
+      ? campaignData.selectedLeads.filter((lead) => lead.emailValidation?.isValid)
+      : campaignData.selectedLeads;
+    const validLeadsCount = reviewLeads.filter(
+      (lead) => lead.email && lead.email.includes('@')
+    ).length;
+    const invalidLeadsCount = reviewLeads.length - validLeadsCount;
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
-        <select
-          value={campaignData.settings.timeZone}
-          onChange={(e) =>
-            setCampaignData((prev) => ({
-              ...prev,
-              settings: { ...prev.settings, timeZone: e.target.value }
-            }))
-          }
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="UTC">UTC</option>
-          <option value="America/New_York">Eastern Time</option>
-          <option value="America/Chicago">Central Time</option>
-          <option value="America/Denver">Mountain Time</option>
-          <option value="America/Los_Angeles">Pacific Time</option>
-          <option value="Asia/Kolkata">India (IST)</option>
-          <option value="Europe/London">London (GMT)</option>
-          <option value="Asia/Tokyo">Tokyo (JST)</option>
-        </select>
-      </div>
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Review</h3>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Sending Start Hour</label>
-          <input
-            type="number"
-            value={campaignData.settings.sendingHours.start}
-            onChange={(e) =>
-              setCampaignData((prev) => ({
-                ...prev,
-                settings: {
-                  ...prev.settings,
-                  sendingHours: { ...prev.settings.sendingHours, start: Math.min(23, Math.max(0, parseInt(e.target.value) || 0)) }
-                }
-              }))
-            }
-            min={0}
-            max={23}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Sending End Hour</label>
-          <input
-            type="number"
-            value={campaignData.settings.sendingHours.end}
-            onChange={(e) =>
-              setCampaignData((prev) => ({
-                ...prev,
-                settings: {
-                  ...prev.settings,
-                  sendingHours: { ...prev.settings.sendingHours, end: Math.min(23, Math.max(0, parseInt(e.target.value) || 0)) }
-                }
-              }))
-            }
-            min={0}
-            max={23}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <h4 className="font-medium text-gray-900 mb-3">Campaign Summary</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-600">Campaign Name:</span>
+                <div className="font-medium text-gray-900">{campaignData.name || 'N/A'}</div>
+              </div>
+              <div>
+                <span className="text-gray-600">Leads with Email:</span>
+                <div className="font-medium text-gray-900">{validLeadsCount} leads</div>
+                {invalidLeadsCount > 0 && (
+                  <div className="text-xs text-amber-600">
+                    {invalidLeadsCount} leads excluded (no email)
+                  </div>
+                )}
+              </div>
+              <div>
+                <span className="text-gray-600">Email Template:</span>
+                <div className="font-medium text-gray-900">
+                  {campaignData.emailTemplate?.templateName || 'N/A'}
+                </div>
+              </div>
+              <div>
+                <span className="text-gray-600">Estimated Credits:</span>
+                <div className="font-medium text-gray-900">{validLeadsCount} credits</div>
+              </div>
+            </div>
+          </div>
+
+          {invalidLeadsCount > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2 text-amber-800">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="font-medium">Notice</span>
+              </div>
+              <p className="text-sm text-amber-700 mt-1">
+                {invalidLeadsCount} lead{invalidLeadsCount > 1 ? 's' : ''} without email addresses will be excluded from this campaign.
+                Only leads with valid email addresses can receive email campaigns.
+              </p>
+            </div>
+          )}
         </div>
       </div>
-
-      <div className="flex items-center space-x-3">
-        <input
-          type="checkbox"
-          id="followUpEnabled"
-          checked={campaignData.settings.followUpEnabled}
-          onChange={(e) =>
-            setCampaignData((prev) => ({
-              ...prev,
-              settings: { ...prev.settings, followUpEnabled: e.target.checked }
-            }))
-          }
-          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-        />
-        <label htmlFor="followUpEnabled" className="text-sm text-gray-700">
-          Enable follow-up emails
-        </label>
-      </div>
-
-      {campaignData.settings.followUpEnabled && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Follow-up delay (hours)
-          </label>
-          <input
-            type="number"
-            value={campaignData.settings.followUpDelayHours}
-            onChange={(e) =>
-              setCampaignData((prev) => ({
-                ...prev,
-                settings: { ...prev.settings, followUpDelayHours: Math.min(720, Math.max(1, parseInt(e.target.value) || 1)) }
-              }))
-            }
-            min={1}
-            max={720}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   return (
     <>

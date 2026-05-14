@@ -18,7 +18,10 @@ import {
   Trash2,
   UserPlus,
   Save,
-  FileSpreadsheet
+  FileSpreadsheet,
+  ShieldCheck,
+  Loader2,
+  XCircle
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import EmailTemplateBuilder from './EmailTemplateBuilder';
@@ -95,6 +98,9 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
   const [newLead, setNewLead] = useState({ firstName: '', email: '', lastName: '', company: '', jobTitle: '', industry: '' });
   const [leadErrors, setLeadErrors] = useState({});
   const [savingCrm, setSavingCrm] = useState(false);
+  const [emailValidationLoading, setEmailValidationLoading] = useState(false);
+  const [emailValidationSummary, setEmailValidationSummary] = useState(null);
+  const [emailValidationError, setEmailValidationError] = useState('');
 
   useEffect(() => {
     if (onCollapseSidebar) {
@@ -134,6 +140,16 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
 
   const nextStep = () => {
     if (validateCurrentStep()) {
+      if (currentStep === 2 && emailValidationSummary) {
+        const validLeads = campaignData.selectedLeads.filter((lead) => lead.emailValidation?.isValid);
+
+        setCampaignData((prev) => ({
+          ...prev,
+          selectedLeads: validLeads
+        }));
+        setAvailableLeads((prev) => prev.filter((lead) => lead.emailValidation?.isValid));
+      }
+
       setCurrentStep((prev) => Math.min(4, prev + 1));
       setErrors({});
     }
@@ -160,6 +176,38 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
       industry: lead.industry || lead.rawData?.GTM_Industry || 'N/A',
       jobTitle: lead.title || lead.jobTitle || lead.rawData?.title || 'N/A'
     };
+  };
+
+  const getNormalizedEmail = (email = '') => String(email).trim().toLowerCase();
+
+  const applyEmailValidationResults = (leads, resultsByEmail) => (
+    leads.map((lead) => {
+      const result = resultsByEmail[getNormalizedEmail(lead.email)];
+      return {
+        ...lead,
+        emailValidation: result || lead.emailValidation || null
+      };
+    })
+  );
+
+  const getValidationBadge = (lead) => {
+    const validation = lead.emailValidation;
+
+    if (!validation?.isValidated) return null;
+
+    if (validation.isValid) {
+      return (
+        <span className="inline-flex items-center text-green-700" title="Email validated">
+          <Check className="w-4 h-4" />
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex items-center text-red-600" title={validation.status || 'Email not validated'}>
+        <XCircle className="w-4 h-4" />
+      </span>
+    );
   };
 
   const fetchUserCrmObjects = async () => {
@@ -207,11 +255,15 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
       setUploadCrmName('');
       setManualLeads([]);
       setNewLead({ firstName: '', email: '', lastName: '', company: '', jobTitle: '', industry: '' });
+      setEmailValidationSummary(null);
+      setEmailValidationError('');
       return;
     }
 
     if (source === 'karya-ai-crm') {
       setSelectedLeadSource('karya-ai-crm');
+      setEmailValidationSummary(null);
+      setEmailValidationError('');
       await fetchUserCrmObjects();
     }
   };
@@ -293,6 +345,8 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
         });
         setAvailableLeads(formattedLeads);
         setCampaignData((prev) => ({ ...prev, selectedLeads: formattedLeads }));
+        setEmailValidationSummary(null);
+        setEmailValidationError('');
       } else {
         setErrors((prev) => ({ ...prev, leads: data.message || 'Failed to save leads' }));
       }
@@ -313,7 +367,66 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
       ...prev,
       selectedLeads: formattedLeads
     }));
+    setEmailValidationSummary(null);
+    setEmailValidationError('');
     setErrors((prev) => ({ ...prev, leads: undefined }));
+  };
+
+  const handleValidateSelectedEmails = async () => {
+    const leadsToValidate = campaignData.selectedLeads.filter(
+      (lead) => lead.email && lead.email.includes('@')
+    );
+
+    if (leadsToValidate.length === 0) {
+      setEmailValidationError('No email addresses available to validate.');
+      return;
+    }
+
+    try {
+      setEmailValidationLoading(true);
+      setEmailValidationError('');
+      setEmailValidationSummary(null);
+
+      const response = await fetch(`${apiBaseUrl}/campaigns/validate-emails`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader()
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          leads: leadsToValidate.map((lead) => ({
+            id: lead.id,
+            leadId: lead.leadId,
+            email: lead.email,
+            firstName: lead.firstName,
+            lastName: lead.lastName,
+            fullName: lead.fullName,
+            company: lead.company
+          }))
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setEmailValidationError(data.message || 'Failed to validate emails.');
+        return;
+      }
+
+      const results = data.data?.results || {};
+      setAvailableLeads((prev) => applyEmailValidationResults(prev, results));
+      setCampaignData((prev) => ({
+        ...prev,
+        selectedLeads: applyEmailValidationResults(prev.selectedLeads, results)
+      }));
+      setEmailValidationSummary(data.data?.summary || null);
+    } catch (error) {
+      console.error('Error validating emails:', error);
+      setEmailValidationError('Failed to validate emails. Please try again.');
+    } finally {
+      setEmailValidationLoading(false);
+    }
   };
 
   const handleResetLeadSource = () => {
@@ -329,6 +442,8 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
     setManualLeads([]);
     setNewLead({ firstName: '', email: '', lastName: '', company: '', jobTitle: '', industry: '' });
     setLeadErrors({});
+    setEmailValidationSummary(null);
+    setEmailValidationError('');
     setErrors((prev) => ({ ...prev, leads: undefined }));
   };
 
@@ -490,11 +605,15 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
           {!selectedLeadSource && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
               <button
-                onClick={() => handleLeadSourceSelection('upload')}
-                className="flex items-center justify-center space-x-3 px-5 py-5 bg-white border border-gray-300 hover:border-gray-400 rounded-xl transition-colors"
+                disabled
+                title="Upload leads is coming soon"
+                className="flex items-center justify-center space-x-3 px-5 py-5 bg-gray-50 border border-gray-200 rounded-xl cursor-not-allowed"
               >
-                <Upload className="w-5 h-5 text-gray-600" />
-                <span className="font-medium text-gray-900">Upload Your Leads</span>
+                <Upload className="w-5 h-5 text-gray-400" />
+                <span className="font-medium text-gray-500">Upload Your Leads</span>
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                  Coming Soon
+                </span>
               </button>
 
               <button
@@ -552,7 +671,7 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-base font-semibold text-gray-900">Add Leads to "{uploadCrmName}"</h4>
+                      <h4 className="text-base font-semibold text-gray-900">Add Leads to &quot;{uploadCrmName}&quot;</h4>
                       <p className="text-sm text-gray-500">{manualLeads.length} lead{manualLeads.length !== 1 ? 's' : ''} added</p>
                     </div>
                     <button
@@ -775,34 +894,53 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
               )}
             </div>
           )}
-
           {selectedCrmObject && availableLeads.length > 0 && (
             <div className="space-y-4 pt-2">
-              <div className="border border-green-200 bg-green-50 rounded-xl p-4">
-                <div className="flex items-center justify-between gap-4">
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-sm font-semibold text-green-900">{selectedCrmObject.crmObjectName}</div>
-                    <div className="text-sm text-green-800 mt-1">
-                      {campaignData.selectedLeads.length} total leads loaded, {validEmailCount} with valid email addresses.
+                    <div className="text-sm font-medium text-gray-700">
+                      Preview of selected CRM leads
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      Email validation consumes credits per email.
                     </div>
                   </div>
-                  <div className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
-                    Campaign Source Ready
-                  </div>
+                  <button
+                    onClick={handleValidateSelectedEmails}
+                    disabled={emailValidationLoading || validEmailCount === 0}
+                    className="inline-flex items-center gap-2 px-3 py-2 text-base cursor-pointer font-medium bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:text-gray-500 text-white rounded-lg transition-colors"
+                  >
+                    {emailValidationLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    ) : (
+                      <ShieldCheck className="w-4 h-4" />
+                    )}
+                    <span>{emailValidationLoading ? 'Validating...' : 'Run Email Validation'}</span>
+                  </button>
                 </div>
-              </div>
-
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
-                  <div className="text-sm font-medium text-gray-700">
-                    Preview of selected CRM leads
+                {emailValidationSummary && (
+                  <div className="px-4 py-2.5 bg-green-50 border-b border-green-100 text-sm text-green-800">
+                    {emailValidationSummary.verifiedCount} verified.
+                    {' '}{emailValidationSummary.validCount} valid.
+                    {emailValidationSummary.notValidCount > 0 && (
+                      <>{' '}{emailValidationSummary.notValidCount} not valid.</>
+                    )}
+                    {' '}Cost: {emailValidationSummary.creditCostPerEmail} credit{emailValidationSummary.creditCostPerEmail === 1 ? '' : 's'} per email.
+                    {' '}Credits used: {emailValidationSummary.creditsConsumed}.
+                    {' '}Remaining credits: {emailValidationSummary.remainingCredits}.
                   </div>
-                </div>
+                )}
+                {emailValidationError && (
+                  <div className="px-4 py-2 bg-red-50 border-b border-red-100 text-xs text-red-700">
+                    {emailValidationError}
+                  </div>
+                )}
                 <div
                   className="max-h-56 overflow-y-auto campaign-form-scroll"
                   style={{ scrollbarWidth: 'thin', scrollbarColor: '#9CA3AF #F3F4F6' }}
                 >
-                  {availableLeads.slice(0, 4).map((lead) => (
+                  {availableLeads.map((lead) => (
                     <div
                       key={lead.id}
                       className="flex items-center p-4 border-b border-gray-100 last:border-b-0"
@@ -816,7 +954,10 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
                             <div className="text-sm text-gray-600">{lead.jobTitle} at {lead.company}</div>
                           </div>
                           <div className="text-right">
-                            <div className="text-sm text-gray-900">{lead.email || 'No email'}</div>
+                            <div className="flex items-center justify-end gap-2 text-sm text-gray-900">
+                              <span>{lead.email || 'No email'}</span>
+                              {getValidationBadge(lead)}
+                            </div>
                             <div className="text-xs text-gray-500">{lead.industry}</div>
                           </div>
                         </div>
@@ -824,11 +965,6 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
                     </div>
                   ))}
                 </div>
-                {availableLeads.length > 4 && (
-                  <div className="px-4 py-3 bg-gray-50 text-xs text-gray-500 border-t border-gray-200">
-                    Showing 4 of {availableLeads.length} leads from this CRM object.
-                  </div>
-                )}
               </div>
             </div>
           )}

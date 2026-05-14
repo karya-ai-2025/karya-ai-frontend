@@ -17,7 +17,8 @@ import {
   Filter,
   Search,
   Eye,
-  Copy
+  Copy,
+  X
 } from 'lucide-react';
 
 // Enhanced scrollbar styles for the campaigns table
@@ -46,6 +47,15 @@ const scrollbarStyles = `
   }
 `;
 
+const formatDisplayDate = (dateValue) => {
+  if (!dateValue) return 'N/A';
+  return new Date(dateValue).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+};
+
 export default function CampaignDashboard({
   campaignStats,
   loading,
@@ -63,6 +73,12 @@ export default function CampaignDashboard({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [actionLoading, setActionLoading] = useState({});
+  const [copyModal, setCopyModal] = useState({
+    open: false,
+    campaign: null,
+    name: '',
+    error: ''
+  });
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -226,6 +242,75 @@ export default function CampaignDashboard({
     }
   };
 
+  const openCopyModal = (campaign) => {
+    setCopyModal({
+      open: true,
+      campaign,
+      name: `${campaign.name} Copy`,
+      error: ''
+    });
+  };
+
+  const closeCopyModal = () => {
+    setCopyModal({
+      open: false,
+      campaign: null,
+      name: '',
+      error: ''
+    });
+  };
+
+  const handleDuplicateCampaign = async () => {
+    if (!copyModal.campaign) return;
+
+    const campaign = copyModal.campaign;
+    const trimmedName = copyModal.name.trim();
+    if (!trimmedName) {
+      setCopyModal((prev) => ({ ...prev, error: 'Campaign name is required.' }));
+      return;
+    }
+
+    if (trimmedName.length < 2 || trimmedName.length > 100) {
+      setCopyModal((prev) => ({ ...prev, error: 'Campaign name must be between 2 and 100 characters.' }));
+      return;
+    }
+
+    try {
+      setActionLoading({ ...actionLoading, [campaign._id]: 'copying' });
+      setCopyModal((prev) => ({ ...prev, error: '' }));
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/campaigns/${campaign._id}/duplicate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: trimmedName })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        fetchCampaigns();
+        onRefresh();
+        closeCopyModal();
+      } else {
+        setCopyModal((prev) => ({
+          ...prev,
+          error: data.message || 'Failed to copy campaign.'
+        }));
+      }
+    } catch (error) {
+      console.error('Error copying campaign:', error);
+      setCopyModal((prev) => ({
+        ...prev,
+        error: 'Failed to copy campaign. Please try again.'
+      }));
+    } finally {
+      setActionLoading({ ...actionLoading, [campaign._id]: null });
+    }
+  };
+
   // Status badge component
   const StatusBadge = ({ status }) => {
     const statusConfig = {
@@ -276,32 +361,43 @@ export default function CampaignDashboard({
       <td className="px-4 py-4 text-sm text-gray-900 min-w-32">
         <div className="flex flex-col space-y-1">
           <div>Sent: {campaign.stats?.sentCount || 0}</div>
-          <div className="text-xs text-gray-500">
-            Opened: {campaign.stats?.openedCount || 0} ({campaign.performance?.openRate || 0}%)
-          </div>
         </div>
       </td>
 
       <td className="px-4 py-4 text-sm text-gray-500 min-w-24">
-        {new Date(campaign.createdAt).toLocaleDateString()}
+        {formatDisplayDate(campaign.createdAt)}
       </td>
 
-      <td className="px-4 py-4 min-w-28">
+      <td className="px-4 py-4 min-w-40">
         <div className="flex items-center space-x-2">
           {/* View Stats */}
           <button
             onClick={() => onViewCampaignStats(campaign)}
-            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
             title="View Statistics"
           >
             <Eye className="w-4 h-4" />
+          </button>
+
+          {/* Copy */}
+          <button
+            onClick={() => openCopyModal(campaign)}
+            disabled={actionLoading[campaign._id]}
+            className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Copy Campaign"
+          >
+            {actionLoading[campaign._id] === 'copying' ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Copy className="w-4 h-4" />
+            )}
           </button>
 
           {/* Edit - only for draft/paused */}
           {['draft', 'paused'].includes(campaign.status) && (
             <button
               onClick={() => onEditCampaign && onEditCampaign(campaign)}
-              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
               title="Edit Campaign"
             >
               <Edit3 className="w-4 h-4" />
@@ -313,7 +409,7 @@ export default function CampaignDashboard({
             <button
               onClick={() => handleStartCampaign(campaign._id)}
               disabled={actionLoading[campaign._id]}
-              className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors disabled:opacity-50"
+              className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               title="Start Campaign"
             >
               {actionLoading[campaign._id] === 'starting' ? (
@@ -326,7 +422,7 @@ export default function CampaignDashboard({
             <button
               onClick={() => handlePauseCampaign(campaign._id)}
               disabled={actionLoading[campaign._id]}
-              className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors disabled:opacity-50"
+              className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               title="Pause Campaign"
             >
               {actionLoading[campaign._id] === 'pausing' ? (
@@ -342,7 +438,7 @@ export default function CampaignDashboard({
             <button
               onClick={() => handleDeleteCampaign(campaign._id, campaign.name)}
               disabled={actionLoading[campaign._id]}
-              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               title="Delete Campaign"
             >
               {actionLoading[campaign._id] === 'deleting' ? (
@@ -403,7 +499,7 @@ export default function CampaignDashboard({
 
         <button
           onClick={() => { fetchCampaigns(); onRefresh(); }}
-          className="flex items-center justify-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 rounded-lg transition-colors whitespace-nowrap"
+          className="flex items-center justify-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
         >
           <RefreshCw className="w-4 h-4" />
           <span className="hidden sm:inline">Refresh</span>
@@ -430,7 +526,7 @@ export default function CampaignDashboard({
             </div>
             <button
               onClick={() => setCreditError(null)}
-              className="text-amber-500 hover:text-amber-700 p-1"
+              className="text-amber-500 hover:text-amber-700 p-1 cursor-pointer"
             >
               <span className="text-lg leading-none">&times;</span>
             </button>
@@ -463,7 +559,7 @@ export default function CampaignDashboard({
             {filteredCampaigns.length === 0 && campaigns.length === 0 && (
               <button
                 onClick={onCreateCampaign}
-                className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+                className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors cursor-pointer"
               >
                 <Mail className="w-4 h-4 mr-2" />
                 Create Your First Campaign
@@ -498,7 +594,7 @@ export default function CampaignDashboard({
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-24">
                       Created
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-28">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-40">
                       Actions
                     </th>
                   </tr>
@@ -523,7 +619,7 @@ export default function CampaignDashboard({
                     <button
                       onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1}
-                      className="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Previous
                     </button>
@@ -535,7 +631,7 @@ export default function CampaignDashboard({
                     <button
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:cursor-not-allowed"
+                      className="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 cursor-pointer disabled:cursor-not-allowed"
                     >
                       Next
                     </button>
@@ -546,6 +642,93 @@ export default function CampaignDashboard({
           </>
         )}
       </div>
+
+      {copyModal.open && copyModal.campaign && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 px-4">
+          <div className="w-full max-w-md bg-white rounded-lg shadow-xl border border-gray-200">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Copy Campaign</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Create a draft copy of <span className="font-medium text-gray-900">{copyModal.campaign.name}</span>.
+                </p>
+              </div>
+              <button
+                onClick={closeCopyModal}
+                disabled={actionLoading[copyModal.campaign._id] === 'copying'}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                handleDuplicateCampaign();
+              }}
+              className="p-5 space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Campaign Name
+                </label>
+                <input
+                  type="text"
+                  value={copyModal.name}
+                  onChange={(event) => setCopyModal((prev) => ({
+                    ...prev,
+                    name: event.target.value,
+                    error: ''
+                  }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  autoFocus
+                />
+              </div>
+
+              <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 text-sm text-indigo-900">
+                The copied campaign will use the same email template, selected leads, and settings.
+              </div>
+
+              {copyModal.error && (
+                <div className="flex items-center space-x-2 text-red-600 bg-red-50 border border-red-100 rounded-lg p-3">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-sm">{copyModal.error}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeCopyModal}
+                  disabled={actionLoading[copyModal.campaign._id] === 'copying'}
+                  className="px-4 py-2 text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading[copyModal.campaign._id] === 'copying'}
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {actionLoading[copyModal.campaign._id] === 'copying' ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Copying...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Create Copy</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
     </>
   );

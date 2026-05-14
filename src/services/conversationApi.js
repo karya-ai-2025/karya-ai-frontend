@@ -41,6 +41,10 @@ export const addMessage = async (conversationId, role, content) => {
   return apiCall(`/conversations/${conversationId}/messages`, 'POST', { role, content });
 };
 
+export const sendAgentMessage = async (conversationId, content) => {
+  return apiCall(`/conversations/${conversationId}/agent-message`, 'POST', { content });
+};
+
 export const updateConversation = async (id, updates) => {
   return apiCall(`/conversations/${id}`, 'PUT', updates);
 };

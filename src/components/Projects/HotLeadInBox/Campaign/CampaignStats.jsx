@@ -6,8 +6,6 @@ import {
   Mail,
   Users,
   Eye,
-  MousePointer,
-  MessageCircle,
   AlertTriangle,
   TrendingUp,
   Calendar,
@@ -15,7 +13,7 @@ import {
   Zap,
   RefreshCw,
   Download,
-  Filter
+  CheckCircle
 } from 'lucide-react';
 
 // Enhanced scrollbar styles for the campaign stats
@@ -104,20 +102,19 @@ export default function CampaignStats({ campaign, onBack }) {
   };
 
   // Metric card component
-  const MetricCard = ({ title, value, percentage, icon: Icon, color = 'indigo', change, subtitle }) => (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-          {percentage !== undefined && (
-            <p className="text-sm text-gray-600 mt-1">{percentage}%</p>
-          )}
-          {subtitle && (
-            <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
-          )}
+  const MetricCard = ({ title, value, icon: Icon, color = 'indigo', change, isComplete }) => (
+    <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <p className="text-sm text-gray-600">{title}</p>
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{value}</p>
+              {isComplete && <CheckCircle className="w-5 h-5 flex-shrink-0 text-green-600" />}
+            </div>
+          </div>
         </div>
-        <div className={`p-3 bg-${color}-100 rounded-lg`}>
+        <div className={`flex-shrink-0 p-3 bg-${color}-100 rounded-lg`}>
           <Icon className={`w-6 h-6 text-${color}-600`} />
         </div>
       </div>
@@ -169,33 +166,45 @@ export default function CampaignStats({ campaign, onBack }) {
   }
 
   const { campaign: campaignData, emailStats, summary } = stats;
+  const getEmailStatusCount = (status) => emailStats[status] || 0;
+  const openedCount = getEmailStatusCount('opened') + getEmailStatusCount('clicked') + getEmailStatusCount('replied');
+  const deliveredCount = getEmailStatusCount('delivered') + openedCount;
+  const sentCount = getEmailStatusCount('sent') + deliveredCount + getEmailStatusCount('bounced') + getEmailStatusCount('spam');
+  const totalEmails = campaignData.stats?.totalLeads || summary.totalLeads || emailStats.total || 0;
+  const getRate = (value, total) => {
+    if (!total || total <= 0) return 0;
+    return Math.min(100, Math.round((value / total) * 100));
+  };
+  const sentRate = getRate(sentCount, totalEmails);
+  const deliveryRate = getRate(deliveredCount, totalEmails);
+  const openRate = getRate(openedCount, totalEmails);
+  const completionRate = totalEmails > 0
+    ? Math.min(100, Math.round(((sentCount + deliveredCount) / (totalEmails * 2)) * 100))
+    : 0;
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: scrollbarStyles }} />
-      <div className="h-full min-h-0 flex flex-col space-y-6 overflow-hidden">
+      <div className="h-full min-h-0 flex flex-col space-y-4 sm:space-y-6 overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex items-center space-x-4">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <button
             onClick={onBack}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+            className="flex-shrink-0 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
 
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 truncate">{campaignData.name}</h1>
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="min-w-0 max-w-full truncate text-xl lg:text-2xl font-bold text-gray-900">{campaignData.name}</h1>
               <StatusBadge status={campaignData.status} />
-              <span className="text-sm text-gray-600">
-                Created {new Date(campaign.createdAt).toLocaleDateString()}
-              </span>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center lg:w-auto">
           {/* Time Range Filter */}
           <select
             value={timeRange}
@@ -209,12 +218,12 @@ export default function CampaignStats({ campaign, onBack }) {
 
           <button
             onClick={fetchCampaignStats}
-            className="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="flex w-full items-center justify-center p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 sm:w-auto"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
 
-          <button className="flex items-center justify-center space-x-2 px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap">
+          <button className="flex w-full items-center justify-center space-x-2 px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap sm:w-auto">
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Export Report</span>
           </button>
@@ -224,92 +233,84 @@ export default function CampaignStats({ campaign, onBack }) {
       {/* Scrollable Content Area */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <div
-          className="h-full min-h-0 overflow-y-auto pb-8 pr-2 scroll-smooth space-y-6 campaign-stats-scroll"
+          className="h-full min-h-0 overflow-y-auto pb-8 pr-1 sm:pr-2 scroll-smooth space-y-4 sm:space-y-6 campaign-stats-scroll"
           style={{
             scrollbarWidth: 'thin',
             scrollbarColor: '#9CA3AF #F3F4F6'
           }}
         >
           {/* Campaign Overview */}
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-lg p-4 sm:p-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-lg p-2 sm:p-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-indigo-900">{summary.totalLeads}</div>
-            <div className="text-sm text-indigo-700">Total Leads</div>
+            <div className="text-xl sm:text-2xl font-bold text-indigo-900">{totalEmails}</div>
+            <div className="text-sm text-indigo-700">Total Emails</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-indigo-900">{summary.completionRate}%</div>
+            <div className="text-xl sm:text-2xl font-bold text-indigo-900">{completionRate}%</div>
             <div className="text-sm text-indigo-700">Completion Rate</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-indigo-900">{summary.openRate}%</div>
-            <div className="text-sm text-indigo-700">Open Rate</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-indigo-900">{summary.replyRate}%</div>
-            <div className="text-sm text-indigo-700">Reply Rate</div>
           </div>
         </div>
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <MetricCard
           title="Emails Sent"
-          value={emailStats.sent || 0}
-          percentage={campaignData.stats.totalLeads > 0 ? Math.round((emailStats.sent || 0) / campaignData.stats.totalLeads * 100) : 0}
+          value={`${sentCount} / ${totalEmails}`}
           icon={Mail}
           color="blue"
-          subtitle={`of ${campaignData.stats.totalLeads} total`}
+          isComplete={totalEmails > 0 && sentCount >= totalEmails}
         />
 
         <MetricCard
           title="Delivered"
-          value={emailStats.delivered || 0}
-          percentage={emailStats.sent > 0 ? Math.round((emailStats.delivered || 0) / emailStats.sent * 100) : 0}
+          value={`${deliveredCount} / ${totalEmails}`}
           icon={Users}
           color="green"
-          subtitle="Successfully delivered"
+          isComplete={totalEmails > 0 && deliveredCount >= totalEmails}
         />
 
         <MetricCard
           title="Opened"
-          value={emailStats.opened || 0}
-          percentage={emailStats.delivered > 0 ? Math.round((emailStats.opened || 0) / emailStats.delivered * 100) : 0}
+          value={`${openedCount} / ${totalEmails}`}
           icon={Eye}
           color="indigo"
-          subtitle="Recipients opened"
-        />
-
-        <MetricCard
-          title="Clicked"
-          value={emailStats.clicked || 0}
-          percentage={emailStats.opened > 0 ? Math.round((emailStats.clicked || 0) / emailStats.opened * 100) : 0}
-          icon={MousePointer}
-          color="purple"
-          subtitle="Links clicked"
+          isComplete={totalEmails > 0 && openedCount >= totalEmails}
         />
       </div>
 
       {/* Detailed Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Performance Metrics */}
-        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-lg p-6">
+        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Breakdown</h3>
 
           <div className="space-y-4">
+            {/* Sent Rate */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-gray-600">Sent Rate</span>
+                <span className="text-sm font-medium text-gray-900">{sentRate}%</span>
+              </div>
+              <div className="w-full overflow-hidden bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-blue-500 h-2 rounded-full"
+                  style={{ width: `${sentRate}%` }}
+                ></div>
+              </div>
+            </div>
+
             {/* Delivery Rate */}
             <div>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-gray-600">Delivery Rate</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {emailStats.sent > 0 ? Math.round((emailStats.delivered || 0) / emailStats.sent * 100) : 0}%
-                </span>
+                <span className="text-sm font-medium text-gray-900">{deliveryRate}%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full overflow-hidden bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-green-500 h-2 rounded-full"
-                  style={{ width: `${emailStats.sent > 0 ? (emailStats.delivered || 0) / emailStats.sent * 100 : 0}%` }}
+                  style={{ width: `${deliveryRate}%` }}
                 ></div>
               </div>
             </div>
@@ -318,62 +319,12 @@ export default function CampaignStats({ campaign, onBack }) {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-gray-600">Open Rate</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {emailStats.delivered > 0 ? Math.round((emailStats.opened || 0) / emailStats.delivered * 100) : 0}%
-                </span>
+                <span className="text-sm font-medium text-gray-900">{openRate}%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full overflow-hidden bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-indigo-500 h-2 rounded-full"
-                  style={{ width: `${emailStats.delivered > 0 ? (emailStats.opened || 0) / emailStats.delivered * 100 : 0}%` }}
-                ></div>
-              </div>
-            </div>
-
-            {/* Click Rate */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-600">Click Rate</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {emailStats.opened > 0 ? Math.round((emailStats.clicked || 0) / emailStats.opened * 100) : 0}%
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-purple-500 h-2 rounded-full"
-                  style={{ width: `${emailStats.opened > 0 ? (emailStats.clicked || 0) / emailStats.opened * 100 : 0}%` }}
-                ></div>
-              </div>
-            </div>
-
-            {/* Reply Rate */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-600">Reply Rate</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {emailStats.delivered > 0 ? Math.round((emailStats.replied || 0) / emailStats.delivered * 100) : 0}%
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-emerald-500 h-2 rounded-full"
-                  style={{ width: `${emailStats.delivered > 0 ? (emailStats.replied || 0) / emailStats.delivered * 100 : 0}%` }}
-                ></div>
-              </div>
-            </div>
-
-            {/* Bounce Rate */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-600">Bounce Rate</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {emailStats.sent > 0 ? Math.round((emailStats.bounced || 0) / emailStats.sent * 100) : 0}%
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-red-500 h-2 rounded-full"
-                  style={{ width: `${emailStats.sent > 0 ? (emailStats.bounced || 0) / emailStats.sent * 100 : 0}%` }}
+                  style={{ width: `${openRate}%` }}
                 ></div>
               </div>
             </div>
@@ -381,74 +332,47 @@ export default function CampaignStats({ campaign, onBack }) {
         </div>
 
         {/* Campaign Details */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Campaign Info */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Details</h3>
 
             <div className="space-y-3">
-              <div className="flex items-center text-sm">
-                <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                <span className="text-gray-600">Created:</span>
-                <span className="ml-1 text-gray-900">
+              <div className="flex min-w-0 items-center text-sm">
+                <Calendar className="w-4 h-4 flex-shrink-0 text-gray-400 mr-2" />
+                <span className="flex-shrink-0 text-gray-600">Created:</span>
+                <span className="ml-1 min-w-0 text-gray-900">
                   {new Date(campaign.createdAt).toLocaleDateString()}
                 </span>
               </div>
 
               {campaign.startedAt && (
-                <div className="flex items-center text-sm">
-                  <Clock className="w-4 h-4 text-gray-400 mr-2" />
-                  <span className="text-gray-600">Started:</span>
-                  <span className="ml-1 text-gray-900">
+                <div className="flex min-w-0 items-center text-sm">
+                  <Clock className="w-4 h-4 flex-shrink-0 text-gray-400 mr-2" />
+                  <span className="flex-shrink-0 text-gray-600">Started:</span>
+                  <span className="ml-1 min-w-0 text-gray-900">
                     {new Date(campaign.startedAt).toLocaleDateString()}
                   </span>
                 </div>
               )}
 
               {campaign.completedAt && (
-                <div className="flex items-center text-sm">
-                  <Clock className="w-4 h-4 text-gray-400 mr-2" />
-                  <span className="text-gray-600">Completed:</span>
-                  <span className="ml-1 text-gray-900">
+                <div className="flex min-w-0 items-center text-sm">
+                  <Clock className="w-4 h-4 flex-shrink-0 text-gray-400 mr-2" />
+                  <span className="flex-shrink-0 text-gray-600">Completed:</span>
+                  <span className="ml-1 min-w-0 text-gray-900">
                     {new Date(campaign.completedAt).toLocaleDateString()}
                   </span>
                 </div>
               )}
 
-              <div className="flex items-center text-sm">
-                <Zap className="w-4 h-4 text-gray-400 mr-2" />
-                <span className="text-gray-600">Credits Used:</span>
-                <span className="ml-1 text-gray-900">
+              <div className="flex min-w-0 items-center text-sm">
+                <Zap className="w-4 h-4 flex-shrink-0 text-gray-400 mr-2" />
+                <span className="flex-shrink-0 text-gray-600">Credits Used:</span>
+                <span className="ml-1 min-w-0 text-gray-900">
                   {campaign.totalCreditsConsumed || 0}⚡
                 </span>
               </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-
-            <div className="space-y-3">
-              {campaign.status === 'draft' && (
-                <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-                  <Mail className="w-4 h-4" />
-                  <span>Start Campaign</span>
-                </button>
-              )}
-
-              {campaign.status === 'sending' && (
-                <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors">
-                  <Clock className="w-4 h-4" />
-                  <span>Pause Campaign</span>
-                </button>
-              )}
-
-              <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">
-                <Download className="w-4 h-4" />
-                <span>Export Lead List</span>
-              </button>
-
             </div>
           </div>
         </div>
@@ -456,9 +380,9 @@ export default function CampaignStats({ campaign, onBack }) {
 
       {/* Issues & Alerts */}
       {(emailStats.bounced > 0 || emailStats.failed > 0) && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6">
           <div className="flex items-center mb-4">
-            <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
+            <AlertTriangle className="w-5 h-5 flex-shrink-0 text-red-600 mr-2" />
             <h3 className="text-lg font-semibold text-red-800">Issues Detected</h3>
           </div>
 
