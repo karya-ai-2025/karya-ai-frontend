@@ -58,7 +58,7 @@ function PlatformUsage() {
   };
 
   const handleBack = () => {
-    router.push('/onboarding-owner/profile-setup');
+    router.back();
   };
 
   return (

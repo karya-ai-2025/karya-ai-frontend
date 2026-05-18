@@ -133,7 +133,7 @@ export default function TopNavbar() {
   const handleLogout = async () => {
     try {
       await logout();
-      router.push('/login');
+      window.location.replace('/');
     } catch (error) {
       // Handle logout error silently or show user-friendly message
     }

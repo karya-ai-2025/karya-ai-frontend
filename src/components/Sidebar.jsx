@@ -37,7 +37,7 @@ const teamSection = [
   { id: 'submit-project',  label: 'Submit Project',   icon: PlusCircle,     href: '/business-dashboard/submit-project' },
   { id: 'my-submissions',  label: 'My Submissions',   icon: ClipboardList,  href: '/business-dashboard/my-submissions' },
   { id: 'intros',          label: 'Intros',           icon: Handshake,      href: '/business-dashboard/intros' },
-  { id: 'marketplace',     label: 'Marketplace',      icon: Store,          href: '/business-dashboard/marketplace' },
+  { id: 'marketplace',     label: 'Marketplace',      icon: Store,          href: '/project-marketplace' },
 ];
 
 const knowledgeSection = [

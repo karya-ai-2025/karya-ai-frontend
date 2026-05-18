@@ -39,7 +39,7 @@ function HomePage() {
   const handleLogout = async () => {
     await logout();
     setShowProfileDropdown(false);
-    router.push('/');
+    window.location.replace('/');
   };
 
   const getDashboardPath = () => {
@@ -853,6 +853,72 @@ function HomePage() {
                 {/* Laptop bottom */}
                 <div className="bg-gray-700 h-3 rounded-b-2xl mx-2 shadow-xl"></div>
                 <div className="bg-gray-600 h-2 rounded-b-xl mx-6 shadow-lg"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== FIND EXPERTS CTA ==================== */}
+      <section className="py-16 px-4 sm:px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="relative rounded-3xl overflow-hidden bg-gray-950">
+            {/* Grid pattern */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:3rem_3rem]" />
+            {/* Blobs */}
+            <div className="absolute -top-16 -left-16 w-72 h-72 bg-blue-600/20 rounded-full blur-3xl" />
+            <div className="absolute -bottom-16 -right-16 w-72 h-72 bg-orange-500/20 rounded-full blur-3xl" />
+
+            <div className="relative flex flex-col lg:flex-row items-center justify-between gap-8 px-8 sm:px-12 py-12">
+              {/* Left */}
+              <div className="text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 border border-white/20 rounded-full mb-5 text-xs text-white/70 font-medium">
+                  <MapPin className="w-3.5 h-3.5 text-blue-400" /> 180+ vetted specialists across India
+                </div>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-4">
+                  Find Your Marketing<br />
+                  <span className="bg-gradient-to-r from-blue-400 to-orange-400 bg-clip-text text-transparent">Expert Today</span>
+                </h2>
+                <p className="text-white/60 text-base sm:text-lg max-w-xl">
+                  Browse pre-vetted specialists in outbound, content, paid ads, SEO, CRM, and more — matched to your exact growth goals.
+                </p>
+
+                {/* Mini stats */}
+                <div className="flex flex-wrap gap-6 mt-6 justify-center lg:justify-start">
+                  {[
+                    { value: '180+', label: 'Vetted Experts' },
+                    { value: '97%',  label: 'Client Satisfaction' },
+                    { value: '24h',  label: 'Avg. Match Time' },
+                  ].map(s => (
+                    <div key={s.label} className="text-center lg:text-left">
+                      <p className="text-2xl font-black text-white">{s.value}</p>
+                      <p className="text-white/50 text-xs">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right — CTA card */}
+              <div className="flex-shrink-0 w-full lg:w-auto">
+                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 sm:p-8 text-center lg:text-left min-w-[260px]">
+                  <p className="text-white font-semibold mb-1 text-sm">Ready to hire?</p>
+                  <p className="text-white/50 text-xs mb-6">No commitment. Browse for free.</p>
+                  <button
+                    onClick={() => router.push('/expert-marketplace')}
+                    className="w-full px-6 py-3.5 bg-gradient-to-r from-blue-500 to-orange-500 hover:from-blue-600 hover:to-orange-600 text-white font-bold rounded-xl transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-500/25 flex items-center justify-center gap-2 text-sm"
+                  >
+                    <Users className="w-4 h-4" /> Browse Experts
+                  </button>
+                  <button
+                    onClick={() => router.push('/project-marketplace')}
+                    className="w-full mt-3 px-6 py-3 border border-white/20 hover:border-white/40 text-white/80 hover:text-white font-semibold rounded-xl transition-all text-sm flex items-center justify-center gap-2"
+                  >
+                    <Package className="w-4 h-4" /> View Project Catalog
+                  </button>
+                  <p className="text-white/30 text-xs mt-4 text-center">
+                    AI matches you in &lt; 24 hours
+                  </p>
+                </div>
               </div>
             </div>
           </div>

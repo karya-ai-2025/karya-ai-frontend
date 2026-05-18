@@ -1,10 +1,10 @@
 'use client';
 // pages/WelcomeOnboard.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { bookCall } from '@/lib/schedulingApi';
+import { bookCall, getMyCall } from '@/lib/schedulingApi';
 import {
   Play,
   ArrowRight,
@@ -28,13 +28,69 @@ function WelcomeOnboard() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState('');
-  const [bookedCall, setBookedCall] = useState(null); // set on success
+  const [bookedCall, setBookedCall] = useState(null);
+  const [canJoin, setCanJoin] = useState(false);
+  const [joinCountdown, setJoinCountdown] = useState('');
+  const [checkingExisting, setCheckingExisting] = useState(false);
+  const [existingCall, setExistingCall] = useState(null);
 
   const getDashboardPath = () =>
     activeRole === 'expert' ? '/expert-dashboard' : '/business-dashboard';
 
+  // Unlock join button 5 minutes before the meeting
+  useEffect(() => {
+    if (!bookedCall) return;
+    const meetingTime = new Date(bookedCall.dateTime).getTime();
+    const updateJoin = () => {
+      const diff = meetingTime - Date.now() - 5 * 60 * 1000; // ms until 5-min mark
+      if (diff <= 0) {
+        setCanJoin(true);
+        setJoinCountdown('');
+      } else {
+        setCanJoin(false);
+        const totalMins = Math.ceil(diff / 60000);
+        const hrs  = Math.floor(totalMins / 60);
+        const mins = totalMins % 60;
+        setJoinCountdown(hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`);
+      }
+    };
+    updateJoin();
+    const id = setInterval(updateJoin, 30000);
+    return () => clearInterval(id);
+  }, [bookedCall]);
+
+  // Generate time slots 9:00 AM → 11:30 PM → 12:00 AM
+  const timeSlots = (() => {
+    const slots = [];
+    for (let h = 9; h < 24; h++) {
+      for (let m = 0; m < 60; m += 30) {
+        const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+        const period = h < 12 ? 'AM' : 'PM';
+        slots.push(`${hour12}:${String(m).padStart(2, '0')} ${period}`);
+      }
+    }
+    slots.push('12:00 AM');
+    return slots;
+  })();
+
+  // Disable a time slot if it's in the past for the selected (or given) date
+  const isTimeSlotDisabled = (timeStr, overrideDateStr) => {
+    const dateStr = overrideDateStr !== undefined ? overrideDateStr : selectedDate;
+    if (!dateStr) return false;
+    const [time, period] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    const [y, mo, d] = dateStr.split('-').map(Number);
+    // 12:00 AM means midnight of the NEXT day
+    const slotDate = hours === 0 && minutes === 0
+      ? new Date(y, mo - 1, d + 1, 0, 0, 0)
+      : new Date(y, mo - 1, d, hours, minutes, 0);
+    return slotDate <= new Date();
+  };
+
   const handleSkip = () => {
-    router.push(getDashboardPath());
+    router.replace(getDashboardPath());
   };
 
   const handleStartOnboarding = () => {
@@ -42,12 +98,23 @@ function WelcomeOnboard() {
   };
 
   const handleManualOnboarding = () => {
-    // Navigate to first step of manual onboarding
-    router.push('/onboarding-owner/profile-setup');
+    router.replace('/onboarding-owner/profile-setup');
   };
 
-  const handleScheduleCall = () => {
-    setShowScheduler(true);
+  const handleScheduleCall = async () => {
+    setCheckingExisting(true);
+    setExistingCall(null);
+    try {
+      const result = await getMyCall();
+      if (result.data && result.data.status === 'scheduled') {
+        setExistingCall(result.data);
+      }
+    } catch (_) {
+      // ignore — let user proceed to booking
+    } finally {
+      setCheckingExisting(false);
+      setShowScheduler(true);
+    }
   };
 
   // Converts "9:00 AM" + "2026-05-10" → ISO string
@@ -144,12 +211,7 @@ function WelcomeOnboard() {
     });
   };
 
-  // Generate available time slots
-  const timeSlots = [
-    '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
-    '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM',
-    '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM', '5:00 PM'
-  ];
+  // timeSlots and isTimeSlotDisabled are defined above with the useEffect
 
   const priorityItems = [
     {
@@ -320,8 +382,9 @@ function WelcomeOnboard() {
                   </li>
                 </ul>
                 <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg text-white font-semibold flex items-center justify-center gap-2 group-hover:from-blue-700 group-hover:to-orange-600 transition-all">
-                  Schedule Now
-                  <Calendar className="w-5 h-5" />
+                  {checkingExisting
+                    ? <><Loader2 className="w-5 h-5 animate-spin" /> Checking...</>
+                    : <>Schedule Now <Calendar className="w-5 h-5" /></>}
                 </button>
               </div>
             </div>
@@ -341,8 +404,31 @@ function WelcomeOnboard() {
         {showScheduler && (
           <div className="bg-white border border-gray-200 shadow-lg rounded-2xl p-8 max-w-4xl mx-auto">
 
-            {/* ── SUCCESS STATE ── */}
-            {bookedCall ? (
+            {existingCall ? (
+              <div className="text-center py-8">
+                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Calendar className="w-10 h-10 text-blue-500" />
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Meeting Already Scheduled</h2>
+                <p className="text-gray-500 mb-2">
+                  {new Date(existingCall.dateTime).toLocaleDateString('en-IN', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+                  })}
+                </p>
+                <p className="text-gray-500 mb-6">
+                  at {new Date(existingCall.dateTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+                <p className="text-sm text-gray-400 mb-8">
+                  You can only book one call at a time. Complete your current meeting first.
+                </p>
+                <button
+                  onClick={() => router.replace(getDashboardPath())}
+                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:opacity-90 rounded-xl text-white font-semibold transition flex items-center gap-2 mx-auto"
+                >
+                  Go to Dashboard <ArrowRight className="w-5 h-5" />
+                </button>
+              </div>
+            ) : bookedCall ? (
               <div className="text-center py-8">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <CheckCircle className="w-10 h-10 text-green-500" />
@@ -356,15 +442,22 @@ function WelcomeOnboard() {
                 </p>
 
                 {bookedCall.meetLink ? (
-                  <a
-                    href={bookedCall.meetLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-orange-500 text-white font-semibold rounded-xl hover:opacity-90 transition mb-6"
-                  >
-                    <Video className="w-5 h-5" />
-                    Join Google Meet
-                  </a>
+                  canJoin ? (
+                    <a
+                      href={bookedCall.meetLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-orange-500 text-white font-semibold rounded-xl hover:opacity-90 transition mb-6"
+                    >
+                      <Video className="w-5 h-5" />
+                      Join Google Meet
+                    </a>
+                  ) : (
+                    <div className="inline-flex items-center gap-2 px-5 py-3 bg-gray-100 border border-gray-200 text-gray-500 rounded-xl mb-6 text-sm font-medium cursor-not-allowed select-none">
+                      <Clock className="w-4 h-4" />
+                      Join link opens {joinCountdown ? `in ${joinCountdown}` : 'soon'} (5 min before meeting)
+                    </div>
+                  )
                 ) : (
                   <div className="inline-flex items-center gap-2 px-5 py-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl mb-6 text-sm font-medium">
                     <Clock className="w-4 h-4" />
@@ -378,7 +471,7 @@ function WelcomeOnboard() {
                 </div>
 
                 <button
-                  onClick={() => router.push(getDashboardPath())}
+                  onClick={() => router.replace(getDashboardPath())}
                   className="px-8 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:opacity-90 rounded-xl text-white font-semibold transition flex items-center gap-2 mx-auto"
                 >
                   Go to Dashboard
@@ -434,7 +527,14 @@ function WelcomeOnboard() {
                       return (
                         <button
                           key={index}
-                          onClick={() => !isDisabled && day && setSelectedDate(dateString)}
+                          onClick={() => {
+                          if (!isDisabled && day) {
+                            setSelectedDate(dateString);
+                            if (selectedTime && isTimeSlotDisabled(selectedTime, dateString)) {
+                              setSelectedTime('');
+                            }
+                          }
+                        }}
                           disabled={isDisabled}
                           className={`text-center py-2 text-sm rounded transition-all ${
                             !day
@@ -459,19 +559,25 @@ function WelcomeOnboard() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Time</h3>
                 <div className="bg-white rounded-xl p-6 max-h-96 overflow-y-auto">
                   <div className="grid grid-cols-2 gap-3">
-                    {timeSlots.map((time) => (
-                      <button
-                        key={time}
-                        onClick={() => setSelectedTime(time)}
-                        className={`py-3 px-4 rounded-lg text-sm font-medium transition-all ${
-                          selectedTime === time
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
-                        }`}
-                      >
-                        {time}
-                      </button>
-                    ))}
+                    {timeSlots.map((time) => {
+                      const disabled = isTimeSlotDisabled(time);
+                      return (
+                        <button
+                          key={time}
+                          onClick={() => !disabled && setSelectedTime(time)}
+                          disabled={disabled}
+                          className={`py-3 px-4 rounded-lg text-sm font-medium transition-all ${
+                            disabled
+                              ? 'bg-gray-50 text-gray-300 cursor-not-allowed'
+                              : selectedTime === time
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
+                          }`}
+                        >
+                          {time}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

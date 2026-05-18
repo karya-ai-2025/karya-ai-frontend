@@ -41,10 +41,10 @@ function ProfileSetup() {
     try {
       setIsLoading(true);
       await skipStep(1);
-      router.push('/onboarding-owner/platform-usage');
+      router.replace('/onboarding-owner/platform-usage');
     } catch (err) {
       // Even if skip fails, allow navigation
-      router.push('/onboarding-owner/platform-usage');
+      router.replace('/onboarding-owner/platform-usage');
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +62,7 @@ function ProfileSetup() {
 
     try {
       await updateProfilePhoto(photoPreview);
-      router.push('/onboarding-owner/platform-usage');
+      router.replace('/onboarding-owner/platform-usage');
     } catch (err) {
       setError(err.message || 'Failed to upload photo. Please try again.');
     } finally {
@@ -146,7 +146,7 @@ function ProfileSetup() {
           {/* Navigation Buttons */}
           <div className="flex gap-4">
             <button
-              onClick={() => router.push('/onboarding-owner/welcome')}
+              onClick={() => router.back()}
               disabled={isLoading}
               className="flex-1 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >

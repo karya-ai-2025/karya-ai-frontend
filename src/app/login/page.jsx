@@ -1,6 +1,6 @@
 'use client';
 // pages/Login.jsx
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -37,7 +37,14 @@ function Login() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const role = searchParams.get('role') || ROLES.OWNER;
-  const { login: authLogin } = useAuth();
+  const { login: authLogin, isAuthenticated, loading: authLoading, activeRole } = useAuth();
+
+  // Redirect already-logged-in users away from the login page
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.replace(activeRole === 'expert' ? '/expert-dashboard' : '/business-dashboard');
+    }
+  }, [isAuthenticated, authLoading, activeRole, router]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -97,8 +104,7 @@ function Login() {
         throw new Error(result.error || 'Invalid credentials');
       }
 
-      setSuccess('Login successful! Redirecting...');
-      router.push('/');
+      router.replace(role === ROLES.EXPERT ? '/expert-dashboard' : '/business-dashboard');
 
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');
@@ -123,6 +129,8 @@ function Login() {
     // TODO: Implement OAuth flow
     setError(`${provider} login coming soon!`);
   };
+
+  if (authLoading || isAuthenticated) return null;
 
   const currentRole = ROLE_CONFIG[role] || ROLE_CONFIG[ROLES.OWNER];
   const Icon = currentRole.icon;

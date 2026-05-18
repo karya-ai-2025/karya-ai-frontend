@@ -48,9 +48,9 @@ function QuickWins() {
       setIsLoading(true);
       await skipStep(7);
       // Navigate to dashboard
-      router.push('/business-dashboard');
+      router.replace('/business-dashboard');
     } catch (err) {
-      router.push('/business-dashboard');
+      router.replace('/business-dashboard');
     } finally {
       setIsLoading(false);
     }
@@ -78,7 +78,7 @@ function QuickWins() {
       }
 
       // Navigate to dashboard
-      router.push('/business-dashboard');
+      router.replace('/business-dashboard');
     } catch (err) {
       setError(err.message || 'Failed to complete setup. Please try again.');
     } finally {
@@ -87,7 +87,7 @@ function QuickWins() {
   };
 
   const handleBack = () => {
-    router.push('/onboarding-owner/marketing-activities');
+    router.back();
   };
 
   return (

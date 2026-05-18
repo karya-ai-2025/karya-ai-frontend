@@ -14,12 +14,23 @@ export default function BusinessDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState('home'); // Set Home as default active
 
-  // Handle authentication redirect with useEffect to avoid race conditions
+  // Auth guard
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      router.push('/login');
+      router.replace('/login?role=owner');
     }
   }, [loading, isAuthenticated, router]);
+
+  // bfcache guard
+  useEffect(() => {
+    const onPageShow = (e) => {
+      if (e.persisted && !localStorage.getItem('token')) {
+        window.location.replace('/login?role=owner');
+      }
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
 
   // Show loading spinner while checking auth
   if (loading) {

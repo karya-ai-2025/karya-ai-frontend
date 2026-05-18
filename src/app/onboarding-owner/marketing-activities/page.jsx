@@ -61,7 +61,7 @@ function MarketingActivities() {
   };
 
   const handleBack = () => {
-    router.push('/onboarding-owner/icp-definition');
+    router.back();
   };
 
   return (

@@ -22,7 +22,7 @@ export default function NavbarAuth({
   ctaPath = '/register',
 }) {
   const router = useRouter();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, loading } = useAuth();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const profileRef = useRef(null);
 
@@ -36,6 +36,8 @@ export default function NavbarAuth({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const displayName = user?.fullName || user?.name || '';
+
   const getInitials = (name) => {
     if (!name) return 'U';
     return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
@@ -44,7 +46,7 @@ export default function NavbarAuth({
   const handleLogout = async () => {
     await logout();
     setShowProfileDropdown(false);
-    router.push('/');
+    window.location.replace('/');
   };
 
   const getDashboardPath = () => {
@@ -54,6 +56,10 @@ export default function NavbarAuth({
 
   const isLight = theme === 'light';
 
+  if (loading) {
+    return <div className="w-24 h-9 rounded-xl bg-gray-200/60 animate-pulse" />;
+  }
+
   if (isAuthenticated) {
     return (
       <div className="relative" ref={profileRef}>
@@ -61,9 +67,13 @@ export default function NavbarAuth({
           onClick={() => setShowProfileDropdown(!showProfileDropdown)}
           className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${isLight ? 'hover:bg-gray-100' : 'hover:bg-white/10'}`}
         >
-          <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-md">
-            {getInitials(user?.name)}
-          </div>
+          {user?.profilePhoto ? (
+            <img src={user.profilePhoto} alt={displayName} className="w-9 h-9 rounded-full object-cover shadow-md" />
+          ) : (
+            <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-md">
+              {getInitials(displayName)}
+            </div>
+          )}
           <ChevronDown
             className={`w-4 h-4 transition-transform duration-300 ${isLight ? 'text-gray-500' : 'text-white/70'} ${showProfileDropdown ? 'rotate-180' : ''}`}
           />
@@ -72,7 +82,7 @@ export default function NavbarAuth({
         {showProfileDropdown && (
           <div className="absolute right-0 mt-3 w-52 bg-white border border-gray-200 rounded-2xl shadow-2xl shadow-blue-500/10 overflow-hidden z-50">
             <div className="px-4 py-3 border-b border-gray-100">
-              <p className="font-semibold text-gray-900 text-sm truncate">{user?.name || 'User'}</p>
+              <p className="font-semibold text-gray-900 text-sm truncate">{displayName || 'User'}</p>
               <p className="text-xs text-gray-500 truncate">{user?.email}</p>
             </div>
             <button

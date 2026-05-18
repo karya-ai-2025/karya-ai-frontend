@@ -15,16 +15,26 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
+  // Start with SSR-safe defaults — both server and client render the same initial state,
+  // preventing hydration mismatches. localStorage is read only in useEffect (client-only).
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check if user is logged in on mount (with small delay to avoid race conditions)
+  // Runs only on the client after hydration
   useEffect(() => {
-    const timer = setTimeout(() => {
-      checkAuth();
-    }, 100);
-    return () => clearTimeout(timer);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    // Restore from cache immediately — unblocks navbar/route-guards without any network wait
+    try {
+      const cached = localStorage.getItem('user');
+      if (cached) setUser(JSON.parse(cached));
+    } catch {}
+    setLoading(false); // render instantly from cache
+    checkAuth();       // silently re-validate token in background
   }, []);
 
   // Check authentication status
@@ -115,6 +125,7 @@ export const AuthProvider = ({ children }) => {
 
       const data = await response.json();
 
+      localStorage.removeItem('myProjects'); // clear previous user's cached projects
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       setUser(data.user);
@@ -171,6 +182,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('myProjects');
       setUser(null);
     }
   };

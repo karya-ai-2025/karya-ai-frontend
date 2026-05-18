@@ -25,3 +25,16 @@ export async function bookCall({ dateTime, timezone, source }) {
   if (!res.ok) throw new Error(json.message || 'Failed to book call');
   return json; // { success, data: { scheduledCall, meetLink, isMock } }
 }
+
+/**
+ * Returns the current user's latest scheduled call, or null if none.
+ */
+export async function getMyCall() {
+  const token = getToken();
+  const res = await fetch(`${API_URL}/scheduling/my`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || 'Failed to fetch call');
+  return json; // { success, data: call | null }
+}

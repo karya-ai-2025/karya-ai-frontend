@@ -248,7 +248,7 @@ function BrandSetup() {
           {/* Navigation Buttons */}
           <div className="flex gap-4">
             <button
-              onClick={() => router.push('/onboarding-owner/company-details')}
+              onClick={() => router.back()}
               disabled={isLoading}
               className="flex-1 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >

@@ -742,12 +742,18 @@ export default function ProjectDetailPage() {
                         </div>
 
                         <div className="mt-5">
-                          <Link href={`/project-marketplace/${projectId}/overview?tier=${selectedPriceTier}&mode=${tier.id}`}
-                            className={`w-full block py-2.5 text-center rounded-xl text-sm font-semibold transition-all ${
-                              tier.popular ? 'bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white shadow-md' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
-                            }`}>
-                            Accept & Proceed →
-                          </Link>
+                          {project?.category === 'outbound' ? (
+                            <Link href={`/project-marketplace/${projectId}/overview?tier=${selectedPriceTier}&mode=${tier.id}`}
+                              className={`w-full block py-2.5 text-center rounded-xl text-sm font-semibold transition-all ${
+                                tier.popular ? 'bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white shadow-md' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
+                              }`}>
+                              Accept & Proceed →
+                            </Link>
+                          ) : (
+                            <button disabled className="w-full py-2.5 text-center rounded-xl text-sm font-semibold border border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed flex items-center justify-center gap-2">
+                              <Clock className="w-3.5 h-3.5" /> Coming Soon
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -1244,11 +1250,15 @@ function HireCard({ project, pricingTiers, dbPriceTiers, selectedHireMode, setSe
             className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-semibold rounded-xl transition-all shadow-md text-sm flex items-center justify-center gap-2">
             <Send className="w-4 h-4" /> Apply to This Project
           </button>
-        ) : (
+        ) : project?.category === 'outbound' ? (
           <Link href={`/project-marketplace/${projectId}/overview?tier=${selectedPriceTier}&mode=${selectedHireMode}`}
             className="w-full block py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-semibold rounded-xl transition-all shadow-md text-sm text-center flex items-center justify-center gap-2">
             <CheckCircle className="w-4 h-4" /> Accept & Proceed
           </Link>
+        ) : (
+          <button disabled className="w-full py-3 bg-gray-100 text-gray-400 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 cursor-not-allowed">
+            <Clock className="w-4 h-4" /> Coming Soon
+          </button>
         )}
         <button className="w-full py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center justify-center gap-2">
           <MessageSquare className="w-4 h-4" /> Talk to a Consultant

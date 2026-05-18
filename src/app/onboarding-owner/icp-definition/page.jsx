@@ -120,7 +120,7 @@ function ICPDefinition() {
   };
 
   const handleBack = () => {
-    router.push('/onboarding-owner/brand-setup');
+    router.back();
   };
 
   return (

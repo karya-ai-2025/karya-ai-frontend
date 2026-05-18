@@ -1,6 +1,6 @@
 'use client';
 // pages/ExpertDashboard.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import NextImage from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -15,176 +15,33 @@ import {
   RefreshCw, Mail, Database, Activity, GraduationCap, Image, Quote, Layers
 } from 'lucide-react';
 
-// Mock expert user data
+// Empty initial state — replaced with real data once user has activity
 const mockExpert = {
-  id: 1,
-  name: "Sarah Mitchell",
-  email: "sarah@mitchellmarketing.com",
-  avatar: "SM",
-  title: "B2B SaaS Growth Marketer",
   isAvailable: true,
-  unreadNotifications: 4,
+  unreadNotifications: 0,
   earnings: {
-    thisMonth: 4250,
-    lastMonth: 3480,
-    thisQuarter: 11800,
-    quarterGoal: 15000,
-    pendingPayouts: 2400,
-    pendingReleaseDate: "March 10",
-    lifetime: 87350
-  }
+    thisMonth: 0, lastMonth: 0, thisQuarter: 0,
+    quarterGoal: 0, pendingPayouts: 0, pendingReleaseDate: null, lifetime: 0,
+  },
 };
 
-// Mock active projects
-const mockProjects = [
-  {
-    id: 1,
-    clientName: "TechFlow Inc",
-    clientAvatar: "TF",
-    clientColor: "bg-blue-500",
-    projectName: "Outbound Lead Generation",
-    currentWeek: 4,
-    totalWeeks: 8,
-    progress: 50,
-    tasks: [
-      { id: 1, name: "Email sequences", status: "complete" },
-      { id: 2, name: "Campaign launch", status: "in-progress" },
-      { id: 3, name: "Results analysis", status: "upcoming" }
-    ],
-    nextDeliverable: { name: "Week 4 Report", dueDate: "Thu" },
-    clientHealth: "satisfied",
-    lastCheckIn: "2 days ago",
-    budget: 8000,
-    earned: 4000
-  },
-  {
-    id: 2,
-    clientName: "FinanceApp",
-    clientAvatar: "FA",
-    clientColor: "bg-emerald-500",
-    projectName: "Content Marketing Strategy",
-    currentWeek: 2,
-    totalWeeks: 6,
-    progress: 33,
-    tasks: [
-      { id: 1, name: "Content audit", status: "complete" },
-      { id: 2, name: "Editorial calendar", status: "in-progress" },
-      { id: 3, name: "First batch of articles", status: "upcoming" }
-    ],
-    nextDeliverable: { name: "Editorial Calendar", dueDate: "Fri" },
-    clientHealth: "happy",
-    lastCheckIn: "1 day ago",
-    budget: 6000,
-    earned: 2000
-  },
-  {
-    id: 3,
-    clientName: "GrowthStack",
-    clientAvatar: "GS",
-    clientColor: "bg-purple-500",
-    projectName: "Sales Funnel Optimization",
-    currentWeek: 6,
-    totalWeeks: 8,
-    progress: 75,
-    tasks: [
-      { id: 1, name: "Funnel analysis", status: "complete" },
-      { id: 2, name: "Landing page redesign", status: "complete" },
-      { id: 3, name: "A/B testing", status: "in-progress" },
-      { id: 4, name: "Final report", status: "upcoming" }
-    ],
-    nextDeliverable: { name: "A/B Test Results", dueDate: "Mon" },
-    clientHealth: "satisfied",
-    lastCheckIn: "3 days ago",
-    budget: 10000,
-    earned: 7500
-  }
+const mockProjects          = [];
+const mockOpportunities     = [];
+const mockSchedule          = [];
+const mockActionItems       = [];
+const mockActivityFeed      = [];
+const mockCRMStats          = { contacts: 0, activeSequences: 0, emailsSent: 0, responses: 0, responseRate: 0 };
+const mockSkillRecommendations = [];
+const mockPlatformUpdates   = [
+  { id: 1, title: 'New integration: Clay is now available', type: 'feature' },
+  { id: 2, title: 'Upcoming webinar: Advanced outbound tactics', type: 'event' },
+  { id: 3, title: 'Feature update: Enhanced time tracking', type: 'update' },
 ];
-
-// Mock opportunities
-const mockOpportunities = [
-  {
-    id: 1,
-    matchScore: 92,
-    projectName: "SEO Strategy for SaaS",
-    clientType: "Series A Fintech",
-    budget: { min: 6000, max: 8000 },
-    duration: 60,
-    startDate: "ASAP",
-    requirements: ["SaaS SEO experience", "Ahrefs proficiency", "Content strategy"],
-    whyMatched: "Your SaaS experience + Ahrefs expertise",
-    respondBy: "48 hours",
-    isNew: true
-  },
-  {
-    id: 2,
-    matchScore: 87,
-    projectName: "Email Marketing Automation",
-    clientType: "Series B E-commerce",
-    budget: { min: 5000, max: 7000 },
-    duration: 45,
-    startDate: "March 15",
-    requirements: ["Email automation", "Klaviyo experience", "E-commerce background"],
-    whyMatched: "Strong email marketing track record",
-    respondBy: "72 hours",
-    isNew: true
-  }
-];
-
-// Mock schedule items
-const mockSchedule = [
-  { id: 1, type: "meeting", title: "TechFlow Check-in", time: "10:00 AM", day: "Today" },
-  { id: 2, type: "deadline", title: "Week 4 Report Due", time: "5:00 PM", day: "Thu" },
-  { id: 3, type: "meeting", title: "FinanceApp Kickoff", time: "2:00 PM", day: "Fri" },
-  { id: 4, type: "focus", title: "Deep Work Block", time: "9:00 AM - 12:00 PM", day: "Wed" }
-];
-
-// Mock action items
-const mockActionItems = [
-  { id: 1, priority: "urgent", title: "Submit Week 4 Report for TechFlow", project: "TechFlow", dueDate: "Today" },
-  { id: 2, priority: "urgent", title: "Respond to Opportunity: SEO Strategy", dueDate: "Today" },
-  { id: 3, priority: "urgent", title: "Review client feedback on email draft", project: "FinanceApp", dueDate: "Today" },
-  { id: 4, priority: "this-week", title: "Client check-in call", project: "TechFlow", dueDate: "Thu 2pm" },
-  { id: 5, priority: "this-week", title: "Finalize Q1 analytics dashboard", project: "GrowthStack", dueDate: "Fri" },
-  { id: 6, priority: "this-week", title: "Update portfolio with latest case study", dueDate: "Fri" },
-  { id: 7, priority: "upcoming", title: "Proposal due for new opportunity", dueDate: "Next Mon" },
-  { id: 8, priority: "upcoming", title: "Monthly earnings review", dueDate: "Mar 1" }
-];
-
-// Mock activity feed
-const mockActivityFeed = [
-  { id: 1, icon: "✅", title: "Client approved \"Email Sequence v2\"", timestamp: "3 hours ago", project: "TechFlow" },
-  { id: 2, icon: "💬", title: "New message from TechFlow", timestamp: "5 hours ago" },
-  { id: 3, icon: "💰", title: "Milestone payment received: $2,000", timestamp: "Yesterday" },
-  { id: 4, icon: "⭐", title: "Client left 5-star review", timestamp: "2 days ago", project: "GrowthStack" },
-  { id: 5, icon: "📄", title: "Uploaded deliverable to FinanceApp project", timestamp: "3 days ago" }
-];
-
-// Mock CRM stats
-const mockCRMStats = {
-  contacts: 1247,
-  activeSequences: 3,
-  emailsSent: 127,
-  responses: 23,
-  responseRate: 18
-};
-
-// Mock skill recommendations
-const mockSkillRecommendations = [
-  { id: 1, text: "Complete Google Ads certification to increase match rate by 15%", type: "certification" },
-  { id: 2, text: "Add Webflow to your skills (trending in demand)", type: "skill" },
-  { id: 3, text: "Your Apollo proficiency is in high demand - 12 opportunities this month", type: "insight" }
-];
-
-// Mock platform updates
-const mockPlatformUpdates = [
-  { id: 1, title: "New integration: Clay is now available", type: "feature" },
-  { id: 2, title: "Upcoming webinar: Advanced outbound tactics - March 18", type: "event" },
-  { id: 3, title: "Feature update: Enhanced time tracking", type: "update" }
-];
+const earningsChartData     = [];
 
 // Sidebar navigation items
 const sidebarNavItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/expert/dashboard' },
+  { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/expert-dashboard' },
   { id: 'projects', label: 'Active Projects', icon: Briefcase, path: '/expert/projects' },
   { id: 'project-marketplace', label: 'Project Catalog', icon: Layers, path: '/project-marketplace' },
   { id: 'opportunities', label: 'Opportunities', icon: Target, path: '/expert/opportunities', badge: 2 },
@@ -194,16 +51,6 @@ const sidebarNavItems = [
   { id: 'crm', label: 'CRM & Outreach', icon: Phone, path: '/expert/crm' },
   { id: 'tools', label: 'Tools & Integrations', icon: Wrench, path: '/expert/tools' },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/expert/settings' }
-];
-
-// Earnings chart data (mock)
-const earningsChartData = [
-  { month: 'Oct', amount: 3200 },
-  { month: 'Nov', amount: 4100 },
-  { month: 'Dec', amount: 3800 },
-  { month: 'Jan', amount: 4500 },
-  { month: 'Feb', amount: 3480 },
-  { month: 'Mar', amount: 4250 }
 ];
 
 // Helper functions
@@ -415,8 +262,28 @@ function EarningsChart({ data }) {
 // Main Expert Dashboard Component
 function ExpertDashboard() {
   const router = useRouter();
-  const { user, logout } = useAuth();
-  const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
+  const { user, logout, isAuthenticated, loading } = useAuth();
+
+  // Auth guard — redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.replace('/login?role=expert');
+    }
+  }, [loading, isAuthenticated, router]);
+
+  // bfcache guard — fires when browser restores this page from Back/Forward Cache
+  useEffect(() => {
+    const onPageShow = (e) => {
+      if (e.persisted && !localStorage.getItem('token')) {
+        window.location.replace('/login?role=expert');
+      }
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
+
+  const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'EX';
+  const displayName = user?.fullName || user?.name || 'Expert';
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeNav, setActiveNav] = useState('dashboard');
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -424,8 +291,20 @@ function ExpertDashboard() {
   const [isAvailable, setIsAvailable] = useState(mockExpert.isAvailable);
   const [earningsView, setEarningsView] = useState('monthly');
 
-  const percentChange = ((mockExpert.earnings.thisMonth - mockExpert.earnings.lastMonth) / mockExpert.earnings.lastMonth * 100).toFixed(0);
-  const quarterProgress = (mockExpert.earnings.thisQuarter / mockExpert.earnings.quarterGoal * 100).toFixed(0);
+  const percentChange   = mockExpert.earnings.lastMonth > 0
+    ? ((mockExpert.earnings.thisMonth - mockExpert.earnings.lastMonth) / mockExpert.earnings.lastMonth * 100).toFixed(0)
+    : null;
+  const quarterProgress = mockExpert.earnings.quarterGoal > 0
+    ? (mockExpert.earnings.thisQuarter / mockExpert.earnings.quarterGoal * 100).toFixed(0)
+    : 0;
+
+  // Show spinner while verifying session, render nothing if not logged in
+  if (loading) return (
+    <div className="h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+  if (!isAuthenticated) return null;
 
   return (
     <div className="h-screen flex flex-col bg-white page-enter">
@@ -437,7 +316,7 @@ function ExpertDashboard() {
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <Menu className="w-5 h-5 text-gray-500" />
             </button>
-            <Link href="/expert/dashboard" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
               <NextImage src="/karya-ai-logo.png" alt="Karya AI" width={36} height={36} className="rounded-xl object-contain" />
               <span className="text-lg font-bold text-gray-900 hidden sm:block">Karya-AI</span>
             </Link>
@@ -462,7 +341,9 @@ function ExpertDashboard() {
               <DollarSign className="w-4 h-4 text-emerald-400" />
               <div>
                 <p className="text-xs text-emerald-400">This month</p>
-                <p className="text-sm font-bold text-gray-900">${mockExpert.earnings.thisMonth.toLocaleString()}</p>
+                <p className="text-sm font-bold text-gray-900">
+                  {mockExpert.earnings.thisMonth > 0 ? `$${mockExpert.earnings.thisMonth.toLocaleString()}` : '₹0'}
+                </p>
               </div>
             </div>
 
@@ -487,7 +368,9 @@ function ExpertDashboard() {
                     <button className="text-xs text-blue-500 hover:text-blue-600 font-medium">Mark all read</button>
                   </div>
                   <div className="max-h-80 overflow-y-auto">
-                    {mockActivityFeed.slice(0, 4).map(item => (
+                    {mockActivityFeed.length === 0 ? (
+                      <div className="p-6 text-center text-sm text-gray-400">No notifications yet</div>
+                    ) : mockActivityFeed.slice(0, 4).map(item => (
                       <div key={item.id} className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100">
                         <div className="flex items-start gap-3">
                           <span className="text-lg">{item.icon}</span>
@@ -514,35 +397,48 @@ function ExpertDashboard() {
                 onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifications(false); }}
                 className="flex items-center gap-2 p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">{getInitials(user?.name)}</span>
-                </div>
+                {user?.profilePhoto ? (
+                  <img src={user.profilePhoto} alt={displayName} className="w-8 h-8 rounded-lg object-cover" />
+                ) : (
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">{getInitials(displayName)}</span>
+                  </div>
+                )}
                 <ChevronDown className="w-4 h-4 text-gray-500 hidden sm:block" />
               </button>
 
               {showUserMenu && (
                 <div className="absolute right-0 top-12 w-56 bg-white border border-gray-200 shadow-xl rounded-xl overflow-hidden z-50">
                   <div className="p-3 border-b border-gray-200">
-                    <p className="font-semibold text-gray-900">{user?.name || 'Expert'}</p>
-                    <p className="text-sm text-gray-500">{user?.email || ''}</p>
+                    <p className="font-semibold text-gray-900 truncate">{displayName}</p>
+                    <p className="text-sm text-gray-500 truncate">{user?.email || ''}</p>
                   </div>
                   <div className="p-1">
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-100 rounded-lg text-left">
+                    <button
+                      onClick={() => { setShowUserMenu(false); router.push('/expert/settings'); }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-100 rounded-lg text-left"
+                    >
                       <User className="w-4 h-4 text-gray-500" />
                       <span className="text-sm text-gray-600">Profile Settings</span>
                     </button>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-100 rounded-lg text-left">
+                    <button
+                      onClick={() => { setShowUserMenu(false); router.push('/expert/settings'); }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-100 rounded-lg text-left"
+                    >
                       <CreditCard className="w-4 h-4 text-gray-500" />
                       <span className="text-sm text-gray-600">Payment Settings</span>
                     </button>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-100 rounded-lg text-left">
+                    <button
+                      onClick={() => { setShowUserMenu(false); router.push('/support-help'); }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-100 rounded-lg text-left"
+                    >
                       <HelpCircle className="w-4 h-4 text-gray-500" />
                       <span className="text-sm text-gray-600">Help & Support</span>
                     </button>
                   </div>
                   <div className="p-1 border-t border-gray-200">
                     <button
-                      onClick={async () => { await logout(); router.push('/'); }}
+                      onClick={async () => { await logout(); window.location.replace('/'); }}
                       className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-500/10 rounded-lg text-left text-red-400"
                     >
                       <LogOut className="w-4 h-4" />
@@ -603,8 +499,11 @@ function ExpertDashboard() {
                   Welcome back, {(user?.name || 'there').split(' ')[0]}! 👋
                 </h1>
                 <p className="text-gray-500">
-                  You have <span className="text-blue-500 font-semibold">{mockProjects.length} active projects</span> and{' '}
-                  <span className="text-emerald-400 font-semibold">{mockOpportunities.length} new opportunities</span>
+                  {mockProjects.length === 0 && mockOpportunities.length === 0
+                    ? 'Complete your profile to start getting matched with projects'
+                    : <>You have <span className="text-blue-500 font-semibold">{mockProjects.length} active projects</span> and{' '}
+                       <span className="text-emerald-400 font-semibold">{mockOpportunities.length} new opportunities</span></>
+                  }
                 </p>
               </div>
 
@@ -626,13 +525,15 @@ function ExpertDashboard() {
             <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-gray-500 text-sm">This Month</span>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                  percentChange >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
-                }`}>
-                  {percentChange >= 0 ? '↑' : '↓'} {Math.abs(percentChange)}%
-                </span>
+                {percentChange !== null && (
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    percentChange >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                  }`}>
+                    {percentChange >= 0 ? '↑' : '↓'} {Math.abs(percentChange)}%
+                  </span>
+                )}
               </div>
-              <p className="text-3xl font-bold text-gray-900">${mockExpert.earnings.thisMonth.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-gray-900">₹{mockExpert.earnings.thisMonth.toLocaleString()}</p>
             </div>
 
             <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
@@ -640,7 +541,7 @@ function ExpertDashboard() {
                 <span className="text-gray-500 text-sm">This Quarter</span>
                 <span className="text-xs text-gray-500">{quarterProgress}% of goal</span>
               </div>
-              <p className="text-3xl font-bold text-gray-900">${mockExpert.earnings.thisQuarter.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-gray-900">₹{mockExpert.earnings.thisQuarter.toLocaleString()}</p>
               <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                 <div className="h-full bg-blue-500 rounded-full" style={{ width: `${quarterProgress}%` }} />
               </div>
@@ -649,9 +550,11 @@ function ExpertDashboard() {
             <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-gray-500 text-sm">Pending Payouts</span>
-                <span className="text-xs text-amber-400">{mockExpert.earnings.pendingReleaseDate}</span>
+                {mockExpert.earnings.pendingReleaseDate && (
+                  <span className="text-xs text-amber-400">{mockExpert.earnings.pendingReleaseDate}</span>
+                )}
               </div>
-              <p className="text-3xl font-bold text-gray-900">${mockExpert.earnings.pendingPayouts.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-gray-900">₹{mockExpert.earnings.pendingPayouts.toLocaleString()}</p>
             </div>
 
             <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
@@ -659,29 +562,17 @@ function ExpertDashboard() {
                 <span className="text-gray-500 text-sm">Lifetime Earnings</span>
                 <Award className="w-4 h-4 text-amber-400" />
               </div>
-              <p className="text-3xl font-bold text-gray-900">${mockExpert.earnings.lifetime.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-gray-900">₹{mockExpert.earnings.lifetime.toLocaleString()}</p>
             </div>
           </div>
 
           {/* Earnings Chart */}
           <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Earnings Trend</h2>
-              <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-                {['monthly', 'quarterly', 'yearly'].map(view => (
-                  <button
-                    key={view}
-                    onClick={() => setEarningsView(view)}
-                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                      earningsView === view ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-900'
-                    }`}
-                  >
-                    {view.charAt(0).toUpperCase() + view.slice(1)}
-                  </button>
-                ))}
-              </div>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Earnings Trend</h2>
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <BarChart3 className="w-10 h-10 text-gray-200 mb-3" />
+              <p className="text-gray-400 text-sm">Your earnings chart will appear once you complete your first project</p>
             </div>
-            <EarningsChart data={earningsChartData} />
           </div>
 
           <div className="grid lg:grid-cols-3 gap-6">
@@ -691,45 +582,62 @@ function ExpertDashboard() {
               <section>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-gray-900">Active Projects</h2>
-                  <button className="text-sm text-blue-500 hover:text-blue-600 font-medium flex items-center gap-1">
-                    View All <ChevronRight className="w-4 h-4" />
-                  </button>
                 </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {mockProjects.slice(0, 2).map(project => (
-                    <ProjectCard
-                      key={project.id}
-                      project={project}
-                      onOpenWorkspace={() => router.push(`/expert/projects/${project.id}`)}
-                    />
-                  ))}
-                </div>
+                {mockProjects.length === 0 ? (
+                  <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center">
+                    <Briefcase className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                    <p className="font-semibold text-gray-400 mb-1">No active projects yet</p>
+                    <p className="text-sm text-gray-400 mb-5">Browse the marketplace to find projects that match your skills</p>
+                    <button
+                      onClick={() => router.push('/project-marketplace')}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-orange-500 hover:opacity-90 text-white font-semibold rounded-xl text-sm transition"
+                    >
+                      <Layers className="w-4 h-4" /> Explore Marketplace
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {mockProjects.slice(0, 2).map(project => (
+                      <ProjectCard
+                        key={project.id}
+                        project={project}
+                        onOpenWorkspace={() => router.push(`/expert/projects/${project.id}`)}
+                      />
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* New Opportunities */}
               <section>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    New Opportunities
-                    <span className="px-2 py-0.5 bg-emerald-500 rounded-full text-xs text-white font-bold">
-                      {mockOpportunities.length}
-                    </span>
-                  </h2>
-                  <button className="text-sm text-blue-500 hover:text-blue-600 font-medium flex items-center gap-1">
-                    Browse All <ChevronRight className="w-4 h-4" />
-                  </button>
+                  <h2 className="text-xl font-bold text-gray-900">New Opportunities</h2>
                 </div>
-                <div className="space-y-4">
-                  {mockOpportunities.map(opp => (
-                    <OpportunityCard
-                      key={opp.id}
-                      opportunity={opp}
-                      onExpressInterest={() => {}}
-                      onPass={() => {}}
-                      onViewBrief={() => router.push(`/expert/opportunities/${opp.id}`)}
-                    />
-                  ))}
-                </div>
+                {mockOpportunities.length === 0 ? (
+                  <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center">
+                    <Target className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                    <p className="font-semibold text-gray-400 mb-1">No opportunities yet</p>
+                    <p className="text-sm text-gray-400 mb-5">Complete your profile so we can match you with the right clients</p>
+                    <button
+                      onClick={() => router.push('/onboarding-expert/profile-setup')}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-orange-500 hover:opacity-90 text-white font-semibold rounded-xl text-sm transition"
+                    >
+                      <User className="w-4 h-4" /> Complete Profile
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {mockOpportunities.map(opp => (
+                      <OpportunityCard
+                        key={opp.id}
+                        opportunity={opp}
+                        onExpressInterest={() => {}}
+                        onPass={() => {}}
+                        onViewBrief={() => router.push(`/expert/opportunities/${opp.id}`)}
+                      />
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* Action Items */}
@@ -738,32 +646,27 @@ function ExpertDashboard() {
                   <AlertCircle className="w-5 h-5 text-amber-400" />
                   Action Items
                 </h2>
-                <div className="space-y-2">
-                  {mockActionItems.slice(0, 6).map(item => (
-                    <div
-                      key={item.id}
-                      className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all cursor-pointer"
-                    >
-                      <div className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${
-                        item.priority === 'urgent' ? 'bg-red-500' :
-                        item.priority === 'this-week' ? 'bg-amber-500' : 'bg-emerald-500'
-                      }`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-gray-900 text-sm font-medium">{item.title}</p>
-                        {item.project && <p className="text-xs text-gray-500 mt-0.5">{item.project}</p>}
+                {mockActionItems.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <CheckCircle className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                    <p className="text-sm text-gray-400">You're all caught up — no pending actions</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {mockActionItems.slice(0, 6).map(item => (
+                      <div key={item.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all cursor-pointer">
+                        <div className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${
+                          item.priority === 'urgent' ? 'bg-red-500' :
+                          item.priority === 'this-week' ? 'bg-amber-500' : 'bg-emerald-500'
+                        }`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-gray-900 text-sm font-medium">{item.title}</p>
+                          {item.project && <p className="text-xs text-gray-500 mt-0.5">{item.project}</p>}
+                        </div>
                       </div>
-                      {item.dueDate && (
-                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${
-                          item.priority === 'urgent' ? 'bg-red-50 text-red-700' :
-                          item.priority === 'this-week' ? 'bg-amber-50 text-amber-700' :
-                          'bg-gray-200 text-gray-600'
-                        }`}>
-                          {item.dueDate}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* Performance Metrics */}
@@ -773,31 +676,19 @@ function ExpertDashboard() {
                   Performance Metrics
                 </h2>
                 <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-gray-900">94%</p>
-                    <p className="text-xs text-gray-500 mt-1">Success Rate</p>
-                    <p className="text-xs text-emerald-400">Above avg (88%)</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-gray-900">96%</p>
-                    <p className="text-xs text-gray-500 mt-1">On-Time Delivery</p>
-                    <p className="text-xs text-emerald-400">Excellent</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-gray-900">4.9</p>
-                    <p className="text-xs text-gray-500 mt-1">Client Rating</p>
-                    <p className="text-xs text-amber-400">Top 10%</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-gray-900">2.3h</p>
-                    <p className="text-xs text-gray-500 mt-1">Response Time</p>
-                    <p className="text-xs text-emerald-400">Fast</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-gray-900">67%</p>
-                    <p className="text-xs text-gray-500 mt-1">Repeat Clients</p>
-                    <p className="text-xs text-emerald-400">Strong</p>
-                  </div>
+                  {[
+                    { label: 'Success Rate',     value: '—' },
+                    { label: 'On-Time Delivery', value: '—' },
+                    { label: 'Client Rating',    value: '—' },
+                    { label: 'Response Time',    value: '—' },
+                    { label: 'Repeat Clients',   value: '—' },
+                  ].map(m => (
+                    <div key={m.label} className="text-center">
+                      <p className="text-3xl font-bold text-gray-300">{m.value}</p>
+                      <p className="text-xs text-gray-400 mt-1">{m.label}</p>
+                      <p className="text-xs text-gray-300">No data yet</p>
+                    </div>
+                  ))}
                 </div>
               </section>
 
@@ -841,44 +732,49 @@ function ExpertDashboard() {
                   <Calendar className="w-5 h-5 text-blue-500" />
                   This Week
                 </h2>
-                <div className="space-y-3">
-                  {mockSchedule.map(item => (
-                    <div key={item.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl transition-all cursor-pointer">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                        item.type === 'meeting' ? 'bg-blue-50' :
-                        item.type === 'deadline' ? 'bg-red-50' :
-                        'bg-blue-50'
-                      }`}>
-                        {item.type === 'meeting' && <Users className="w-5 h-5 text-blue-400" />}
-                        {item.type === 'deadline' && <AlertCircle className="w-5 h-5 text-red-400" />}
-                        {item.type === 'focus' && <Zap className="w-5 h-5 text-blue-500" />}
+                {mockSchedule.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <Calendar className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                    <p className="text-sm text-gray-400">No upcoming schedule</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {mockSchedule.map(item => (
+                      <div key={item.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl transition-all cursor-pointer">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                          <Users className="w-5 h-5 text-blue-400" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                          <p className="text-xs text-gray-500">{item.day} • {item.time}</p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{item.title}</p>
-                        <p className="text-xs text-gray-500">{item.day} • {item.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <button className="w-full mt-3 py-2.5 text-sm text-blue-500 hover:text-blue-600 text-center font-medium hover:bg-gray-50 rounded-lg transition-colors">
-                  View Full Calendar
-                </button>
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* Recent Activity */}
               <section className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">Recent Activity</h2>
-                <div className="space-y-4">
-                  {mockActivityFeed.map(activity => (
-                    <div key={activity.id} className="flex items-start gap-3">
-                      <span className="text-xl">{activity.icon}</span>
-                      <div>
-                        <p className="text-sm text-gray-600">{activity.title}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{activity.timestamp}</p>
+                {mockActivityFeed.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <Activity className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                    <p className="text-sm text-gray-400">No activity yet — activity will appear once you start working</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {mockActivityFeed.map(activity => (
+                      <div key={activity.id} className="flex items-start gap-3">
+                        <span className="text-xl">{activity.icon}</span>
+                        <div>
+                          <p className="text-sm text-gray-600">{activity.title}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">{activity.timestamp}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* Skill Development */}
@@ -887,14 +783,21 @@ function ExpertDashboard() {
                   <GraduationCap className="w-5 h-5 text-amber-400" />
                   Skill Development
                 </h2>
-                <div className="space-y-3">
-                  {mockSkillRecommendations.map(rec => (
-                    <div key={rec.id} className="flex items-start gap-2 p-3 bg-white/80 rounded-xl border border-gray-200">
-                      <Zap className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-gray-600">{rec.text}</p>
-                    </div>
-                  ))}
-                </div>
+                {mockSkillRecommendations.length === 0 ? (
+                  <div className="py-5 text-center">
+                    <GraduationCap className="w-8 h-8 text-blue-200 mx-auto mb-2" />
+                    <p className="text-sm text-gray-400">Recommendations will appear after your first project</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {mockSkillRecommendations.map(rec => (
+                      <div key={rec.id} className="flex items-start gap-2 p-3 bg-white/80 rounded-xl border border-gray-200">
+                        <Zap className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-gray-600">{rec.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <button className="w-full mt-3 py-2 text-sm text-blue-500 hover:text-blue-600 text-center font-medium">
                   View All Recommendations
                 </button>
@@ -906,22 +809,16 @@ function ExpertDashboard() {
                   <Image className="w-5 h-5 text-blue-500" />
                   Portfolio Highlight
                 </h2>
-                <div className="bg-gray-50 rounded-xl overflow-hidden">
-                  <div className="h-32 bg-gradient-to-br from-blue-100 to-violet-100 flex items-center justify-center">
-                    <span className="text-4xl">📈</span>
-                  </div>
-                  <div className="p-3">
-                    <p className="font-medium text-gray-900 text-sm">B2B SaaS Lead Generation</p>
-                    <p className="text-emerald-400 text-sm font-semibold mt-1">487 qualified leads generated</p>
-                    <div className="flex items-start gap-2 mt-2 p-2 bg-white rounded-lg">
-                      <Quote className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-gray-500 italic">"Sarah transformed our outbound motion..."</p>
-                    </div>
-                  </div>
+                <div className="border border-dashed border-gray-300 rounded-xl p-6 text-center">
+                  <FolderOpen className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                  <p className="text-sm text-gray-400 mb-3">No portfolio items yet</p>
+                  <button
+                    onClick={() => router.push('/onboarding-expert/profile-setup')}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Portfolio Item
+                  </button>
                 </div>
-                <button className="w-full mt-3 py-2 text-sm text-blue-500 hover:text-blue-600 text-center font-medium">
-                  Update Portfolio
-                </button>
               </section>
 
               {/* Platform Updates */}

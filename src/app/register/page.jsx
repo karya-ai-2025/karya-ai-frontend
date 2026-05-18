@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertCircle, CheckCircle, Check, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Constants
 const ROLES = {
@@ -25,7 +26,7 @@ const ROLE_CONFIG = {
     subtitle: 'Connect with businesses and grow your career',
     icon: Users,
     gradient: 'bg-gradient-to-r from-blue-600 to-orange-500',
-    onboardingRoute: '/onboarding-expert/profile-setup'
+    onboardingRoute: '/onboarding-expert/welcome'
   }
 };
 
@@ -56,6 +57,14 @@ function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const role = searchParams.get('role') || ROLES.OWNER;
+  const { isAuthenticated, loading: authLoading, activeRole, register: authRegister } = useAuth();
+
+  // Redirect already-logged-in users away from the register page
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.replace(activeRole === 'expert' ? '/expert-dashboard' : '/business-dashboard');
+    }
+  }, [isAuthenticated, authLoading, activeRole, router]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -195,38 +204,20 @@ function RegisterContent() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          fullName: formData.fullName.trim(),
-          email: formData.email.toLowerCase().trim(),
-          password: formData.password,
-          confirmPassword: formData.confirmPassword,
-          role,
-          company: formData.company.trim() || undefined
-        })
+      const result = await authRegister({
+        fullName: formData.fullName.trim(),
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        role,
+        company: formData.company.trim() || undefined
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
+      if (!result.success) {
+        throw new Error(result.error || 'Registration failed');
       }
 
-      // Store token
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-      }
-
-      setSuccess('Account created! Redirecting to onboarding...');
-
-      // Navigate to onboarding
-      setTimeout(() => {
-        router.push(ROLE_CONFIG[role].onboardingRoute);
-      }, 1500);
+      router.replace(ROLE_CONFIG[role].onboardingRoute);
 
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
@@ -251,6 +242,8 @@ function RegisterContent() {
   const handleSocialSignup = (provider) => {
     setError(`${provider} signup coming soon!`);
   };
+
+  if (authLoading || isAuthenticated) return null;
 
   const currentRole = ROLE_CONFIG[role] || ROLE_CONFIG[ROLES.OWNER];
   const Icon = currentRole.icon;

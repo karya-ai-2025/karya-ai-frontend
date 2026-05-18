@@ -90,7 +90,7 @@ export default function CompanyDetails() {
   };
 
   const handleBack = () => {
-    router.push('/onboarding-owner/platform-usage');
+    router.back();
   };
 
   return (
