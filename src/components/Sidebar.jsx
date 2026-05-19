@@ -100,10 +100,13 @@ export default function Sidebar({ sidebarCollapsed, setSidebarCollapsed, activeI
       {/* Sidebar Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         {!sidebarCollapsed && (
-          <div className="flex items-center gap-2">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
             <Image src="/karya-ai-logo.png" alt="Karya AI" width={32} height={32} className="rounded-lg object-contain" />
             <h1 className="text-base font-bold text-gray-900">Karya AI</h1>
-          </div>
+          </button>
         )}
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -114,6 +117,17 @@ export default function Sidebar({ sidebarCollapsed, setSidebarCollapsed, activeI
           ) : (
             <ChevronLeft className="h-4 w-4 text-gray-500" />
           )}
+        </button>
+      </div>
+
+      {/* New Project CTA */}
+      <div className="px-3 pt-3">
+        <button
+          onClick={() => handleItemClick('create-project', '/create-project')}
+          className={`w-full flex items-center gap-2.5 px-3 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm ${sidebarCollapsed ? 'justify-center' : ''}`}
+        >
+          <PlusCircle className="h-4 w-4 flex-shrink-0" />
+          {!sidebarCollapsed && <span>New Project</span>}
         </button>
       </div>
 

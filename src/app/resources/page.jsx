@@ -1,13 +1,15 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   FileText, BookOpen, Play, Mic, TrendingUp, Target, Users, Zap,
   ArrowRight, Clock, ChevronRight, Search, Star, Download, ExternalLink,
-  MessageSquare, Rocket, BarChart3, Globe, Menu
+  MessageSquare, Rocket, BarChart3, Globe, Menu, Loader2
 } from 'lucide-react';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 const NAV_LINKS = [
   { label: 'About', path: '/about' },
@@ -62,114 +64,124 @@ const RESOURCE_CATEGORIES = [
   { label: 'Videos', value: 'video', icon: <Play className="w-4 h-4" /> },
 ];
 
-const RESOURCES = [
+// Fallback hardcoded cards — shown after any DB cards
+const HARDCODED_RESOURCES = [
   {
     type: 'guide',
     typeLabel: 'Guide',
     emoji: '📖',
     title: 'The Complete B2B GTM Playbook for 2025',
-    desc: 'Everything you need to build, launch, and scale your go-to-market strategy — from ICP definition to your first 100 customers.',
+    description: 'Everything you need to build, launch, and scale your go-to-market strategy — from ICP definition to your first 100 customers.',
     readTime: '18 min read',
     badge: 'Featured',
     badgeColor: 'bg-blue-600 text-white',
     topics: ['ICP', 'GTM Strategy', 'Launch'],
     gradient: 'from-blue-500 to-cyan-600',
+    link: null,
   },
   {
     type: 'case-study',
     typeLabel: 'Case Study',
     emoji: '📊',
     title: 'How a SaaS Startup Went from 0 to 500 Signups in 90 Days',
-    desc: 'An HR-tech startup used Karya-AI\'s Lead in a Box + GTM in a Box to validate their ICP and acquire their first paying cohort — in under 90 days.',
+    description: 'An HR-tech startup used Karya-AI\'s Lead in a Box + GTM in a Box to validate their ICP and acquire their first paying cohort — in under 90 days.',
     readTime: '8 min read',
     badge: 'Popular',
     badgeColor: 'bg-orange-500 text-white',
     topics: ['Lead Gen', 'SaaS', 'GTM'],
     gradient: 'from-orange-500 to-amber-500',
+    link: null,
   },
   {
     type: 'template',
     typeLabel: 'Template',
     emoji: '📋',
     title: 'ICP Definition Worksheet (Free Download)',
-    desc: 'A structured worksheet to define your Ideal Customer Profile with firmographic, psychographic, and behavioral attributes — used by 500+ teams.',
+    description: 'A structured worksheet to define your Ideal Customer Profile with firmographic, psychographic, and behavioral attributes — used by 500+ teams.',
     readTime: 'Download',
     badge: 'Free',
     badgeColor: 'bg-green-500 text-white',
     topics: ['ICP', 'Lead Gen', 'Strategy'],
     gradient: 'from-emerald-500 to-teal-600',
+    link: null,
   },
   {
     type: 'playbook',
     typeLabel: 'Playbook',
     emoji: '⚡',
     title: 'Cold Email Playbook: 40%+ Open Rates Without Tricks',
-    desc: 'The exact framework our expert network uses to write cold email sequences that get replies — including subject lines, openers, CTAs, and A/B testing protocols.',
+    description: 'The exact framework our expert network uses to write cold email sequences that get replies — including subject lines, openers, CTAs, and A/B testing protocols.',
     readTime: '12 min read',
-    badge: 'Editor\'s Pick',
+    badge: "Editor's Pick",
     badgeColor: 'bg-purple-600 text-white',
     topics: ['Email', 'Outreach', 'Copywriting'],
     gradient: 'from-purple-500 to-violet-600',
+    link: null,
   },
   {
     type: 'case-study',
     typeLabel: 'Case Study',
     emoji: '🚀',
     title: 'E-commerce Brand: $50K to $200K/mo in One Quarter',
-    desc: 'How a DTC brand used social media campaigns + email automation from Karya-AI to 4x their monthly revenue without increasing ad spend.',
+    description: 'How a DTC brand used social media campaigns + email automation from Karya-AI to 4x their monthly revenue without increasing ad spend.',
     readTime: '10 min read',
     badge: 'High ROI',
     badgeColor: 'bg-emerald-600 text-white',
     topics: ['E-commerce', 'Social', 'Email'],
     gradient: 'from-rose-500 to-pink-500',
+    link: null,
   },
   {
     type: 'guide',
     typeLabel: 'Guide',
     emoji: '🎯',
     title: 'Account-Based Marketing (ABM) for B2B: A Practical Guide',
-    desc: 'Learn how to run targeted ABM campaigns that close enterprise deals — from target account selection and personalization to multi-channel activation.',
+    description: 'Learn how to run targeted ABM campaigns that close enterprise deals — from target account selection and personalization to multi-channel activation.',
     readTime: '15 min read',
     badge: 'New',
     badgeColor: 'bg-blue-500 text-white',
     topics: ['ABM', 'Enterprise Sales', 'Marketing'],
     gradient: 'from-blue-600 to-indigo-600',
+    link: null,
   },
   {
     type: 'template',
     typeLabel: 'Template',
     emoji: '📈',
     title: 'GTM Dashboard Template — Track What Matters',
-    desc: 'A Notion + Google Sheets GTM dashboard template pre-wired with the KPIs your investors, board, and team actually care about.',
+    description: 'A Notion + Google Sheets GTM dashboard template pre-wired with the KPIs your investors, board, and team actually care about.',
     readTime: 'Download',
     badge: 'Free',
     badgeColor: 'bg-green-500 text-white',
     topics: ['Analytics', 'KPIs', 'Dashboard'],
     gradient: 'from-teal-500 to-emerald-600',
+    link: null,
   },
   {
     type: 'video',
     typeLabel: 'Video',
     emoji: '🎬',
     title: 'How to Use Karya-AI to Launch Your First GTM Campaign',
-    desc: 'A 20-minute walkthrough of the full Karya-AI platform — from telling the AI your goal to watching your expert team execute.',
+    description: 'A 20-minute walkthrough of the full Karya-AI platform — from telling the AI your goal to watching your expert team execute.',
     readTime: '20 min watch',
     badge: 'Video',
     badgeColor: 'bg-red-500 text-white',
     topics: ['Platform', 'Getting Started', 'GTM'],
     gradient: 'from-red-500 to-rose-600',
+    link: null,
   },
   {
     type: 'playbook',
     typeLabel: 'Playbook',
     emoji: '🤝',
     title: 'LinkedIn Outreach Playbook: Warm Leads at Scale',
-    desc: 'The exact LinkedIn connection + DM strategy our experts use to generate 20–40 qualified conversations per month without paid tools.',
+    description: 'The exact LinkedIn connection + DM strategy our experts use to generate 20–40 qualified conversations per month without paid tools.',
     readTime: '10 min read',
     badge: 'Proven',
     badgeColor: 'bg-blue-600 text-white',
     topics: ['LinkedIn', 'Outreach', 'Lead Gen'],
     gradient: 'from-blue-700 to-cyan-600',
+    link: null,
   },
 ];
 
@@ -186,10 +198,25 @@ export default function ResourcesPage() {
   const router = useRouter();
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [resources, setResources] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filtered = RESOURCES.filter(r => {
+  useEffect(() => {
+    fetch(`${API_URL}/resources`)
+      .then(r => r.json())
+      .then(json => setResources(json.data?.resources || []))
+      .catch(() => setResources([]))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  // DB cards first, then hardcoded fallbacks
+  const allResources = [...resources, ...HARDCODED_RESOURCES];
+
+  const filtered = allResources.filter(r => {
     const matchesCategory = activeCategory === 'all' || r.type === activeCategory;
-    const matchesSearch = !searchQuery || r.title.toLowerCase().includes(searchQuery.toLowerCase()) || r.desc.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = !searchQuery ||
+      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.description || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -259,36 +286,86 @@ export default function ResourcesPage() {
             ))}
           </div>
 
-          {filtered.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="text-center py-20">
               <div className="text-5xl mb-4">🔍</div>
-              <p className="text-gray-500 text-lg">No resources match your search. Try a different term.</p>
+              <p className="text-gray-500 text-lg">
+                {resources.length === 0 ? 'No resources published yet. Check back soon!' : 'No resources match your search. Try a different term.'}
+              </p>
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filtered.map((resource, i) => (
-                <div key={i} className="group bg-white border border-gray-200 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+                <div key={resource._id || i} className="group bg-white border border-gray-200 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-1 transition-all duration-300 flex flex-col">
                   {/* Top gradient bar */}
-                  <div className={`h-2 bg-gradient-to-r ${resource.gradient}`} />
-                  <div className="p-6">
+                  <div className={`h-2 bg-gradient-to-r ${resource.gradient} flex-shrink-0`} />
+
+                  {/* Cover image — aspect-video keeps all images the same proportion */}
+                  {resource.image && (
+                    <div className="w-full aspect-video overflow-hidden flex-shrink-0">
+                      <img
+                        src={resource.image}
+                        alt={resource.title}
+                        className="w-full h-full object-cover object-center"
+                      />
+                    </div>
+                  )}
+
+                  {/* Card body — flex-col so CTA always sits at the bottom */}
+                  <div className="p-6 flex flex-col flex-1">
                     {/* Meta row */}
                     <div className="flex items-center justify-between mb-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${resource.badgeColor}`}>{resource.badge}</span>
+                      {resource.badge
+                        ? <span className={`px-3 py-1 rounded-full text-xs font-bold ${resource.badgeColor}`}>{resource.badge}</span>
+                        : <span />}
                       <span className="text-gray-400 text-xs flex items-center gap-1"><Clock className="w-3 h-3" /> {resource.readTime}</span>
                     </div>
-                    {/* Content */}
-                    <div className="text-3xl mb-3">{resource.emoji}</div>
-                    <span className={`text-xs font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r ${resource.gradient}`}>{resource.typeLabel}</span>
-                    <h3 className="font-black text-gray-900 text-lg mt-1 mb-3 leading-snug group-hover:text-blue-600 transition-colors">{resource.title}</h3>
-                    <p className="text-gray-500 text-sm leading-relaxed mb-5">{resource.desc}</p>
+
+                    {/* Emoji (only when no image) */}
+                    {!resource.image && <div className="text-3xl mb-3">{resource.emoji}</div>}
+
+                    {/* Type label */}
+                    <span className={`text-xs font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r ${resource.gradient}`}>
+                      {resource.typeLabel}
+                    </span>
+
+                    {/* Title — max 2 lines */}
+                    <h3 className="font-black text-gray-900 text-lg mt-1 mb-3 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
+                      {resource.title}
+                    </h3>
+
+                    {/* Description — max 3 lines */}
+                    <p className="text-gray-500 text-sm leading-relaxed mb-5 line-clamp-3">
+                      {resource.description}
+                    </p>
+
                     {/* Topics */}
-                    <div className="flex flex-wrap gap-1.5 mb-5">
-                      {resource.topics.map((t, j) => (
-                        <span key={j} className="px-2.5 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">{t}</span>
-                      ))}
-                    </div>
-                    <div className={`flex items-center gap-2 text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r ${resource.gradient}`}>
-                      {resource.type === 'template' ? <><Download className="w-4 h-4 text-emerald-500" /> Download Free</> : resource.type === 'video' ? <><Play className="w-4 h-4 text-red-500" /> Watch Now</> : <><ArrowRight className="w-4 h-4 text-blue-500" /> Read More</>}
+                    {resource.topics?.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-5">
+                        {resource.topics.slice(0, 3).map((t, j) => (
+                          <span key={j} className="px-2.5 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">{t}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* CTA — pinned to bottom, opens link in new tab */}
+                    <div className="mt-auto pt-2">
+                      <button
+                        onClick={() => resource.link && window.open(resource.link, '_blank', 'noopener,noreferrer')}
+                        className={`flex items-center gap-2 text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r ${resource.gradient} ${resource.link ? 'hover:opacity-80 cursor-pointer' : 'opacity-50 cursor-default'} transition-opacity`}
+                      >
+                        {resource._id
+                          ? <><ArrowRight className="w-4 h-4 text-blue-500" /> Read More</>
+                          : resource.type === 'template'
+                          ? <><Download className="w-4 h-4 text-emerald-500" /> Download Free</>
+                          : resource.type === 'video'
+                          ? <><Play className="w-4 h-4 text-red-500" /> Watch Now</>
+                          : <><ArrowRight className="w-4 h-4 text-blue-500" /> Read More</>}
+                      </button>
                     </div>
                   </div>
                 </div>

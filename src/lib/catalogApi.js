@@ -132,6 +132,22 @@ export async function removeCatalogProject(slug) {
   return res.json();
 }
 
+// Creates a new catalog project (any logged-in user).
+export async function createProject(payload) {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const res = await fetch(`${API_URL}/catalog`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || 'Failed to create project');
+  return json.data;
+}
+
 // Fetches experts attached to a catalog project.
 export async function fetchProjectExperts(slug) {
   const res = await fetch(`${API_URL}/catalog/${slug}/experts`, { cache: 'no-store' });

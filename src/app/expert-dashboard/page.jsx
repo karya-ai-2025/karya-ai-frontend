@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Search, Bell, ChevronDown, Home, Briefcase, Target, Users, DollarSign,
-  FolderOpen, Phone, Wrench, Settings, Plus, Calendar, Clock, CheckCircle,
+  FolderOpen, Phone, Wrench, Settings, Plus, PlusCircle, Calendar, Clock, CheckCircle,
   Circle, AlertCircle, ChevronRight, Star, HelpCircle, ExternalLink,
   Sparkles, Menu, LogOut, User, CreditCard, TrendingUp, TrendingDown,
   MessageSquare, FileText, Send, Eye, ThumbsUp, ThumbsDown, Timer,
@@ -456,6 +456,18 @@ function ExpertDashboard() {
         {/* Sidebar */}
         <aside className={`${sidebarOpen ? 'w-64' : 'w-0 lg:w-16'} flex-shrink-0 transition-all duration-300 overflow-hidden`}>
           <div className={`bg-white border-r border-gray-200 h-full overflow-y-auto ${sidebarOpen ? 'p-4' : 'p-2'}`}>
+            {/* New Project CTA */}
+            <div className="mb-3">
+              <button
+                onClick={() => { setActiveNav('create-project'); router.push('/create-project'); }}
+                title={!sidebarOpen ? 'New Project' : ''}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm ${!sidebarOpen ? 'justify-center' : ''}`}
+              >
+                <PlusCircle className="w-5 h-5 flex-shrink-0" />
+                {sidebarOpen && <span>New Project</span>}
+              </button>
+            </div>
+
             {/* Navigation */}
             <nav className="space-y-1">
               {sidebarNavItems.map(item => {

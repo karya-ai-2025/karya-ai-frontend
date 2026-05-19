@@ -34,11 +34,16 @@ export const AuthProvider = ({ children }) => {
       if (cached) setUser(JSON.parse(cached));
     } catch {}
     setLoading(false); // render instantly from cache
-    checkAuth();       // silently re-validate token in background
+
+    // Background re-validate — abort cleanly on unmount (React Strict Mode safe)
+    const controller = new AbortController();
+    checkAuth(controller.signal);
+    return () => controller.abort('unmount');
   }, []);
 
   // Check authentication status
-  const checkAuth = async () => {
+  // signal is optional — pass one from useEffect for cleanup, omit for manual calls
+  const checkAuth = async (signal) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -46,62 +51,33 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      // Debug: Check auth with existing token
-      console.log('Checking auth with existing token...');
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
       const response = await fetch(`${API_URL}/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         credentials: 'include',
-        signal: controller.signal
+        ...(signal ? { signal } : {}),
       });
-
-      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
       } else if (response.status === 401) {
-        // Token is invalid/expired - clear storage and allow fresh login
-        console.log('Token invalid/expired, clearing auth data');
+        // Token is invalid/expired — clear and force fresh login
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
-      } else if(response.status === 500) {
-        // Other errors (500, network issues, etc.)
-        console.error('Auth check failed with status:', response.status);
-        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-        console.error('Error details:', errorData);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
-      } else {
-        // Server error (5xx) or other — restore from localStorage so user stays logged in
-        const cached = localStorage.getItem('user');
-        if (cached) {
-          try { setUser(JSON.parse(cached)); } catch { setUser(null); }
-        }
       }
+      // Any other status (5xx, etc.) — keep cached user, server may be temporarily down
     } catch (err) {
-      // Network error (backend unreachable) — restore from localStorage
-      console.error('Auth check failed:', err);
       if (err.name === 'AbortError') {
-        console.error('Auth request timed out after 10 seconds');
-      } else if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        console.error('Network error - server may be down:', err.message);
-      } else {
-        console.error('Unexpected error during auth check:', err.message);
+        // Component unmounted or navigation happened — silently keep cached user, do NOT clear token
+        return;
       }
-      // Clear auth data on any error
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      setUser(null);
+      // Network error (backend unreachable) — keep cached user so user stays logged in
+      console.warn('Auth background check failed:', err.message);
     } finally {
       setLoading(false);
     }

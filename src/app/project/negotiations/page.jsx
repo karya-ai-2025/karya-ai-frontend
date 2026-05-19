@@ -6,6 +6,7 @@ import {
   Package, Tag, Loader2, RefreshCw, Trash2,
 } from 'lucide-react';
 import { getAllNegotiations, updateNegotiationStatus, deleteNegotiation } from '@/lib/negotiationApi';
+import AdminGuard from '@/components/AdminGuard';
 
 const ALL_TIER_DELIVERABLES = [
   { key: 'crmExport',             label: 'Verified contact list (CSV / CRM format)' },
@@ -81,6 +82,7 @@ export default function NegotiationsPage() {
   const visible = filter === 'all' ? negotiations : negotiations.filter(n => n.status === filter);
 
   return (
+    <AdminGuard>
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto">
 
@@ -283,5 +285,6 @@ export default function NegotiationsPage() {
         )}
       </div>
     </div>
+    </AdminGuard>
   );
 }

@@ -6,6 +6,7 @@ import {
   Loader2, Calendar, Mail, User, ExternalLink, PhoneCall,
 } from 'lucide-react';
 import { getAllScheduledCalls, markCallComplete } from '@/lib/scheduledCallsApi';
+import AdminGuard from '@/components/AdminGuard';
 
 const SOURCE_LABEL = {
   'onboarding-owner':  { label: 'Business Owner', color: 'bg-blue-100 text-blue-700 border-blue-200' },
@@ -60,6 +61,7 @@ export default function ScheduledCallsPage() {
     : calls.filter(c => c.completedAt);
 
   return (
+    <AdminGuard>
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto">
 
@@ -212,5 +214,6 @@ export default function ScheduledCallsPage() {
         )}
       </div>
     </div>
+    </AdminGuard>
   );
 }
