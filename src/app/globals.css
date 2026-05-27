@@ -503,6 +503,16 @@ html {
   background-size: 200% 200%;
 }
 
+/* Carousel progress bar */
+@keyframes carouselBar {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+.animate-carouselBar {
+  animation: carouselBar 4s linear forwards;
+}
+
 /* Print styles */
 @media print {
   .reduce-motion * {

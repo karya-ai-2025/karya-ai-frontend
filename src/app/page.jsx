@@ -4,7 +4,8 @@ import Image from 'next/image';
 import {
   Sparkles, TrendingUp, Target, Zap, Users, MessageSquare, Search, Star, Award,
   Play, ChevronDown, ChevronRight, Check, Briefcase, ArrowRight, X, Globe, Rocket,
-  ChevronLeft, Package, UserCheck, MapPin, Menu, FileText, User, LogOut, LayoutDashboard, Settings
+  ChevronLeft, Package, UserCheck, MapPin, Menu, FileText, User, LogOut, LayoutDashboard, Settings,
+  Home, LayoutGrid, Bot, Phone, Mail, Layers, BarChart2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -13,7 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 function HomePage() {
   const router = useRouter();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, loading: authLoading } = useAuth();
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [questionIndex, setQuestionIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
@@ -30,6 +31,11 @@ function HomePage() {
   const [pricingLoading, setPricingLoading] = useState(true);
   const signInRef = useRef(null);
   const profileRef = useRef(null);
+  const [activeLauncherTab, setActiveLauncherTab] = useState('starter-kit');
+  const [selectedLauncherOption, setSelectedLauncherOption] = useState(null);
+  const [launcherSearch, setLauncherSearch] = useState('');
+  const [carouselSlide, setCarouselSlide] = useState(0);
+  const [carouselPaused, setCarouselPaused] = useState(false);
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -46,6 +52,21 @@ function HomePage() {
     if (user?.activeRole === 'expert') return '/expert-dashboard';
     return '/business-dashboard';
   };
+
+  const handleProtectedRoute = (path) => {
+    if (isAuthenticated) {
+      router.push(path);
+    } else {
+      router.push(`/login?redirect=${encodeURIComponent(path)}`);
+    }
+  };
+
+  // Logged-in users should never see the landing page — their dashboard IS their home
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.replace(user?.activeRole === 'expert' ? '/expert-dashboard' : '/business-dashboard');
+    }
+  }, [isAuthenticated, authLoading, user, router]);
 
   const dynamicWords = ["Growth Ops", "Content", "Strategy", "Marketing", "Execution", "GTM", "Advertising"];
 
@@ -216,11 +237,161 @@ function HomePage() {
     { label: 'Privacy Policy', path: '/privacy' },
   ];
 
+  useEffect(() => {
+    if (carouselPaused) return;
+    const timer = setInterval(() => {
+      setCarouselSlide(prev => (prev + 1) % 6);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [carouselPaused]);
+
   const toggleAccordion = (section) => setOpenAccordion(openAccordion === section ? null : section);
   const toggleFAQ = (index) => setOpenFAQ(openFAQ === index ? null : index);
   const currentStage = useCases[activeTab];
 
   const marqueeItems = ['AI Planning', '743+ Projects Delivered', '4.8★ Rating', '180+ Vetted Experts', '90-Day Results', 'GTM Execution', 'ICP Matching', 'Live Analytics', 'Expert Marketplace'];
+
+  // ── App Launcher data ──────────────────────────────────────────────────────
+  const launcherTabs = [
+    { id: 'starter-kit', label: 'Starter Kit' },
+    { id: 'custom',      label: 'Custom' },
+    { id: 'outreach',    label: 'Outreach' },
+    { id: 'content',     label: 'Content' },
+    { id: 'growth',      label: 'Growth' },
+  ];
+
+  const launcherOptions = {
+    'starter-kit': [
+      { id: 'get-customers',  label: 'Get New Customers',      icon: '🎯', desc: 'Lead gen, outreach & pipeline building' },
+      { id: 'advertise',      label: 'Advertise Your Product', icon: '📣', desc: 'Google, Meta & LinkedIn ad campaigns' },
+      { id: 'brand-presence', label: 'Build Brand Presence',   icon: '🏆', desc: 'Identity, PR & thought leadership' },
+      { id: 'go-viral',       label: 'Go Viral on Social',     icon: '🔥', desc: 'Hooks, formats & platform distribution' },
+      { id: 'launch-product', label: 'Launch a Product',       icon: '🚀', desc: 'GTM strategy, waitlist & launch day' },
+    ],
+    'custom': [
+      { id: 'fill-manually',  label: 'Fill Manually',          icon: '✏️', desc: 'Step-by-step guided project builder' },
+      { id: 'schedule-call',  label: 'Schedule a Call',        icon: '📞', desc: 'Our team scopes the project with you' },
+      { id: 'by-agent',       label: 'By Agent',               icon: '🤖', desc: 'AI chats with you & builds the brief' },
+    ],
+    'outreach': [
+      { id: 'email-outreach', label: 'Email Outreach',         icon: '📧', desc: 'Cold email sequences & automation' },
+      { id: 'linkedin',       label: 'LinkedIn Outreach',      icon: '💼', desc: 'Profile optimisation & DM campaigns' },
+      { id: 'cold-calls',     label: 'AI Cold Calls',          icon: '📱', desc: 'Automated voice outreach at scale' },
+      { id: 'sms-campaigns',  label: 'SMS Campaigns',          icon: '💬', desc: 'Text message nurture & conversions' },
+    ],
+    'content': [
+      { id: 'blog-seo',       label: 'Blog & SEO Content',     icon: '✍️', desc: 'Keyword research & optimised posts' },
+      { id: 'social-posts',   label: 'Social Media Posts',     icon: '📲', desc: 'Content calendar across all platforms' },
+      { id: 'video-scripts',  label: 'Video Scripts',          icon: '🎥', desc: 'Hooks, scripts & CTAs for any format' },
+      { id: 'email-copy',     label: 'Email Copy',             icon: '📝', desc: 'Welcome, nurture & conversion sequences' },
+    ],
+    'growth': [
+      { id: 'lead-gen',       label: 'Lead Generation',        icon: '⚡', desc: 'ICP-matched verified lead lists' },
+      { id: 'paid-ads',       label: 'Paid Advertising',       icon: '📈', desc: 'Performance campaigns & ad creatives' },
+      { id: 'referral',       label: 'Referral Programs',      icon: '🤝', desc: 'Referral system design & launch' },
+      { id: 'retention',      label: 'Customer Retention',     icon: '🔄', desc: 'Churn reduction & loyalty programs' },
+    ],
+  };
+
+  const launcherProjects = {
+    'get-customers': [
+      { title: 'Lead in a Box',       desc: '1,000 ICP-matched verified leads delivered',    emoji: '🎯', path: '/leads' },
+      { title: 'Cold Email Machine',  desc: 'Automated multi-step outreach sequences',       emoji: '📧', path: '/project-marketplace' },
+      { title: 'AI Cold Calls',       desc: 'AI-powered voice outreach campaigns',           emoji: '📞', path: '/project-marketplace' },
+    ],
+    'advertise': [
+      { title: 'Google Ads Setup',    desc: 'End-to-end performance campaign launch',        emoji: '📈', path: '/project-marketplace' },
+      { title: 'Meta Ads',            desc: 'Facebook & Instagram advertising',              emoji: '🎯', path: '/project-marketplace' },
+      { title: 'Ad Creatives Pack',   desc: 'High-converting copy, visuals & videos',        emoji: '🎨', path: '/project-marketplace' },
+    ],
+    'brand-presence': [
+      { title: 'Brand Identity Kit',  desc: 'Logo, colors, voice & brand guidelines',        emoji: '🏆', path: '/project-marketplace' },
+      { title: 'LinkedIn Authority',  desc: 'Thought leadership & profile program',          emoji: '💼', path: '/project-marketplace' },
+      { title: 'PR & Media',          desc: 'Press coverage & journalist outreach',          emoji: '📰', path: '/project-marketplace' },
+    ],
+    'go-viral': [
+      { title: 'Viral Content Engine',desc: 'Hooks, formats & multi-platform distribution',  emoji: '🔥', path: '/project-marketplace' },
+      { title: 'Influencer Connect',  desc: 'Micro-influencer campaign management',          emoji: '⭐', path: '/project-marketplace' },
+      { title: 'Community Build',     desc: 'Discord, Slack & community growth system',      emoji: '👥', path: '/project-marketplace' },
+    ],
+    'launch-product': [
+      { title: 'GTM in a Box',        desc: 'Complete go-to-market execution package',       emoji: '🚀', path: '/project-marketplace' },
+      { title: 'Product Hunt Launch', desc: 'Hunt day strategy, assets & execution',         emoji: '🏅', path: '/project-marketplace' },
+      { title: 'Launch Waitlist',     desc: 'Pre-launch audience & waitlist building',       emoji: '📋', path: '/project-marketplace' },
+    ],
+    'email-outreach': [
+      { title: 'Cold Email Sequences',desc: 'Multi-step personalized outreach flows',        emoji: '📧', path: '/project-marketplace' },
+      { title: 'Email Warm-up',       desc: 'Domain reputation & deliverability building',  emoji: '🔥', path: '/project-marketplace' },
+      { title: 'Newsletter Build',    desc: 'Audience-building newsletter system',           emoji: '📰', path: '/project-marketplace' },
+    ],
+    'linkedin': [
+      { title: 'LinkedIn Lead Gen',   desc: 'Profile optimisation + outreach sequences',    emoji: '💼', path: '/project-marketplace' },
+      { title: 'Sales Navigator Pro', desc: 'Advanced targeting & lead list building',       emoji: '🎯', path: '/project-marketplace' },
+      { title: 'DM Outreach System',  desc: 'Personalised connection + DM campaigns',       emoji: '✉️', path: '/project-marketplace' },
+    ],
+    'cold-calls': [
+      { title: 'AI Call Campaigns',   desc: 'Automated voice outreach at scale',            emoji: '📞', path: '/project-marketplace' },
+      { title: 'Sales Dialer Setup',  desc: 'Power dialer + script + training',             emoji: '🎙️', path: '/project-marketplace' },
+    ],
+    'sms-campaigns': [
+      { title: 'SMS Drip Sequences',  desc: 'Text message nurture & conversion flows',      emoji: '💬', path: '/project-marketplace' },
+      { title: 'WhatsApp Outreach',   desc: 'WhatsApp broadcast & automation setup',        emoji: '📲', path: '/project-marketplace' },
+    ],
+    'blog-seo': [
+      { title: 'SEO Blog Engine',     desc: '4 posts/mo with keyword research & briefs',    emoji: '✍️', path: '/project-marketplace' },
+      { title: 'Long-form Authority', desc: 'Deep-dive articles that rank & convert',        emoji: '📄', path: '/project-marketplace' },
+      { title: 'Technical SEO Audit', desc: 'Full site audit + fix recommendations',        emoji: '🔍', path: '/project-marketplace' },
+    ],
+    'social-posts': [
+      { title: 'Social Calendar',     desc: '30 posts/mo across LinkedIn, X & Instagram',  emoji: '📲', path: '/project-marketplace' },
+      { title: 'Short-form Videos',   desc: 'Reels, TikToks & YouTube Shorts',             emoji: '🎥', path: '/project-marketplace' },
+    ],
+    'video-scripts': [
+      { title: 'Video Script Pack',   desc: 'Hooks, scripts & CTAs for any format',         emoji: '🎬', path: '/project-marketplace' },
+      { title: 'YouTube Strategy',    desc: 'Channel plan, SEO & content calendar',          emoji: '▶️', path: '/project-marketplace' },
+    ],
+    'email-copy': [
+      { title: 'Email Copy System',   desc: 'Welcome, nurture & sales email sequences',     emoji: '📝', path: '/project-marketplace' },
+      { title: 'Newsletter Design',   desc: 'Template, copy & weekly send system',          emoji: '💌', path: '/project-marketplace' },
+    ],
+    'lead-gen': [
+      { title: 'Lead in a Box',       desc: '1,000 ICP-matched verified leads delivered',    emoji: '🎯', path: '/leads' },
+      { title: 'Inbound Lead Funnel', desc: 'Landing page + lead magnet + nurture',         emoji: '⚡', path: '/project-marketplace' },
+    ],
+    'paid-ads': [
+      { title: 'Full Funnel Ads',     desc: 'Google + Meta + LinkedIn ads management',      emoji: '📈', path: '/project-marketplace' },
+      { title: 'Retargeting System',  desc: 'Pixel setup + retargeting campaigns',          emoji: '🔄', path: '/project-marketplace' },
+    ],
+    'referral': [
+      { title: 'Referral Program',    desc: 'End-to-end referral system design & launch',   emoji: '🤝', path: '/project-marketplace' },
+      { title: 'Affiliate Setup',     desc: 'Affiliate program + partner recruitment',       emoji: '🌐', path: '/project-marketplace' },
+    ],
+    'retention': [
+      { title: 'Churn Reduction',     desc: 'Exit surveys, win-back & loyalty flows',       emoji: '🔄', path: '/project-marketplace' },
+      { title: 'Customer Success',    desc: 'Onboarding + NPS + upsell system',             emoji: '💎', path: '/project-marketplace' },
+    ],
+  };
+  const featuredLauncherProjects = [
+    { title: 'Lead in a Box',        desc: '1,000 ICP-matched verified leads ready for outreach', emoji: '🎯', thumb: 'from-blue-600 via-blue-500 to-cyan-400',      img: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=640&h=360&fit=crop&auto=format',  path: '/leads',               tag: 'Most Popular' },
+    { title: 'GTM in a Box',         desc: '2 dedicated experts to win your first 50 customers',  emoji: '🚀', thumb: 'from-violet-600 via-purple-500 to-pink-400',  img: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace', tag: 'Featured' },
+    { title: 'Cold Email Machine',   desc: 'Multi-step automated outreach with personalisation',  emoji: '📧', thumb: 'from-emerald-600 via-teal-500 to-cyan-400',   img: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=640&h=360&fit=crop&auto=format', path: '/project-marketplace', tag: 'Outreach' },
+    { title: 'SEO Blog Engine',      desc: '4 fully optimised blog posts delivered every month',  emoji: '✍️', thumb: 'from-orange-500 via-amber-400 to-yellow-400', img: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace', tag: 'Content' },
+    { title: 'Brand Identity Kit',   desc: 'Logo, typography, color palette & brand voice guide', emoji: '🏆', thumb: 'from-rose-600 via-pink-500 to-fuchsia-400',   img: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace', tag: 'Branding' },
+    { title: 'Viral Content Engine', desc: 'Hooks, short-form formats & multi-platform reach',    emoji: '🔥', thumb: 'from-red-600 via-orange-500 to-amber-400',    img: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace', tag: 'Social' },
+  ];
+
+  const projectCardColors = [
+    'from-blue-500 to-cyan-500',
+    'from-purple-500 to-pink-500',
+    'from-emerald-500 to-teal-500',
+    'from-orange-500 to-amber-500',
+    'from-rose-500 to-pink-500',
+    'from-indigo-500 to-blue-500',
+  ];
+  // ── End App Launcher data ─────────────────────────────────────────────────
+
+  // Don't render landing page for authenticated users (redirect fires in useEffect above)
+  if (authLoading || isAuthenticated) return null;
 
   return (
     <div className="min-h-screen bg-white font-sans overflow-x-hidden">
@@ -320,8 +491,334 @@ function HomePage() {
         </div>
       </div>
 
-      {/* ==================== HERO — SPLIT LAYOUT ==================== */}
-      <section className="relative min-h-[92vh] flex items-center overflow-hidden bg-white">
+      {/* ==================== LAUNCH PAD (pre-login homepage section) ==================== */}
+      {!isAuthenticated && (
+        <section className="relative overflow-hidden border-b border-gray-200" style={{ height: 'calc(100vh - 65px)', background: '#ffffff' }}>
+          <div className="flex h-full overflow-hidden">
+
+            {/* ── Icon Rail ── */}
+            <div className="hidden md:flex w-[72px] flex-col items-center pt-6 pb-5 gap-1 bg-white border-r border-gray-100 flex-shrink-0 h-full">
+              {[
+                { Icon: LayoutGrid,    label: 'Home',     path: '/business-dashboard' },
+                { Icon: Layers,        label: 'Projects', path: '/project-marketplace' },
+                { Icon: Bot,           label: 'Agent',    path: '/agent' },
+                { Icon: Users,         label: 'Experts',  path: '/expert-marketplace' },
+                { Icon: MessageSquare, label: 'Messages', path: '/business-dashboard/messages' },
+              ].map(({ Icon, label, path }) => (
+                <button key={label} onClick={() => handleProtectedRoute(path)} title={label}
+                  className="w-12 h-12 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors text-gray-400 hover:text-blue-600 hover:bg-blue-50">
+                  <Icon className="w-[22px] h-[22px]" strokeWidth={1.5} />
+                  <span className="text-[8px] font-medium tracking-wide leading-none opacity-60">{label}</span>
+                </button>
+              ))}
+              <div className="flex-1" />
+              <button onClick={() => handleProtectedRoute('/settings')} title="Settings"
+                className="w-12 h-12 flex flex-col items-center justify-center gap-1 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                <Settings className="w-[22px] h-[22px]" strokeWidth={1.5} />
+                <span className="text-[8px] font-medium opacity-60">Settings</span>
+              </button>
+            </div>
+
+            {/* ── Left Panel ── */}
+            <div className="hidden md:flex w-[420px] lg:w-[500px] flex-col bg-white border-r border-gray-100 flex-shrink-0 h-full overflow-hidden">
+
+              {/* Header */}
+              <div className="flex-shrink-0 px-7 pt-7 pb-4">
+                <h2 className="text-gray-900 font-bold text-[20px] leading-snug tracking-tight mb-1.5">
+                  What do you want to build?
+                </h2>
+                <p className="text-gray-500 text-[13px] leading-relaxed">Pick a goal — we'll find the right project and experts.</p>
+              </div>
+
+              {/* Search */}
+              <div className="flex-shrink-0 px-7 pb-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-[14px] h-[14px] text-gray-400" strokeWidth={1.5} />
+                  <input type="text" value={launcherSearch} onChange={(e) => setLauncherSearch(e.target.value)}
+                    placeholder="Search projects and tools…"
+                    className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 text-[13px] focus:outline-none focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <div className="flex-shrink-0 flex border-b border-gray-100 overflow-x-auto scrollbar-none px-7">
+                {launcherTabs.map(tab => (
+                  <button key={tab.id}
+                    onClick={() => { setActiveLauncherTab(tab.id); setSelectedLauncherOption(tab.id === 'custom' ? 'custom' : null); }}
+                    className={`flex-shrink-0 px-3 py-2.5 text-[12px] font-semibold transition-colors border-b-2 -mb-[1px] ${
+                      activeLauncherTab === tab.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400 hover:text-gray-700'
+                    }`}>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Option list */}
+              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5">
+                {activeLauncherTab !== 'custom' &&
+                  (launcherOptions[activeLauncherTab] || [])
+                    .filter(o => !launcherSearch || o.label.toLowerCase().includes(launcherSearch.toLowerCase()))
+                    .map(option => {
+                      const ICON_MAP = {
+                        'get-customers':  Users,       'advertise':      BarChart2,
+                        'brand-presence': Star,        'go-viral':       Zap,
+                        'launch-product': Rocket,      'email-outreach': Mail,
+                        'linkedin':       Briefcase,   'cold-calls':     Phone,
+                        'sms-campaigns':  MessageSquare, 'blog-seo':     FileText,
+                        'social-posts':   Globe,       'video-scripts':  Play,
+                        'email-copy':     Mail,        'lead-gen':       Target,
+                        'paid-ads':       TrendingUp,  'referral':       Users,
+                        'retention':      Award,
+                      };
+                      const OptionIcon = ICON_MAP[option.id] || Sparkles;
+                      const isSelected = selectedLauncherOption === option.id;
+                      return (
+                        <button key={option.id} onClick={() => setSelectedLauncherOption(option.id)}
+                          className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-left transition-all border ${
+                            isSelected
+                              ? 'bg-blue-50 border-blue-200'
+                              : 'bg-white border-gray-100 hover:bg-gray-50 hover:border-gray-200'
+                          }`}>
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                            isSelected ? 'bg-blue-100' : 'bg-gray-100'
+                          }`}>
+                            <OptionIcon className={`w-[15px] h-[15px] ${isSelected ? 'text-blue-600' : 'text-gray-500'}`} strokeWidth={1.5} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`font-semibold text-[13px] leading-tight transition-colors ${
+                              isSelected ? 'text-blue-700' : 'text-gray-800'
+                            }`}>{option.label}</p>
+                            <p className="text-gray-400 text-[11px] mt-0.5 truncate">{option.desc}</p>
+                          </div>
+                        </button>
+                      );
+                    })
+                }
+                {activeLauncherTab === 'custom' && [
+                  { label: 'Fill Manually',   Icon: FileText, desc: 'Step-by-step guided project builder', path: '/business-dashboard' },
+                  { label: 'Schedule a Call', Icon: Phone,    desc: 'Our team scopes the project with you', path: '/business-dashboard' },
+                  { label: 'By Agent',        Icon: Bot,      desc: 'AI chats with you & builds the brief', path: '/business-dashboard' },
+                ].map(opt => (
+                  <button key={opt.label} onClick={() => handleProtectedRoute(opt.path)}
+                    className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-left bg-white border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <opt.Icon className="w-[15px] h-[15px] text-gray-500" strokeWidth={1.5} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-[13px] text-gray-800">{opt.label}</p>
+                      <p className="text-gray-400 text-[11px] mt-0.5 truncate">{opt.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+            </div>
+
+            {/* ── Right Panel ── */}
+            <div className="flex-1 flex flex-col h-full overflow-hidden bg-white">
+
+              {/* Desktop: 30/70 split */}
+              <div className="hidden md:flex flex-col h-full">
+
+                {/* TOP 30% — Section title + big Ask Karya */}
+                <div className="flex flex-col border-b border-gray-100 px-8 pt-7 pb-6" style={{ height: '30%' }}>
+
+                  {/* Section heading — changes with selection */}
+                  <div className="flex-shrink-0 mb-4">
+                    {selectedLauncherOption && activeLauncherTab !== 'custom' ? (
+                      <>
+                        <button onClick={() => setSelectedLauncherOption(null)}
+                          className="flex items-center gap-1 text-gray-400 hover:text-gray-700 text-[12px] font-medium mb-2 transition-colors">
+                          <ChevronRight className="w-3.5 h-3.5 rotate-180" strokeWidth={2} /> Back
+                        </button>
+                        <h2 className="text-gray-900 font-bold text-[22px] tracking-tight leading-tight">
+                          {launcherOptions[activeLauncherTab]?.find(o => o.id === selectedLauncherOption)?.label}
+                        </h2>
+                        <p className="text-gray-400 text-[13px] mt-0.5">Recommended projects to get you started</p>
+                      </>
+                    ) : activeLauncherTab === 'custom' ? (
+                      <>
+                        <h2 className="text-gray-900 font-bold text-[22px] tracking-tight leading-tight">How would you like to build?</h2>
+                        <p className="text-gray-400 text-[13px] mt-0.5">Choose the method that works best for you</p>
+                      </>
+                    ) : (
+                      <>
+                        <h2 className="text-gray-900 font-bold text-[22px] tracking-tight leading-tight">Popular projects</h2>
+                        <p className="text-gray-400 text-[13px] mt-0.5">Recommended projects to get you started</p>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Ask Karya — fills remaining space of 30% */}
+                  <div className="flex-1 min-h-0 cursor-pointer" onClick={() => handleProtectedRoute('/agent')}>
+                    <div className="h-full flex items-center gap-4 bg-gray-50 hover:bg-white border-2 border-gray-200 hover:border-blue-400 rounded-2xl px-6 transition-all group">
+                      <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Image src="/karya-ai-logo.png" alt="Karya AI" width={18} height={18} className="object-contain brightness-0 invert" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-gray-400 text-[15px] leading-normal">
+                          {currentQuestion || 'Ask Karya about your GTM strategy…'}
+                          {currentQuestion && <span className="inline-block w-[2px] h-4 bg-blue-600 ml-0.5 animate-blink align-middle" />}
+                        </p>
+                        <p className="text-gray-300 text-[12px] mt-1">Get customers · Build content · Run ads · Find experts</p>
+                      </div>
+                      <span className="text-[13px] text-gray-500 bg-white border border-gray-200 px-4 py-2 rounded-xl font-semibold flex-shrink-0 group-hover:border-blue-400 group-hover:text-blue-600 transition-colors">Ask AI →</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* BOTTOM 70% — 2×2 card grid */}
+                <div className="flex-1 min-h-0 overflow-y-auto px-8 py-6">
+
+                  {/* DEFAULT: 2×2 project cards (first 4 only) */}
+                  {!selectedLauncherOption && activeLauncherTab !== 'custom' && (
+                    <div className="grid grid-cols-2 grid-rows-2 gap-5 h-full">
+                      {featuredLauncherProjects.slice(0, 4).map((project, i) => (
+                        <button key={i} onClick={() => handleProtectedRoute(project.path)}
+                          className="group text-left flex flex-col rounded-xl overflow-hidden transition-colors animate-fadeInUp min-h-0"
+                          style={{ animationDelay: `${i * 55}ms`, animationFillMode: 'both' }}>
+                          <div className="relative flex-1 min-h-0 rounded-xl overflow-hidden">
+                            <div className={`absolute inset-0 bg-gradient-to-br ${project.thumb}`} />
+                            {project.img && (
+                              <img src={project.img} alt={project.title}
+                                className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                                loading="lazy" />
+                            )}
+                            {project.tag && (
+                              <span className="absolute top-2.5 left-2.5 text-[10px] font-semibold text-white bg-black/30 px-2.5 py-1 rounded-full">
+                                {project.tag}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex-shrink-0 pt-2.5 pb-1">
+                            <p className="text-gray-900 font-semibold text-[13px] leading-tight">{project.title}</p>
+                            <p className="text-gray-500 text-[11px] mt-0.5 line-clamp-2 leading-relaxed">{project.desc}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* SELECTED: 2×2 filtered cards */}
+                  {selectedLauncherOption && activeLauncherTab !== 'custom' && launcherProjects[selectedLauncherOption] && (
+                    <div className="grid grid-cols-2 gap-5">
+                      {launcherProjects[selectedLauncherOption].map((project, i) => (
+                        <button key={i} onClick={() => handleProtectedRoute(project.path)}
+                          className="group text-left rounded-xl overflow-hidden transition-colors animate-fadeInUp"
+                          style={{ animationDelay: `${i * 65}ms`, animationFillMode: 'both' }}>
+                          <div className="relative w-full overflow-hidden rounded-xl mb-2.5" style={{ aspectRatio: '16/9' }}>
+                            <div className={`absolute inset-0 bg-gradient-to-br ${projectCardColors[i % projectCardColors.length]} flex items-center justify-center`}>
+                              <span className="text-4xl relative z-10">{project.emoji}</span>
+                              <div className="absolute inset-0 bg-[radial-gradient(circle_at_65%_30%,rgba(255,255,255,0.15),transparent_60%)]" />
+                            </div>
+                          </div>
+                          <div className="px-0.5">
+                            <p className="text-gray-900 font-semibold text-[14px] leading-tight">{project.title}</p>
+                            <p className="text-gray-500 text-[12px] mt-0.5 line-clamp-2 leading-relaxed">{project.desc}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* CUSTOM tab */}
+                  {activeLauncherTab === 'custom' && (
+                    <div className="grid grid-cols-3 gap-5">
+                      {[
+                        { icon: '✏️', title: 'Fill Manually',   desc: 'Step-by-step guided project builder with full control.', path: '/business-dashboard', badge: 'Most Control' },
+                        { icon: '📞', title: 'Schedule a Call', desc: "Talk to our team — we'll scope the project for you.", path: '/business-dashboard', badge: 'Guided' },
+                        { icon: '🤖', title: 'By Agent',        desc: 'AI chats with you and builds your full project brief.', path: '/business-dashboard', badge: 'AI-Powered' },
+                      ].map((option, i) => (
+                        <button key={i} onClick={() => handleProtectedRoute(option.path)}
+                          className="group text-left bg-gray-50 hover:bg-gray-100 rounded-xl p-5 transition-colors animate-fadeInUp"
+                          style={{ animationDelay: `${i * 80}ms`, animationFillMode: 'both' }}>
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl border border-gray-100">{option.icon}</div>
+                            <span className="text-[10px] font-semibold text-blue-600 bg-white border border-blue-100 px-2 py-0.5 rounded-full">{option.badge}</span>
+                          </div>
+                          <p className="text-gray-900 font-semibold text-[14px] mb-1 group-hover:text-blue-700 transition-colors">{option.title}</p>
+                          <p className="text-gray-500 text-[12px] leading-relaxed">{option.desc}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Sign-in nudge */}
+                  <p className="mt-6 flex items-center gap-2 text-[11px] text-gray-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
+                    Free to start — access all 200+ projects instantly ·{' '}
+                    <button onClick={() => router.push('/register')} className="text-blue-600 font-semibold hover:underline">Create account →</button>
+                  </p>
+
+                </div>
+              </div>
+
+              {/* Mobile fallback */}
+              <div className="md:hidden flex-1 overflow-y-auto">
+                <div className="p-4 border-b border-gray-100">
+                  <h2 className="text-gray-900 font-bold text-base mb-3">Popular projects</h2>
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" strokeWidth={1.5} />
+                    <input type="text" value={launcherSearch} onChange={(e) => setLauncherSearch(e.target.value)}
+                      placeholder="Search..." className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 text-sm focus:outline-none" />
+                  </div>
+                  <div className="flex border-b border-gray-100 overflow-x-auto scrollbar-none">
+                    {launcherTabs.map(tab => (
+                      <button key={tab.id} onClick={() => { setActiveLauncherTab(tab.id); setSelectedLauncherOption(null); }}
+                        className={`flex-shrink-0 px-3.5 py-2.5 text-xs font-semibold border-b-2 -mb-[1px] transition-colors ${activeLauncherTab === tab.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400'}`}>
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="p-4 grid grid-cols-2 gap-3">
+                  {featuredLauncherProjects.slice(0, 4).map((project, i) => (
+                    <button key={i} onClick={() => handleProtectedRoute(project.path)} className="group text-left rounded-xl overflow-hidden">
+                      <div className="relative w-full rounded-xl overflow-hidden mb-2" style={{ aspectRatio: '16/9' }}>
+                        <div className={`absolute inset-0 bg-gradient-to-br ${project.thumb}`} />
+                        {project.img && <img src={project.img} alt={project.title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
+                      </div>
+                      <p className="text-gray-900 font-semibold text-[13px]">{project.title}</p>
+                      <p className="text-gray-500 text-[11px] mt-0.5 line-clamp-2">{project.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </section>
+      )}
+
+      {/* ==================== CAROUSEL: 6 Core Sections ==================== */}
+      <div
+        className="relative overflow-hidden h-[92vh] min-h-[600px]"
+        onMouseEnter={() => setCarouselPaused(true)}
+        onMouseLeave={() => setCarouselPaused(false)}
+      >
+        {/* Auto-progress bar */}
+        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gray-100 z-30 pointer-events-none">
+          <div key={`bar-${carouselSlide}`} className="h-full bg-gradient-to-r from-blue-600 to-orange-500 animate-carouselBar" />
+        </div>
+
+        {/* Slide counter + label */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 hidden sm:flex items-center gap-2 bg-white/90 backdrop-blur-md border border-gray-200 rounded-full px-3 py-1.5 shadow-sm pointer-events-none">
+          {['Hero','How It Works','Platform','Sound Familiar','Capabilities','Solutions'].map((l, i) => (
+            <span key={i} className={`text-xs font-bold transition-all ${carouselSlide === i ? 'text-blue-600' : 'hidden'}`}>{l}</span>
+          ))}
+          <span className="text-xs text-gray-400 font-normal">{carouselSlide + 1} / 6</span>
+        </div>
+
+        {/* Slides track */}
+        <div
+          className="flex h-full transition-transform duration-700 ease-in-out will-change-transform"
+          style={{ transform: `translateX(-${carouselSlide * 100}%)` }}
+        >
+
+          {/* ─── SLIDE 1: Hero ─── */}
+          <section className="w-full flex-shrink-0 relative h-full flex items-center overflow-hidden bg-white">
         {/* Subtle grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:3rem_3rem] pointer-events-none" />
         {/* Blobs */}
@@ -442,7 +939,7 @@ function HomePage() {
                   <div className="flex h-[calc(100%-44px)]">
                     {/* Sidebar */}
                     <div className="w-28 bg-white border-r border-gray-100 py-3 px-2 flex flex-col gap-0.5 flex-shrink-0">
-                      {[['📊','Dashboard'],['🎯','Projects'],['👥','Experts'],['📈','Analytics'],['⚙️','Settings']].map(([icon, label], i) => (
+                      {[['📊','Dashboard'],['🎯','Projects'],['👥','Experts'],['🤖','Agent'],['⚙️','Settings']].map(([icon, label], i) => (
                         <div key={i} className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[10px] font-medium cursor-pointer ${i===0 ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}>
                           <span className="text-sm">{icon}</span>{label}
                         </div>
@@ -499,24 +996,8 @@ function HomePage() {
         </div>
       </section>
 
-      {/* ==================== DARK MARQUEE TICKER ==================== */}
-      <div className="bg-gray-950 border-y border-gray-800 py-4 overflow-hidden">
-        <div className="flex animate-marquee whitespace-nowrap">
-          {[...Array(3)].map((_, dupIdx) => (
-            <div key={dupIdx} className="flex items-center gap-0 flex-shrink-0">
-              {marqueeItems.map((item, i) => (
-                <span key={i} className="inline-flex items-center gap-3 mx-8 text-gray-400 font-medium text-sm">
-                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
-                  {item}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ==================== HOW IT WORKS ==================== */}
-      <section className="py-14 sm:py-16 px-4 sm:px-6 bg-white">
+          {/* ─── SLIDE 2: How Karya-AI Works ─── */}
+          <section className="w-full flex-shrink-0 h-full overflow-y-auto px-4 sm:px-6 bg-white py-10 sm:py-12">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full mb-5">
@@ -593,118 +1074,204 @@ function HomePage() {
         </div>
       </section>
 
-      {/* ==================== BENTO GRID — PLATFORM FEATURES ==================== */}
-      <section className="py-20 px-4 sm:px-6 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 mb-4">Everything in One Platform</h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">No more juggling tools. Karya-AI handles strategy, hiring, and execution — together.</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Large card */}
-            <div className="sm:col-span-2 group relative overflow-hidden bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl p-8 text-white min-h-[220px] hover:shadow-2xl hover:shadow-blue-500/30 transition-all duration-300">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform" />
-              <div className="absolute bottom-0 left-0 w-40 h-40 bg-orange-500/20 rounded-full translate-y-1/2 -translate-x-1/2" />
-              <div className="relative">
-                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-5"><Zap className="w-6 h-6 text-white" /></div>
-                <h3 className="text-xl font-black mb-2">AI Project Planning Engine</h3>
-                <p className="text-blue-100 text-sm mb-4 max-w-sm">Transform your idea into a full 90-day roadmap with task breakdowns, expert recommendations, and timeline — in minutes.</p>
-                <div className="flex flex-wrap gap-2">
-                  {['90-day roadmap','Task breakdown','Resource allocation','Workflow automation'].map(f=>(
-                    <span key={f} className="px-3 py-1 bg-white/15 rounded-full text-xs font-medium">{f}</span>
-                  ))}
-                </div>
+          {/* ─── SLIDE 3: Everything in One Platform ─── */}
+          <section className="w-full flex-shrink-0 h-full overflow-y-auto px-4 sm:px-6 bg-gray-50 py-10 sm:py-12">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-14">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 mb-4">Everything in One Platform</h2>
+                <p className="text-gray-500 text-lg max-w-2xl mx-auto">No more juggling tools. Karya-AI handles strategy, hiring, and execution — together.</p>
               </div>
-            </div>
-
-            {/* Tall card */}
-            <div className="group bg-white border border-gray-200 rounded-3xl p-7 hover:border-purple-300 hover:shadow-xl transition-all duration-300 flex flex-col">
-              <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center mb-5"><Users className="w-6 h-6 text-purple-600" /></div>
-              <h3 className="text-lg font-black text-gray-900 mb-2">Smart Expert Matching</h3>
-              <p className="text-gray-500 text-sm mb-5 flex-1">Our AI reads your project requirements and surfaces the best-fit expert from 180+ vetted professionals.</p>
-              <div className="space-y-2">
-                {['97% satisfaction rate','Background verified','Portfolio reviewed'].map((f,i)=>(
-                  <div key={i} className="flex items-center gap-2 text-sm text-gray-700"><Check className="w-4 h-4 text-green-500 flex-shrink-0" />{f}</div>
-                ))}
-              </div>
-            </div>
-
-            {/* Small card */}
-            <div className="group bg-white border border-gray-200 rounded-3xl p-7 hover:border-emerald-300 hover:shadow-xl transition-all duration-300">
-              <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mb-5"><TrendingUp className="w-6 h-6 text-emerald-600" /></div>
-              <h3 className="text-lg font-black text-gray-900 mb-2">Live Analytics Dashboard</h3>
-              <p className="text-gray-500 text-sm">Track leads, revenue, and campaign performance in real-time. No more waiting for reports.</p>
-            </div>
-
-            {/* Small card */}
-            <div className="group bg-white border border-gray-200 rounded-3xl p-7 hover:border-orange-300 hover:shadow-xl transition-all duration-300">
-              <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-5"><Globe className="w-6 h-6 text-orange-600" /></div>
-              <h3 className="text-lg font-black text-gray-900 mb-2">50+ Integrations</h3>
-              <p className="text-gray-500 text-sm mb-4">HubSpot, Salesforce, Slack, Google Analytics, Zapier and more — connect your existing stack.</p>
-              <div className="flex gap-2 flex-wrap">
-                {['HubSpot','Slack','GA4','Zapier'].map(t=>(
-                  <span key={t} className="px-2.5 py-1 bg-orange-50 border border-orange-200 rounded-lg text-xs text-orange-700 font-medium">{t}</span>
-                ))}
-              </div>
-            </div>
-
-            {/* Dark card */}
-            <div className="group bg-gray-950 rounded-3xl p-7 hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-transparent" />
-              <div className="relative">
-                <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-5"><Briefcase className="w-6 h-6 text-blue-400" /></div>
-                <h3 className="text-lg font-black text-white mb-2">Unified Workspace</h3>
-                <p className="text-gray-400 text-sm mb-4">Chat, files, project management, knowledge base — all in one place. Zero tool switching.</p>
-                <div className="flex items-center gap-2 text-blue-400 text-sm font-medium group-hover:gap-3 transition-all cursor-pointer">
-                  Explore workspace <ChevronRight className="w-4 h-4" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ==================== AI CHATBOT DEMO ==================== */}
-      <section className="py-20 px-4 sm:px-6 bg-white">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">Ask Karya-AI Anything</h2>
-            <p className="text-gray-500 text-lg">From content strategy to finding your next hire — just ask.</p>
-          </div>
-
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-orange-500 rounded-3xl opacity-20 blur-xl group-hover:opacity-30 transition-opacity" />
-            <div className="relative bg-white border border-gray-200 rounded-3xl p-6 sm:p-10 shadow-xl">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 animate-floatSlow">
-                  <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-                    <Image src="/karya-ai-logo.png" alt="Karya AI" width={32} height={32} className="object-contain" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="sm:col-span-2 group relative overflow-hidden bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl p-8 text-white min-h-[220px] hover:shadow-2xl hover:shadow-blue-500/30 transition-all duration-300">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform" />
+                  <div className="absolute bottom-0 left-0 w-40 h-40 bg-orange-500/20 rounded-full translate-y-1/2 -translate-x-1/2" />
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-5"><Zap className="w-6 h-6 text-white" /></div>
+                    <h3 className="text-xl font-black mb-2">AI Project Planning Engine</h3>
+                    <p className="text-blue-100 text-sm mb-4 max-w-sm">Transform your idea into a full 90-day roadmap with task breakdowns, expert recommendations, and timeline — in minutes.</p>
+                    <div className="flex flex-wrap gap-2">{['90-day roadmap','Task breakdown','Resource allocation','Workflow automation'].map(f=>(<span key={f} className="px-3 py-1 bg-white/15 rounded-full text-xs font-medium">{f}</span>))}</div>
                   </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-blue-500 font-semibold mb-2">Ask me anything...</p>
-                  <div className="text-lg sm:text-2xl text-gray-900 min-h-[36px] sm:min-h-[48px] flex items-center">
-                    <span className="break-words">{currentQuestion}</span>
-                    <span className="inline-block w-0.5 h-6 sm:h-8 bg-blue-500 ml-1 animate-blink flex-shrink-0 rounded-full"></span>
+                <div className="group bg-white border border-gray-200 rounded-3xl p-7 hover:border-purple-300 hover:shadow-xl transition-all duration-300 flex flex-col">
+                  <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center mb-5"><Users className="w-6 h-6 text-purple-600" /></div>
+                  <h3 className="text-lg font-black text-gray-900 mb-2">Smart Expert Matching</h3>
+                  <p className="text-gray-500 text-sm mb-5 flex-1">Our AI reads your project requirements and surfaces the best-fit expert from 180+ vetted professionals.</p>
+                  <div className="space-y-2">{['97% satisfaction rate','Background verified','Portfolio reviewed'].map((f,i)=>(<div key={i} className="flex items-center gap-2 text-sm text-gray-700"><Check className="w-4 h-4 text-green-500 flex-shrink-0" />{f}</div>))}</div>
+                </div>
+                <div className="group bg-white border border-gray-200 rounded-3xl p-7 hover:border-emerald-300 hover:shadow-xl transition-all duration-300">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mb-5"><TrendingUp className="w-6 h-6 text-emerald-600" /></div>
+                  <h3 className="text-lg font-black text-gray-900 mb-2">Live Analytics Dashboard</h3>
+                  <p className="text-gray-500 text-sm">Track leads, revenue, and campaign performance in real-time.</p>
+                </div>
+                <div className="group bg-white border border-gray-200 rounded-3xl p-7 hover:border-orange-300 hover:shadow-xl transition-all duration-300">
+                  <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-5"><Globe className="w-6 h-6 text-orange-600" /></div>
+                  <h3 className="text-lg font-black text-gray-900 mb-2">50+ Integrations</h3>
+                  <p className="text-gray-500 text-sm mb-4">HubSpot, Salesforce, Slack, Google Analytics, Zapier and more.</p>
+                  <div className="flex gap-2 flex-wrap">{['HubSpot','Slack','GA4','Zapier'].map(t=>(<span key={t} className="px-2.5 py-1 bg-orange-50 border border-orange-200 rounded-lg text-xs text-orange-700 font-medium">{t}</span>))}</div>
+                </div>
+                <div className="group bg-gray-950 rounded-3xl p-7 hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-transparent" />
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-5"><Briefcase className="w-6 h-6 text-blue-400" /></div>
+                    <h3 className="text-lg font-black text-white mb-2">Unified Workspace</h3>
+                    <p className="text-gray-400 text-sm mb-4">Chat, files, project management, knowledge base — zero tool switching.</p>
+                    <div className="flex items-center gap-2 text-blue-400 text-sm font-medium group-hover:gap-3 transition-all cursor-pointer">Explore workspace <ChevronRight className="w-4 h-4" /></div>
                   </div>
                 </div>
               </div>
+            </div>
+          </section>
 
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <p className="text-xs text-gray-400 font-medium mb-3 uppercase tracking-wider">Quick prompts</p>
-                <div className="flex flex-wrap gap-2">
-                  {['📝 Content Strategy', '🔍 Find Expert', '🚀 Launch Plan', '📊 Growth Ops', '💡 GTM Roadmap'].map((btn, i) => (
-                    <button key={i} onClick={btn.includes('Find') ? () => router.push('/expert-marketplace') : undefined} className="px-3 py-2 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-xl text-sm text-gray-700 hover:text-blue-700 transition-all hover:scale-105">
-                      {btn}
+          {/* ─── SLIDE 4: Sound Familiar? ─── */}
+          <section className="w-full flex-shrink-0 h-full flex flex-col justify-center px-4 sm:px-6 bg-white py-10">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center mb-14">
+                <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">Sound Familiar?</h2>
+                <p className="text-gray-500 text-lg">These are the problems Karya-AI was built to solve.</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {painPoints.map((pt, i) => (
+                  <div key={i} className="group relative animate-fadeInUp" style={{animationDelay:`${i*100}ms`}}>
+                    <div className="absolute -inset-0.5 bg-gradient-to-br from-blue-500 to-orange-500 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity" />
+                    <div className="relative bg-white border border-gray-200 rounded-2xl p-6 hover:border-blue-200 transition-all h-full shadow-sm group-hover:shadow-xl">
+                      <span className="text-4xl mb-4 block">{pt.icon}</span>
+                      <h3 className="text-base font-black text-gray-900 mb-3">{pt.problem}</h3>
+                      <div className="h-1 w-10 bg-gradient-to-r from-blue-500 to-orange-500 rounded-full mb-4"></div>
+                      <p className="text-gray-500 text-sm leading-relaxed">{pt.solution}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ─── SLIDE 5: Platform Capabilities ─── */}
+          <section className="w-full flex-shrink-0 h-full overflow-y-auto px-4 sm:px-6 bg-gray-50 py-10 sm:py-12">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-3">Platform Capabilities</h2>
+              <p className="text-gray-500 text-lg text-center mb-12">Everything you need to execute your go-to-market strategy</p>
+              <div className="space-y-3">
+                {capabilities.map((cap, i) => (
+                  <div key={cap.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-blue-200 transition-all shadow-sm animate-fadeInUp" style={{animationDelay:`${i*100}ms`}}>
+                    <button onClick={() => toggleAccordion(cap.id)} className="w-full p-5 flex items-center justify-between hover:bg-gray-50 transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
+                          {cap.id === 'ai-planning' && <Zap className="w-6 h-6 text-white" />}
+                          {cap.id === 'expert-marketplace' && <Users className="w-6 h-6 text-white" />}
+                          {cap.id === 'workspace' && <Briefcase className="w-6 h-6 text-white" />}
+                          {cap.id === 'integrations' && <Globe className="w-6 h-6 text-white" />}
+                        </div>
+                        <div className="text-left">
+                          <h3 className="text-base sm:text-lg font-black text-gray-900">{cap.title}</h3>
+                          <p className="text-gray-500 text-xs sm:text-sm">{cap.description}</p>
+                        </div>
+                      </div>
+                      <ChevronDown className={`w-5 h-5 text-blue-500 transition-transform duration-300 flex-shrink-0 ${openAccordion === cap.id ? 'rotate-180' : ''}`} />
                     </button>
-                  ))}
+                    <div className={`overflow-hidden transition-all duration-300 ${openAccordion === cap.id ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'}`}>
+                      <div className="px-5 pb-5 border-t border-gray-100">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
+                          {cap.deliverables.map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-3 text-gray-600 text-sm">
+                              <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0"><Check className="w-3 h-3 text-green-600" /></div>
+                              {item}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ─── SLIDE 6: Solutions for Every Stage ─── */}
+          <section className="w-full flex-shrink-0 h-full overflow-y-auto px-4 sm:px-6 bg-white py-10 sm:py-12">
+            <div className="max-w-5xl mx-auto">
+              <h2 className="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-10">Solutions for Every Stage</h2>
+              <div className="flex justify-center gap-3 mb-8 flex-wrap">
+                {Object.entries(useCases).map(([key, stage]) => (
+                  <button key={key} onClick={() => setActiveTab(key)} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${activeTab === key ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25 scale-105' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'}`}>
+                    {stage.title}
+                  </button>
+                ))}
+              </div>
+              <div className="bg-gray-50 border border-gray-200 rounded-3xl p-6 sm:p-8 shadow-sm">
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-black text-gray-900 mb-3 flex items-center gap-2"><span className="text-red-500">✗</span> Typical Challenges</h3>
+                    <ul className="space-y-2">
+                      {currentStage.challenges.map((c, i) => (
+                        <li key={i} className="flex items-start gap-3 text-gray-600 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-2.5"><X className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />{c}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-black text-gray-900 mb-3 flex items-center gap-2"><span className="text-blue-500">→</span> Recommended Experts</h3>
+                    <div className="flex flex-wrap gap-2 mb-5">{currentStage.experts.map((e, i) => (<span key={i} className="px-3 py-2 bg-blue-100 border border-blue-200 rounded-xl text-blue-800 text-xs font-bold">{e}</span>))}</div>
+                    <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">90-Day Plan</p>
+                      <p className="text-gray-700 text-sm">{currentStage.plan}</p>
+                    </div>
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+                      <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Expected Outcomes</p>
+                      <p className="text-emerald-800 text-sm font-semibold">{currentStage.outcomes}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <button className="text-blue-600 hover:text-blue-700 font-bold flex items-center gap-2 group text-sm">
+                    <Star className="w-4 h-4" /> Read Case Study: {currentStage.caseStudy} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </button>
                 </div>
               </div>
             </div>
-          </div>
+          </section>
+
+        </div>{/* ─ end slides track ─ */}
+
+        {/* Prev / Next arrows */}
+        <button
+          onClick={() => setCarouselSlide(prev => (prev - 1 + 6) % 6)}
+          className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 bg-white rounded-full border border-gray-200 flex items-center justify-center shadow-xl hover:shadow-2xl hover:scale-110 hover:border-blue-300 transition-all duration-200 group"
+          style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.12)' }}
+        >
+          <ChevronLeft className="w-5 h-5 text-gray-600 group-hover:text-blue-600 transition-colors" />
+        </button>
+        <button
+          onClick={() => setCarouselSlide(prev => (prev + 1) % 6)}
+          className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 bg-white rounded-full border border-gray-200 flex items-center justify-center shadow-xl hover:shadow-2xl hover:scale-110 hover:border-blue-300 transition-all duration-200 group"
+          style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.12)' }}
+        >
+          <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-blue-600 transition-colors" />
+        </button>
+
+        {/* Dot navigation */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full px-4 py-2 shadow-md">
+          {['From Idea to Customers','How It Works','Platform Features','Sound Familiar?','Capabilities','Solutions'].map((label, i) => (
+            <button key={i} onClick={() => setCarouselSlide(i)} title={label}
+              className={`transition-all duration-300 rounded-full ${carouselSlide === i ? 'w-6 h-2.5 bg-blue-600' : 'w-2.5 h-2.5 bg-gray-300 hover:bg-gray-500'}`}
+            />
+          ))}
         </div>
-      </section>
+      </div>{/* ─ end carousel ─ */}
+
+      {/* ==================== DARK MARQUEE TICKER ==================== */}
+      <div className="bg-gray-950 border-y border-gray-800 py-4 overflow-hidden">
+        <div className="flex animate-marquee whitespace-nowrap">
+          {[...Array(3)].map((_, dupIdx) => (
+            <div key={dupIdx} className="flex items-center gap-0 flex-shrink-0">
+              {marqueeItems.map((item, i) => (
+                <span key={i} className="inline-flex items-center gap-3 mx-8 text-gray-400 font-medium text-sm">
+                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
+                  {item}
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* ==================== TOP PROJECTS ==================== */}
       <section className="py-20 px-4 sm:px-6 bg-gray-50">
@@ -760,99 +1327,41 @@ function HomePage() {
         </div>
       </section>
 
-      {/* ==================== LAPTOP MOCKUP SECTION ==================== */}
-      <section className="py-20 px-4 sm:px-6 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left: Feature list */}
-            <div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 border border-purple-100 rounded-full mb-6">
-                <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
-                <span className="text-purple-700 text-sm font-semibold">Platform Preview</span>
-              </div>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 mb-6 leading-[1.1]">
-                Your entire GTM,<br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500">in one dashboard.</span>
-              </h2>
-              <p className="text-gray-500 text-lg mb-10 leading-relaxed">Stop switching between 12 tools. Karya-AI gives you everything — planning, talent, execution, and reporting — in a single place.</p>
+      {/* ==================== AI CHATBOT DEMO ==================== */}
+      <section className="py-20 px-4 sm:px-6 bg-white">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">Ask Karya-AI Anything</h2>
+            <p className="text-gray-500 text-lg">From content strategy to finding your next hire — just ask.</p>
+          </div>
 
-              <div className="space-y-5">
-                {[
-                  { icon: <Zap className="w-5 h-5" />, color: 'bg-blue-100 text-blue-600', title: 'AI-generated roadmaps', desc: 'Full 90-day plan created in under 5 minutes.' },
-                  { icon: <Users className="w-5 h-5" />, color: 'bg-purple-100 text-purple-600', title: 'Expert collaboration', desc: 'Chat, share files, and track work with your expert team.' },
-                  { icon: <TrendingUp className="w-5 h-5" />, color: 'bg-emerald-100 text-emerald-600', title: 'Real-time metrics', desc: 'Leads, conversions, ROAS — updated live, not in reports.' },
-                  { icon: <Target className="w-5 h-5" />, color: 'bg-orange-100 text-orange-600', title: 'Milestone payments', desc: 'Pay only when you approve results. Funds held in escrow.' },
-                ].map((feat, i) => (
-                  <div key={i} className="flex items-start gap-4 group cursor-default">
-                    <div className={`w-10 h-10 ${feat.color} rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>{feat.icon}</div>
-                    <div>
-                      <p className="font-bold text-gray-900 mb-0.5">{feat.title}</p>
-                      <p className="text-gray-500 text-sm">{feat.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <button onClick={() => router.push('/register')} className="mt-10 group px-8 py-4 bg-gray-900 hover:bg-gray-800 rounded-2xl text-white font-bold text-base transition-all hover:shadow-2xl hover:shadow-gray-900/20 flex items-center gap-2">
-                See it in action
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-            </div>
-
-            {/* Right: Laptop mockup */}
-            <div className="relative flex justify-center">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full blur-3xl opacity-40" />
-              <div className="relative w-full max-w-lg">
-                {/* Laptop lid */}
-                <div className="bg-gray-800 rounded-t-2xl px-3 pt-3 pb-0 shadow-2xl">
-                  {/* Browser chrome */}
-                  <div className="bg-gray-700 rounded-xl mb-2 px-3 py-2 flex items-center gap-2">
-                    <div className="flex gap-1.5"><div className="w-3 h-3 rounded-full bg-red-400"></div><div className="w-3 h-3 rounded-full bg-yellow-400"></div><div className="w-3 h-3 rounded-full bg-green-400"></div></div>
-                    <div className="flex-1 bg-gray-600 rounded-md px-3 py-1 text-xs text-gray-300 text-center">app.karya-ai.com/dashboard</div>
-                  </div>
-                  {/* Screen */}
-                  <div className="bg-white rounded-t-xl overflow-hidden" style={{minHeight:'280px'}}>
-                    {/* Dashboard mock UI */}
-                    <div className="flex h-full">
-                      {/* Sidebar */}
-                      <div className="w-14 bg-gray-900 flex flex-col items-center py-4 gap-4 flex-shrink-0">
-                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><Image src="/karya-ai-logo.png" alt="" width={20} height={20} className="object-contain" /></div>
-                        {[LayoutDashboard, Users, Briefcase, TrendingUp, Settings].map((Icon, i) => (
-                          <div key={i} className={`w-8 h-8 rounded-lg flex items-center justify-center ${i===0?'bg-blue-500/20':'hover:bg-gray-700'} transition-colors cursor-pointer`}>
-                            <Icon className={`w-4 h-4 ${i===0?'text-blue-400':'text-gray-500'}`} />
-                          </div>
-                        ))}
-                      </div>
-                      {/* Main */}
-                      <div className="flex-1 p-4 bg-gray-50">
-                        <div className="flex items-center justify-between mb-4">
-                          <p className="font-bold text-gray-900 text-sm">Dashboard</p>
-                          <div className="px-3 py-1 bg-blue-600 rounded-lg text-white text-xs font-medium">90-day plan active</div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-3 mb-4">
-                          {[{l:'Leads',v:'1,247',c:'text-blue-600'},{l:'Revenue',v:'$42K',c:'text-emerald-600'},{l:'ROAS',v:'3.4x',c:'text-orange-600'}].map(s=>(
-                            <div key={s.l} className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
-                              <p className="text-xs text-gray-500 mb-1">{s.l}</p>
-                              <p className={`text-lg font-black ${s.c}`}>{s.v}</p>
-                            </div>
-                          ))}
-                        </div>
-                        {/* Mini chart */}
-                        <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
-                          <p className="text-xs text-gray-500 mb-2 font-medium">Growth this month</p>
-                          <div className="flex items-end gap-1 h-14">
-                            {[40,60,45,75,55,80,70,90,65,95,80,100].map((h,i)=>(
-                              <div key={i} className="flex-1 bg-gradient-to-t from-blue-500 to-blue-300 rounded-t-sm opacity-80 hover:opacity-100 transition-opacity" style={{height:`${h}%`}}></div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-orange-500 rounded-3xl opacity-20 blur-xl group-hover:opacity-30 transition-opacity" />
+            <div className="relative bg-white border border-gray-200 rounded-3xl p-6 sm:p-10 shadow-xl">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 animate-floatSlow">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                    <Image src="/karya-ai-logo.png" alt="Karya AI" width={32} height={32} className="object-contain" />
                   </div>
                 </div>
-                {/* Laptop bottom */}
-                <div className="bg-gray-700 h-3 rounded-b-2xl mx-2 shadow-xl"></div>
-                <div className="bg-gray-600 h-2 rounded-b-xl mx-6 shadow-lg"></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-blue-500 font-semibold mb-2">Ask me anything...</p>
+                  <div className="text-lg sm:text-2xl text-gray-900 min-h-[36px] sm:min-h-[48px] flex items-center">
+                    <span className="break-words">{currentQuestion}</span>
+                    <span className="inline-block w-0.5 h-6 sm:h-8 bg-blue-500 ml-1 animate-blink flex-shrink-0 rounded-full"></span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <p className="text-xs text-gray-400 font-medium mb-3 uppercase tracking-wider">Quick prompts</p>
+                <div className="flex flex-wrap gap-2">
+                  {['📝 Content Strategy', '🔍 Find Expert', '🚀 Launch Plan', '📊 Growth Ops', '💡 GTM Roadmap'].map((btn, i) => (
+                    <button key={i} onClick={btn.includes('Find') ? () => router.push('/expert-marketplace') : undefined} className="px-3 py-2 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-xl text-sm text-gray-700 hover:text-blue-700 transition-all hover:scale-105">
+                      {btn}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -976,117 +1485,6 @@ function HomePage() {
             <button onClick={() => router.push('/expert-marketplace')} className="px-8 py-4 bg-white border-2 border-gray-200 hover:border-blue-300 rounded-2xl text-gray-900 font-bold text-base hover:bg-blue-50 transition-all inline-flex items-center gap-3 hover:scale-105">
               <Users className="w-5 h-5 text-blue-500" /> Browse All 180+ Experts
             </button>
-          </div>
-        </div>
-      </section>
-
-      {/* ==================== PAIN POINTS ==================== */}
-      <section className="py-20 px-4 sm:px-6 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">Sound Familiar?</h2>
-            <p className="text-gray-500 text-lg">These are the problems Karya-AI was built to solve.</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {painPoints.map((pt, i) => (
-              <div key={i} className="group relative animate-fadeInUp" style={{animationDelay:`${i*100}ms`}}>
-                <div className="absolute -inset-0.5 bg-gradient-to-br from-blue-500 to-orange-500 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity" />
-                <div className="relative bg-white border border-gray-200 rounded-2xl p-6 hover:border-blue-200 transition-all h-full shadow-sm group-hover:shadow-xl">
-                  <span className="text-4xl mb-4 block">{pt.icon}</span>
-                  <h3 className="text-base font-black text-gray-900 mb-3">{pt.problem}</h3>
-                  <div className="h-1 w-10 bg-gradient-to-r from-blue-500 to-orange-500 rounded-full mb-4"></div>
-                  <p className="text-gray-500 text-sm leading-relaxed">{pt.solution}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ==================== PLATFORM CAPABILITIES ==================== */}
-      <section className="py-20 px-4 sm:px-6 bg-gray-50">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-3">Platform Capabilities</h2>
-          <p className="text-gray-500 text-lg text-center mb-12">Everything you need to execute your go-to-market strategy</p>
-          <div className="space-y-3">
-            {capabilities.map((cap, i) => (
-              <div key={cap.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-blue-200 transition-all shadow-sm animate-fadeInUp" style={{animationDelay:`${i*100}ms`}}>
-                <button onClick={() => toggleAccordion(cap.id)} className="w-full p-5 flex items-center justify-between hover:bg-gray-50 transition-all">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
-                      {cap.id === 'ai-planning' && <Zap className="w-6 h-6 text-white" />}
-                      {cap.id === 'expert-marketplace' && <Users className="w-6 h-6 text-white" />}
-                      {cap.id === 'workspace' && <Briefcase className="w-6 h-6 text-white" />}
-                      {cap.id === 'integrations' && <Globe className="w-6 h-6 text-white" />}
-                    </div>
-                    <div className="text-left">
-                      <h3 className="text-base sm:text-lg font-black text-gray-900">{cap.title}</h3>
-                      <p className="text-gray-500 text-xs sm:text-sm">{cap.description}</p>
-                    </div>
-                  </div>
-                  <ChevronDown className={`w-5 h-5 text-blue-500 transition-transform duration-300 flex-shrink-0 ${openAccordion === cap.id ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === cap.id ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'}`}>
-                  <div className="px-5 pb-5 border-t border-gray-100">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
-                      {cap.deliverables.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-3 text-gray-600 text-sm">
-                          <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0"><Check className="w-3 h-3 text-green-600" /></div>
-                          {item}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ==================== USE CASES ==================== */}
-      <section className="py-20 px-4 sm:px-6 bg-white">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-10">Solutions for Every Stage</h2>
-          <div className="flex justify-center gap-3 mb-8 flex-wrap">
-            {Object.entries(useCases).map(([key, stage]) => (
-              <button key={key} onClick={() => setActiveTab(key)} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${activeTab === key ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25 scale-105' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'}`}>
-                {stage.title}
-              </button>
-            ))}
-          </div>
-          <div className="bg-gray-50 border border-gray-200 rounded-3xl p-6 sm:p-8 shadow-sm">
-            <div className="grid sm:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-black text-gray-900 mb-3 flex items-center gap-2"><span className="text-red-500">✗</span> Typical Challenges</h3>
-                <ul className="space-y-2">
-                  {currentStage.challenges.map((c, i) => (
-                    <li key={i} className="flex items-start gap-3 text-gray-600 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-2.5"><X className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />{c}</li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-black text-gray-900 mb-3 flex items-center gap-2"><span className="text-blue-500">→</span> Recommended Experts</h3>
-                <div className="flex flex-wrap gap-2 mb-5">
-                  {currentStage.experts.map((e, i) => (
-                    <span key={i} className="px-3 py-2 bg-blue-100 border border-blue-200 rounded-xl text-blue-800 text-xs font-bold">{e}</span>
-                  ))}
-                </div>
-                <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">90-Day Plan</p>
-                  <p className="text-gray-700 text-sm">{currentStage.plan}</p>
-                </div>
-                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
-                  <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Expected Outcomes</p>
-                  <p className="text-emerald-800 text-sm font-semibold">{currentStage.outcomes}</p>
-                </div>
-              </div>
-            </div>
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <button className="text-blue-600 hover:text-blue-700 font-bold flex items-center gap-2 group text-sm">
-                <Star className="w-4 h-4" /> Read Case Study: {currentStage.caseStudy} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </button>
-            </div>
           </div>
         </div>
       </section>
@@ -1298,8 +1696,10 @@ function HomePage() {
         @keyframes equalizer {
           0%,100%{transform:scaleY(0.4)} 25%{transform:scaleY(1)} 50%{transform:scaleY(0.6)} 75%{transform:scaleY(0.9)}
         }
+        @keyframes carouselBar { from { width: 0% } to { width: 100% } }
 
         .animate-blob { animation: blob 8s infinite; }
+        .animate-carouselBar { animation: carouselBar 4s linear forwards; }
         .animate-floatSlow { animation: floatSlow 5s ease-in-out infinite; }
         .animate-fadeInUp { animation: fadeInUp 0.6s ease-out both; }
         .animate-slideDown { animation: slideDown 0.3s ease-out; }
