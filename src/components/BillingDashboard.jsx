@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Crown,
   Calendar,
@@ -20,10 +20,13 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { checkUserPlanAccess, getCurrentUserPlan, getUserBillingHistory } from '@/services/planService';
+import { verifyCashfreeOrder } from '@/services/paymentService';
 
 export default function BillingDashboard() {
   const { user, getAuthHeader } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const verifiedOrderRef = useRef(null);
   const [planData, setPlanData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -31,6 +34,7 @@ export default function BillingDashboard() {
   const [billingHistory, setBillingHistory] = useState([]);
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState(null);
+  const [paymentVerification, setPaymentVerification] = useState(null);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -113,6 +117,58 @@ export default function BillingDashboard() {
     fetchPlanData();
     fetchBillingHistory(1);
   }, [getAuthHeader]);
+
+  useEffect(() => {
+    const orderId = searchParams?.get('order_id');
+
+    if (!orderId || verifiedOrderRef.current === orderId) return;
+
+    verifiedOrderRef.current = orderId;
+
+    const verifyReturnedPayment = async () => {
+      setPaymentVerification({
+        type: 'pending',
+        message: 'Verifying your payment...'
+      });
+
+      try {
+        const response = await verifyCashfreeOrder({
+          orderId,
+          authHeader: getAuthHeader()
+        });
+
+        const status = response?.data?.status;
+
+        if (status === 'paid') {
+          setPaymentVerification({
+            type: 'success',
+            message: 'Payment verified. Your plan is active.'
+          });
+          window.dispatchEvent(new CustomEvent('planUpdated'));
+          await Promise.all([fetchPlanData(), fetchBillingHistory(1)]);
+        } else if (status === 'pending') {
+          setPaymentVerification({
+            type: 'pending',
+            message: 'Payment is still pending. Please refresh in a moment.'
+          });
+        } else {
+          setPaymentVerification({
+            type: 'error',
+            message: 'Payment was not completed. Please try again.'
+          });
+        }
+      } catch (err) {
+        setPaymentVerification({
+          type: 'error',
+          message: err.message || 'Failed to verify payment'
+        });
+      } finally {
+        router.replace('/settings?section=billing');
+      }
+    };
+
+    verifyReturnedPayment();
+  }, [searchParams, getAuthHeader, router]);
 
   // Listen for plan updates and project creation events
   useEffect(() => {
@@ -417,6 +473,27 @@ export default function BillingDashboard() {
         </button>
       </div>
 
+      {paymentVerification && (
+        <div
+          className={`rounded-lg border p-4 flex items-center space-x-3 ${
+            paymentVerification.type === 'success'
+              ? 'bg-green-50 border-green-200 text-green-800'
+              : paymentVerification.type === 'error'
+              ? 'bg-red-50 border-red-200 text-red-800'
+              : 'bg-yellow-50 border-yellow-200 text-yellow-800'
+          }`}
+        >
+          {paymentVerification.type === 'success' ? (
+            <CheckCircle className="h-5 w-5 text-green-600" />
+          ) : paymentVerification.type === 'error' ? (
+            <XCircle className="h-5 w-5 text-red-600" />
+          ) : (
+            <Clock className="h-5 w-5 text-yellow-600" />
+          )}
+          <p className="font-medium">{paymentVerification.message}</p>
+        </div>
+      )}
+
       {/* Current Plan Overview */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
@@ -443,7 +520,7 @@ export default function BillingDashboard() {
             {!error && planData?.access?.hasActivePlan && (
               <div className="text-right">
                 <div className="text-2xl font-bold text-gray-900">
-                  ${userPlan?.planPackageId?.price}
+                  {formatAmount(userPlan?.planPackageId?.price || 0, userPlan?.paymentDetails?.currency || 'INR')}
                 </div>
                 <div className="text-sm text-gray-500">
                   per {userPlan?.planPackageId?.billingCycle}

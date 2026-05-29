@@ -16,8 +16,9 @@ import {
   Target,
   Package
 } from 'lucide-react';
-import { getPlans, getPackagesByPlan, upgradePlan, simpleUpgrade } from '@/services/planService';
+import { getPlans, getPackagesByPlan } from '@/services/planService';
 import { useAuth } from '@/contexts/AuthContext';
+import CashfreePaymentGateway from '@/components/payments/CashfreePaymentGateway';
 
 const PlanSelection = () => {
   const { user } = useAuth();
@@ -79,59 +80,6 @@ const PlanSelection = () => {
     setSelectedPlan(plan);
     fetchPackages(plan._id);
   };
-
-  const handlePackageSelect = async (pkg) => {
-    // Get token from localStorage since AuthContext stores it separately
-    const token = localStorage.getItem('token');
-
-    if (!token || !user || !selectedPlan) {
-      setError('Please login to upgrade your plan');
-      return;
-    }
-
-    setSelectedPackage(pkg);
-    setIsUpgrading(true);
-    setError('');
-
-    try {
-      const response = await simpleUpgrade(
-        selectedPlan._id,
-        pkg._id,
-        token
-      );
-
-      if (response.success) {
-        setUpgradeSuccess(true);
-
-        // Trigger plan update event for navbar to refresh
-        window.dispatchEvent(new CustomEvent('planUpdated'));
-
-        // Show success message with next billing date
-        const nextBillingMessage = response.data.nextBillingDate
-          ? `Next billing date: ${new Date(response.data.nextBillingDate).toLocaleDateString()}`
-          : 'One-time purchase - no recurring billing';
-
-        // Set success message
-        setError(''); // Clear any previous errors
-
-        setTimeout(() => {
-          setUpgradeSuccess(false);
-          setSelectedPackage(null);
-          // Optionally refresh user data
-          window.location.reload(); // Simple refresh to update user state
-        }, 4000);
-
-      } else {
-        setError(response.message || 'Failed to upgrade plan');
-      }
-    } catch (err) {
-      setError(err.message || 'Failed to upgrade plan. Please try again.');
-      console.error('Upgrade error:', err);
-    } finally {
-      setIsUpgrading(false);
-    }
-  };
-
 
   const getPlanIcon = (planType) => {
     switch (planType) {
@@ -342,9 +290,29 @@ const PlanSelection = () => {
                       </div>
 
                       {/* Select Button */}
-                      <button
-                        onClick={() => handlePackageSelect(pkg)}
-                        disabled={isUpgrading}
+                      <CashfreePaymentGateway
+                        paymentType="plan_package"
+                        payload={{
+                          planId: selectedPlan._id,
+                          planPackageId: pkg._id
+                        }}
+                        disabled={isUpgrading || !selectedPlan}
+                        onStart={() => {
+                          if (!user || !selectedPlan) {
+                            setError('Please login to upgrade your plan');
+                            return false;
+                          }
+                          setSelectedPackage(pkg);
+                          setIsUpgrading(true);
+                          setUpgradeSuccess(false);
+                          setError('');
+                          return true;
+                        }}
+                        onError={(message) => {
+                          setError(message || 'Failed to start payment. Please try again.');
+                          setIsUpgrading(false);
+                          setSelectedPackage(null);
+                        }}
                         className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors cursor-pointer flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                           upgradeSuccess && selectedPackage?._id === pkg._id
                             ? 'bg-green-600 text-white'
@@ -355,24 +323,26 @@ const PlanSelection = () => {
                             : 'bg-gray-900 text-white hover:bg-gray-800'
                         }`}
                       >
-                        {isUpgrading && selectedPackage?._id === pkg._id ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Upgrading...</span>
-                          </>
-                        ) : upgradeSuccess && selectedPackage?._id === pkg._id ? (
-                          <>
-                            <Check className="h-4 w-4" />
-                            <span>Upgraded!</span>
-                          </>
-                        ) : (
-                          <>
-                            <CreditCard className="h-4 w-4" />
-                            <span>Choose {pkg.name}</span>
-                            <ArrowRight className="h-4 w-4" />
-                          </>
+                        {({ isProcessing }) => (
+                          isProcessing || (isUpgrading && selectedPackage?._id === pkg._id) ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span>Opening checkout...</span>
+                            </>
+                          ) : upgradeSuccess && selectedPackage?._id === pkg._id ? (
+                            <>
+                              <Check className="h-4 w-4" />
+                              <span>Upgraded!</span>
+                            </>
+                          ) : (
+                            <>
+                              <CreditCard className="h-4 w-4" />
+                              <span>Choose {pkg.name}</span>
+                              <ArrowRight className="h-4 w-4" />
+                            </>
+                          )
                         )}
-                      </button>
+                      </CashfreePaymentGateway>
                     </div>
                   </div>
                 );
