@@ -96,7 +96,7 @@ function QuickWins() {
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-500">Step 7 of 7</span>
+            <span className="text-sm text-gray-500">Step 5 of 5</span>
             <span className="text-sm text-gray-500">100% Complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">

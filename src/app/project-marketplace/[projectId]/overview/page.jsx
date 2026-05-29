@@ -67,6 +67,9 @@ export default function ProjectOverviewPage() {
   const [negError, setNegError]                   = useState('');
   const [accepting, setAccepting]                 = useState(false);
   const [accepted, setAccepted]                   = useState(false);
+  const [showContactForm, setShowContactForm]     = useState(false);
+  const [contactForm, setContactForm]             = useState({ name: '', phone: '', preferredTime: 'morning', note: '' });
+  const [submittingContact, setSubmittingContact] = useState(false);
 
   useEffect(() => {
     if (!projectId) return;
@@ -225,23 +228,132 @@ export default function ProjectOverviewPage() {
     }
   };
 
+  // ── Contact form — shown when user clicks "Pay Now" ─────────────────────────
+  if (showContactForm && !accepted) {
+    const handleContactSubmit = async (e) => {
+      e.preventDefault();
+      if (!contactForm.name.trim() || !contactForm.phone.trim()) return;
+      setSubmittingContact(true);
+      await handleAccept();
+      setSubmittingContact(false);
+    };
+
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-xl max-w-md w-full overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-orange-500 px-8 py-6 text-white">
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-3">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <h2 className="text-xl font-bold">Get a Personalised Plan</h2>
+            <p className="text-sm text-white/80 mt-1">
+              We'll review your requirements and reach out within <strong className="text-white">2–3 hours</strong> with the best possible offer for you.
+            </p>
+          </div>
+
+          {/* Selected plan pill */}
+          {selectedTier && (
+            <div className="px-8 pt-5">
+              <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-full px-3 py-1.5 w-fit">
+                <Package className="w-3.5 h-3.5 text-blue-600" />
+                <span className="text-xs font-semibold text-blue-700">{project?.title} — {selectedTier.name || selectedTier.tierId} plan selected</span>
+              </div>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleContactSubmit} className="px-8 py-5 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name <span className="text-red-500">*</span></label>
+              <input
+                value={contactForm.name}
+                onChange={e => setContactForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="Your full name"
+                required
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number <span className="text-red-500">*</span></label>
+              <input
+                value={contactForm.phone}
+                onChange={e => setContactForm(f => ({ ...f, phone: e.target.value }))}
+                placeholder="+91 98765 43210"
+                required
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Best time to call</label>
+              <select
+                value={contactForm.preferredTime}
+                onChange={e => setContactForm(f => ({ ...f, preferredTime: e.target.value }))}
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-blue-400 bg-white"
+              >
+                <option value="morning">Morning (9 AM – 12 PM)</option>
+                <option value="afternoon">Afternoon (12 PM – 4 PM)</option>
+                <option value="evening">Evening (4 PM – 7 PM)</option>
+                <option value="anytime">Anytime works for me</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Anything specific you'd like? <span className="text-gray-400 font-normal">(optional)</span></label>
+              <textarea
+                rows={3}
+                value={contactForm.note}
+                onChange={e => setContactForm(f => ({ ...f, note: e.target.value }))}
+                placeholder="E.g. budget range, timeline, special requirements…"
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 resize-none"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowContactForm(false)}
+                className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+              >
+                ← Back
+              </button>
+              <button
+                type="submit"
+                disabled={submittingContact || accepting || !contactForm.name.trim() || !contactForm.phone.trim()}
+                className="flex-1 py-2.5 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-all"
+              >
+                {(submittingContact || accepting) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                {(submittingContact || accepting) ? 'Submitting…' : 'Get My Personalised Plan'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Success screen — shown after form is submitted ────────────────────────────
   if (accepted) {
+    const isContentProject = projectId === 'brand-voice-social';
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl border border-gray-200 shadow-xl p-10 text-center max-w-md w-full">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-10 h-10 text-green-500" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Confirmed!</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">We've Got Your Request!</h2>
           <p className="text-gray-600 mb-6">
-            Your project is now live. A dedicated manager will reach out within <strong>2 business hours</strong> to kick things off.
+            Our team is reviewing your requirements and will reach out within{' '}
+            <strong className="text-gray-900">2–3 hours</strong> with a personalised plan crafted just for you.
           </p>
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 text-left space-y-2">
             <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">What happens next</p>
             {[
-              "You'll receive a confirmation email shortly",
-              'Team onboarding call scheduled within 24 hrs',
-              'Access to your project dashboard in 48 hrs',
+              'Personal call from our team within 2–3 hours',
+              'Custom pricing & plan tailored to your needs',
+              `Immediate kickoff on your go-ahead${isContentProject ? ' — start your brand brief right away' : ''}`,
             ].map(s => (
               <div key={s} className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
@@ -249,12 +361,26 @@ export default function ProjectOverviewPage() {
               </div>
             ))}
           </div>
-          <button
-            onClick={() => router.push('/business-dashboard')}
-            className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 text-white font-bold rounded-xl hover:from-blue-700 hover:to-orange-600 transition-all"
-          >
-            Go to Dashboard →
-          </button>
+          <div className="space-y-2">
+            {isContentProject && (
+              <button
+                onClick={() => router.push('/business-dashboard/my-projects/brand-voice-social')}
+                className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 text-white font-bold rounded-xl hover:from-blue-700 hover:to-orange-600 transition-all"
+              >
+                Start Your Brief in the Meantime →
+              </button>
+            )}
+            <button
+              onClick={() => router.push('/business-dashboard')}
+              className={`w-full py-3 rounded-xl font-semibold text-sm transition-colors ${
+                isContentProject
+                  ? 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                  : 'bg-gradient-to-r from-blue-600 to-orange-500 text-white font-bold hover:from-blue-700 hover:to-orange-600'
+              }`}
+            >
+              Go to Dashboard
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -869,12 +995,10 @@ export default function ProjectOverviewPage() {
 
                 <div className="px-5 pb-5 pt-3 space-y-3">
                   <button
-                    onClick={handleAccept}
-                    disabled={accepting}
+                    onClick={() => setShowContactForm(true)}
                     className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm"
                   >
-                    {accepting ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign className="w-4 h-4" />}
-                    {accepting ? 'Processing Payment...' : 'Pay Now'}
+                    <DollarSign className="w-4 h-4" /> Pay Now
                   </button>
 
                   {myNegotiation ? (

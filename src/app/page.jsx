@@ -1,11 +1,11 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import {
   Sparkles, TrendingUp, Target, Zap, Users, MessageSquare, Search, Star, Award,
-  Play, ChevronDown, ChevronRight, Check, Briefcase, ArrowRight, X, Globe, Rocket,
-  ChevronLeft, Package, UserCheck, MapPin, Menu, FileText, User, LogOut, LayoutDashboard, Settings,
-  Home, LayoutGrid, Bot, Phone, Mail, Layers, BarChart2
+  Play, ChevronDown, ChevronRight, Check, Briefcase, ArrowRight, Globe, Rocket,
+  ChevronLeft, Package, UserCheck, MapPin, Menu, FileText, LogOut, LayoutDashboard, Settings,
+  LayoutGrid, Bot, Phone, Mail, Layers, BarChart2, Paperclip
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -15,17 +15,10 @@ import { useAuth } from '@/contexts/AuthContext';
 function HomePage() {
   const router = useRouter();
   const { isAuthenticated, user, logout, loading: authLoading } = useAuth();
-  const [currentQuestion, setCurrentQuestion] = useState('');
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [charIndex, setCharIndex] = useState(0);
-  const [isTyping, setIsTyping] = useState(true);
-  const [heroSlide, setHeroSlide] = useState(0);
-  const [openAccordion, setOpenAccordion] = useState('ai-planning');
-  const [activeTab, setActiveTab] = useState('pre-launch');
   const [openFAQ, setOpenFAQ] = useState(null);
+  const [heroInput, setHeroInput] = useState('');
   const [showSignInDropdown, setShowSignInDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [dynamicWordIndex, setDynamicWordIndex] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [pricingData, setPricingData] = useState([]);
   const [pricingLoading, setPricingLoading] = useState(true);
@@ -34,8 +27,10 @@ function HomePage() {
   const [activeLauncherTab, setActiveLauncherTab] = useState('starter-kit');
   const [selectedLauncherOption, setSelectedLauncherOption] = useState(null);
   const [launcherSearch, setLauncherSearch] = useState('');
-  const [carouselSlide, setCarouselSlide] = useState(0);
-  const [carouselPaused, setCarouselPaused] = useState(false);
+  const [showcaseSlide, setShowcaseSlide] = useState(0);
+  const [showcasePaused, setShowcasePaused] = useState(false);
+  const [showcaseUrl, setShowcaseUrl] = useState('https://yourwebsite.com');
+  const topProjectsScrollRef = useRef(null);
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -67,8 +62,6 @@ function HomePage() {
       router.replace(user?.activeRole === 'expert' ? '/expert-dashboard' : '/business-dashboard');
     }
   }, [isAuthenticated, authLoading, user, router]);
-
-  const dynamicWords = ["Growth Ops", "Content", "Strategy", "Marketing", "Execution", "GTM", "Advertising"];
 
   useEffect(() => {
     const fetchPricingData = async () => {
@@ -112,22 +105,6 @@ function HomePage() {
   }, []);
 
   useEffect(() => {
-    const wordTimer = setInterval(() => {
-      setDynamicWordIndex((prev) => (prev + 1) % dynamicWords.length);
-    }, 2000);
-    return () => clearInterval(wordTimer);
-  }, []);
-
-  const questions = [
-    "Let's create a blog about recent trend around my product",
-    "What did we work on last week",
-    "Make an ad that will work with our audience",
-    "research my biggest competitor's content strategy",
-    "Introduce me to a designer that fits our style",
-    "How should we launch our new product"
-  ];
-
-  useEffect(() => {
     const handleClickOutside = (event) => {
       if (signInRef.current && !signInRef.current.contains(event.target)) setShowSignInDropdown(false);
       if (profileRef.current && !profileRef.current.contains(event.target)) setShowProfileDropdown(false);
@@ -136,43 +113,6 @@ function HomePage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (!isTyping) {
-      const pauseTimer = setTimeout(() => {
-        setQuestionIndex((prev) => (prev + 1) % questions.length);
-        setCharIndex(0);
-        setCurrentQuestion('');
-        setIsTyping(true);
-      }, 2000);
-      return () => clearTimeout(pauseTimer);
-    }
-    if (charIndex < questions[questionIndex].length) {
-      const typingTimer = setTimeout(() => {
-        setCurrentQuestion(questions[questionIndex].substring(0, charIndex + 1));
-        setCharIndex(charIndex + 1);
-      }, 50);
-      return () => clearTimeout(typingTimer);
-    } else {
-      setIsTyping(false);
-    }
-  }, [charIndex, questionIndex, isTyping]);
-
-  const values = [
-    { icon: <MessageSquare className="w-4 h-4" />, label: "Content creation" },
-    { icon: <Target className="w-4 h-4" />, label: "Strategy" },
-    { icon: <TrendingUp className="w-4 h-4" />, label: "Growth Ops" },
-    { icon: <Zap className="w-4 h-4" />, label: "Execution" },
-    { icon: <Search className="w-4 h-4" />, label: "Go-To Market" },
-    { icon: <Award className="w-4 h-4" />, label: "Expertise" },
-    { icon: <Target className="w-4 h-4" />, label: "Advertising" }
-  ];
-
-  const topProjects = [
-    { id: 1, title: "Lead in a Box", description: "Get 1,000 Leads suited as per your ICP", icon: <Package className="w-7 h-7" />, color: "from-blue-500 to-cyan-500", features: ["ICP-matched leads", "Verified contacts", "CRM ready"], emoji: "🎯" },
-    { id: 2, title: "GTM in a Box", description: "Get 2 experts owning your project. Delivers 1st 50 customers", icon: <Rocket className="w-7 h-7" />, color: "from-purple-500 to-pink-500", features: ["2 dedicated experts", "90-day roadmap", "First 50 customers"], emoji: "🚀" },
-    { id: 3, title: "Talent in a Box", description: "Get top Go-To-Market professional who understands your needs", icon: <UserCheck className="w-7 h-7" />, color: "from-emerald-500 to-teal-500", features: ["Pre-vetted talent", "Domain expertise", "Flexible engagement"], emoji: "⭐" }
-  ];
-
   const experts = [
     { name: "Sarah Mitchell", role: "Content Strategist", expertise: "SEO, Blog Strategy, Content Marketing", rating: 4.9, reviews: 127, hourlyRate: "$95/hr", avatar: "SM", badge: "Top Rated", color: "from-blue-600 to-orange-400" },
     { name: "Marcus Chen", role: "Growth Marketer", expertise: "Performance Marketing, Analytics, A/B Testing", rating: 5.0, reviews: 89, hourlyRate: "$120/hr", avatar: "MC", badge: "Expert", color: "from-green-500 to-teal-500" },
@@ -180,35 +120,6 @@ function HomePage() {
     { name: "David Park", role: "PR Specialist", expertise: "Media Relations, Crisis Management, Press Releases", rating: 4.9, reviews: 94, hourlyRate: "$110/hr", avatar: "DP", badge: "Top Rated", color: "from-orange-500 to-red-500" },
     { name: "Lisa Thompson", role: "Social Media Manager", expertise: "Community Building, Influencer Marketing", rating: 4.7, reviews: 203, hourlyRate: "$75/hr", avatar: "LT", badge: "Verified", color: "from-blue-500 to-indigo-500" },
     { name: "James Wilson", role: "Marketing Strategist", expertise: "Go-to-Market, Product Launch, Market Research", rating: 5.0, reviews: 78, hourlyRate: "$130/hr", avatar: "JW", badge: "Expert", color: "from-purple-500 to-pink-500" }
-  ];
-
-  const painPoints = [
-    { problem: "Overwhelmed by GTM complexity?", solution: "AI breaks down your entire go-to-market into simple, actionable steps", icon: "🧩" },
-    { problem: "Can't afford full-time CMO/CRO?", solution: "Access top marketing & sales experts on-demand, only when you need them", icon: "💼" },
-    { problem: "Wasting budget on wrong channels?", solution: "Data-driven recommendations ensure you focus on what actually drives results", icon: "🎯" },
-    { problem: "Need results, not just strategy?", solution: "Experts execute while you track real metrics in real-time", icon: "📈" }
-  ];
-
-  const capabilities = [
-    { id: 'ai-planning', title: 'AI Project Planning Engine', description: 'Transform your ideas into executable roadmaps in minutes', deliverables: ['90-day roadmap', 'Task breakdown', 'Workflow automation', 'Resource allocation'] },
-    { id: 'expert-marketplace', title: 'Expert Marketplace', description: 'Find pre-vetted specialists matched to your exact needs', deliverables: ['Smart matching algorithm', '97% satisfaction rate', 'Background verification', 'Portfolio reviews'] },
-    { id: 'workspace', title: 'Unified Workspace', description: 'Everything you need in one place - no more tool juggling', deliverables: ['Knowledge base', 'Project management', 'Communication hub', 'File sharing'] },
-    { id: 'integrations', title: 'Built-in Tools & Integrations', description: 'Connect your existing tools or use ours', deliverables: ['HubSpot', 'Salesforce', 'Google Analytics', 'Slack', 'Zapier', '50+ integrations'] }
-  ];
-
-  const useCases = {
-    'pre-launch': { title: 'Pre-Launch', challenges: ['No existing customers', 'Unvalidated product-market fit', 'Limited budget'], experts: ['Product Marketing Strategist', 'Content Creator', 'SEO Specialist'], plan: 'Month 1: Brand foundation → Month 2: Content & SEO → Month 3: Launch campaign', outcomes: 'First 100 customers, established brand presence, content pipeline', caseStudy: 'SaaS startup went 0 to 500 signups in 90 days' },
-    'growth': { title: 'Growth Stage', challenges: ['Scaling customer acquisition', 'Optimizing conversion funnels', 'Building repeatable systems'], experts: ['Growth Marketer', 'CRO Specialist', 'Marketing Automation Expert'], plan: 'Month 1: Audit & optimize → Month 2: Scale winners → Month 3: Automate systems', outcomes: '3x customer acquisition, 40% better conversion rates', caseStudy: 'E-commerce brand scaled from $50K to $200K/mo' },
-    'scaling': { title: 'Scaling', challenges: ['Managing complex campaigns', 'Coordinating multiple channels', 'ROI accountability'], experts: ['CMO Consultant', 'Data Analyst', 'Performance Marketing Lead'], plan: 'Month 1: Strategic alignment → Month 2: Multi-channel execution → Month 3: Optimization', outcomes: 'Unified strategy, cross-channel attribution, 50%+ efficiency gains', caseStudy: 'Series B company reduced CAC by 60%' }
-  };
-
-  const expertCategories = [
-    { name: 'Growth Marketing', icon: <TrendingUp className="w-5 h-5" />, count: '127 experts', color: 'from-blue-500 to-cyan-500' },
-    { name: 'Sales Development', icon: <Users className="w-5 h-5" />, count: '89 experts', color: 'from-purple-500 to-pink-500' },
-    { name: 'Content Strategy', icon: <MessageSquare className="w-5 h-5" />, count: '156 experts', color: 'from-emerald-500 to-teal-500' },
-    { name: 'SEO & Performance', icon: <Search className="w-5 h-5" />, count: '94 experts', color: 'from-orange-500 to-red-500' },
-    { name: 'Social Media', icon: <Globe className="w-5 h-5" />, count: '203 experts', color: 'from-pink-500 to-rose-500' },
-    { name: 'Product Marketing', icon: <Rocket className="w-5 h-5" />, count: '78 experts', color: 'from-blue-600 to-indigo-600' }
   ];
 
   const faqs = [
@@ -237,19 +148,16 @@ function HomePage() {
     { label: 'Privacy Policy', path: '/privacy' },
   ];
 
+  // Showcase carousel auto-rotation (2 slides, 5s each)
   useEffect(() => {
-    if (carouselPaused) return;
+    if (showcasePaused) return;
     const timer = setInterval(() => {
-      setCarouselSlide(prev => (prev + 1) % 6);
-    }, 4000);
+      setShowcaseSlide(prev => (prev + 1) % 2);
+    }, 5000);
     return () => clearInterval(timer);
-  }, [carouselPaused]);
+  }, [showcasePaused]);
 
-  const toggleAccordion = (section) => setOpenAccordion(openAccordion === section ? null : section);
   const toggleFAQ = (index) => setOpenFAQ(openFAQ === index ? null : index);
-  const currentStage = useCases[activeTab];
-
-  const marqueeItems = ['AI Planning', '743+ Projects Delivered', '4.8★ Rating', '180+ Vetted Experts', '90-Day Results', 'GTM Execution', 'ICP Matching', 'Live Analytics', 'Expert Marketplace'];
 
   // ── App Launcher data ──────────────────────────────────────────────────────
   const launcherTabs = [
@@ -293,91 +201,92 @@ function HomePage() {
     ],
   };
 
+  const MP = '/project-marketplace'; // shorthand
   const launcherProjects = {
     'get-customers': [
-      { title: 'Lead in a Box',       desc: '1,000 ICP-matched verified leads delivered',    emoji: '🎯', path: '/leads' },
-      { title: 'Cold Email Machine',  desc: 'Automated multi-step outreach sequences',       emoji: '📧', path: '/project-marketplace' },
-      { title: 'AI Cold Calls',       desc: 'AI-powered voice outreach campaigns',           emoji: '📞', path: '/project-marketplace' },
+      { title: 'Lead in a Box',       desc: '1,000 ICP-matched verified leads delivered',    emoji: '🎯', path: `${MP}/outbound-list-builder` },
+      { title: 'Cold Email Machine',  desc: 'Automated multi-step outreach sequences',       emoji: '📧', path: `${MP}/ai-email-sales-agency` },
+      { title: 'AI Cold Calls',       desc: 'AI-powered voice outreach campaigns',           emoji: '📞', path: `${MP}/sales-outreach-automation` },
     ],
     'advertise': [
-      { title: 'Google Ads Setup',    desc: 'End-to-end performance campaign launch',        emoji: '📈', path: '/project-marketplace' },
-      { title: 'Meta Ads',            desc: 'Facebook & Instagram advertising',              emoji: '🎯', path: '/project-marketplace' },
-      { title: 'Ad Creatives Pack',   desc: 'High-converting copy, visuals & videos',        emoji: '🎨', path: '/project-marketplace' },
+      { title: 'Google Ads Setup',    desc: 'End-to-end performance campaign launch',        emoji: '📈', path: `${MP}/traffic-abm-agency` },
+      { title: 'Meta Ads',            desc: 'Facebook & Instagram advertising',              emoji: '🎯', path: `${MP}/traffic-abm-agency` },
+      { title: 'Ad Creatives Pack',   desc: 'High-converting copy, visuals & videos',        emoji: '🎨', path: `${MP}/brand-voice-thought-leadership` },
     ],
     'brand-presence': [
-      { title: 'Brand Identity Kit',  desc: 'Logo, colors, voice & brand guidelines',        emoji: '🏆', path: '/project-marketplace' },
-      { title: 'LinkedIn Authority',  desc: 'Thought leadership & profile program',          emoji: '💼', path: '/project-marketplace' },
-      { title: 'PR & Media',          desc: 'Press coverage & journalist outreach',          emoji: '📰', path: '/project-marketplace' },
+      { title: 'Brand Identity Kit',  desc: 'Logo, colors, voice & brand guidelines',        emoji: '🏆', path: `${MP}/brand-voice-thought-leadership` },
+      { title: 'LinkedIn Authority',  desc: 'Thought leadership & profile program',          emoji: '💼', path: `${MP}/connection-relationship-manager` },
+      { title: 'PR & Media',          desc: 'Press coverage & journalist outreach',          emoji: '📰', path: `${MP}/brand-voice-thought-leadership` },
     ],
     'go-viral': [
-      { title: 'Viral Content Engine',desc: 'Hooks, formats & multi-platform distribution',  emoji: '🔥', path: '/project-marketplace' },
-      { title: 'Influencer Connect',  desc: 'Micro-influencer campaign management',          emoji: '⭐', path: '/project-marketplace' },
-      { title: 'Community Build',     desc: 'Discord, Slack & community growth system',      emoji: '👥', path: '/project-marketplace' },
+      { title: 'Viral Content Engine',desc: 'Hooks, formats & multi-platform distribution',  emoji: '🔥', path: `${MP}/brand-voice-thought-leadership` },
+      { title: 'Influencer Connect',  desc: 'Micro-influencer campaign management',          emoji: '⭐', path: `${MP}/brand-voice-thought-leadership` },
+      { title: 'Community Build',     desc: 'Discord, Slack & community growth system',      emoji: '👥', path: `${MP}/connection-relationship-manager` },
     ],
     'launch-product': [
-      { title: 'GTM in a Box',        desc: 'Complete go-to-market execution package',       emoji: '🚀', path: '/project-marketplace' },
-      { title: 'Product Hunt Launch', desc: 'Hunt day strategy, assets & execution',         emoji: '🏅', path: '/project-marketplace' },
-      { title: 'Launch Waitlist',     desc: 'Pre-launch audience & waitlist building',       emoji: '📋', path: '/project-marketplace' },
+      { title: 'GTM in a Box',        desc: 'Complete go-to-market execution package',       emoji: '🚀', path: `${MP}/outbound-list-builder` },
+      { title: 'Product Hunt Launch', desc: 'Hunt day strategy, assets & execution',         emoji: '🏅', path: `${MP}/brand-voice-thought-leadership` },
+      { title: 'Launch Waitlist',     desc: 'Pre-launch audience & waitlist building',       emoji: '📋', path: `${MP}/inbound-aggregation` },
     ],
     'email-outreach': [
-      { title: 'Cold Email Sequences',desc: 'Multi-step personalized outreach flows',        emoji: '📧', path: '/project-marketplace' },
-      { title: 'Email Warm-up',       desc: 'Domain reputation & deliverability building',  emoji: '🔥', path: '/project-marketplace' },
-      { title: 'Newsletter Build',    desc: 'Audience-building newsletter system',           emoji: '📰', path: '/project-marketplace' },
+      { title: 'Cold Email Sequences',desc: 'Multi-step personalized outreach flows',        emoji: '📧', path: `${MP}/ai-email-sales-agency` },
+      { title: 'Email Warm-up',       desc: 'Domain reputation & deliverability building',  emoji: '🔥', path: `${MP}/ai-email-sales-agency` },
+      { title: 'Newsletter Build',    desc: 'Audience-building newsletter system',           emoji: '📰', path: `${MP}/inbound-aggregation` },
     ],
     'linkedin': [
-      { title: 'LinkedIn Lead Gen',   desc: 'Profile optimisation + outreach sequences',    emoji: '💼', path: '/project-marketplace' },
-      { title: 'Sales Navigator Pro', desc: 'Advanced targeting & lead list building',       emoji: '🎯', path: '/project-marketplace' },
-      { title: 'DM Outreach System',  desc: 'Personalised connection + DM campaigns',       emoji: '✉️', path: '/project-marketplace' },
+      { title: 'LinkedIn Lead Gen',   desc: 'Profile optimisation + outreach sequences',    emoji: '💼', path: `${MP}/connection-relationship-manager` },
+      { title: 'Sales Navigator Pro', desc: 'Advanced targeting & lead list building',       emoji: '🎯', path: `${MP}/outbound-list-builder` },
+      { title: 'DM Outreach System',  desc: 'Personalised connection + DM campaigns',       emoji: '✉️', path: `${MP}/sales-outreach-automation` },
     ],
     'cold-calls': [
-      { title: 'AI Call Campaigns',   desc: 'Automated voice outreach at scale',            emoji: '📞', path: '/project-marketplace' },
-      { title: 'Sales Dialer Setup',  desc: 'Power dialer + script + training',             emoji: '🎙️', path: '/project-marketplace' },
+      { title: 'AI Call Campaigns',   desc: 'Automated voice outreach at scale',            emoji: '📞', path: `${MP}/call-intelligence-crm` },
+      { title: 'Sales Dialer Setup',  desc: 'Power dialer + script + training',             emoji: '🎙️', path: `${MP}/call-intelligence-crm` },
     ],
     'sms-campaigns': [
-      { title: 'SMS Drip Sequences',  desc: 'Text message nurture & conversion flows',      emoji: '💬', path: '/project-marketplace' },
-      { title: 'WhatsApp Outreach',   desc: 'WhatsApp broadcast & automation setup',        emoji: '📲', path: '/project-marketplace' },
+      { title: 'SMS Drip Sequences',  desc: 'Text message nurture & conversion flows',      emoji: '💬', path: `${MP}/ai-email-sales-agency` },
+      { title: 'WhatsApp Outreach',   desc: 'WhatsApp broadcast & automation setup',        emoji: '📲', path: `${MP}/sales-outreach-automation` },
     ],
     'blog-seo': [
-      { title: 'SEO Blog Engine',     desc: '4 posts/mo with keyword research & briefs',    emoji: '✍️', path: '/project-marketplace' },
-      { title: 'Long-form Authority', desc: 'Deep-dive articles that rank & convert',        emoji: '📄', path: '/project-marketplace' },
-      { title: 'Technical SEO Audit', desc: 'Full site audit + fix recommendations',        emoji: '🔍', path: '/project-marketplace' },
+      { title: 'SEO Blog Engine',     desc: '4 posts/mo with keyword research & briefs',    emoji: '✍️', path: `${MP}/inbound-aggregation` },
+      { title: 'Long-form Authority', desc: 'Deep-dive articles that rank & convert',        emoji: '📄', path: `${MP}/inbound-aggregation` },
+      { title: 'Technical SEO Audit', desc: 'Full site audit + fix recommendations',        emoji: '🔍', path: `${MP}/inbound-aggregation` },
     ],
     'social-posts': [
-      { title: 'Social Calendar',     desc: '30 posts/mo across LinkedIn, X & Instagram',  emoji: '📲', path: '/project-marketplace' },
-      { title: 'Short-form Videos',   desc: 'Reels, TikToks & YouTube Shorts',             emoji: '🎥', path: '/project-marketplace' },
+      { title: 'Social Calendar',     desc: '30 posts/mo across LinkedIn, X & Instagram',  emoji: '📲', path: `${MP}/brand-voice-thought-leadership` },
+      { title: 'Short-form Videos',   desc: 'Reels, TikToks & YouTube Shorts',             emoji: '🎥', path: `${MP}/brand-voice-thought-leadership` },
     ],
     'video-scripts': [
-      { title: 'Video Script Pack',   desc: 'Hooks, scripts & CTAs for any format',         emoji: '🎬', path: '/project-marketplace' },
-      { title: 'YouTube Strategy',    desc: 'Channel plan, SEO & content calendar',          emoji: '▶️', path: '/project-marketplace' },
+      { title: 'Video Script Pack',   desc: 'Hooks, scripts & CTAs for any format',         emoji: '🎬', path: `${MP}/brand-voice-thought-leadership` },
+      { title: 'YouTube Strategy',    desc: 'Channel plan, SEO & content calendar',          emoji: '▶️', path: `${MP}/inbound-aggregation` },
     ],
     'email-copy': [
-      { title: 'Email Copy System',   desc: 'Welcome, nurture & sales email sequences',     emoji: '📝', path: '/project-marketplace' },
-      { title: 'Newsletter Design',   desc: 'Template, copy & weekly send system',          emoji: '💌', path: '/project-marketplace' },
+      { title: 'Email Copy System',   desc: 'Welcome, nurture & sales email sequences',     emoji: '📝', path: `${MP}/ai-email-sales-agency` },
+      { title: 'Newsletter Design',   desc: 'Template, copy & weekly send system',          emoji: '💌', path: `${MP}/ai-email-sales-agency` },
     ],
     'lead-gen': [
-      { title: 'Lead in a Box',       desc: '1,000 ICP-matched verified leads delivered',    emoji: '🎯', path: '/leads' },
-      { title: 'Inbound Lead Funnel', desc: 'Landing page + lead magnet + nurture',         emoji: '⚡', path: '/project-marketplace' },
+      { title: 'Lead in a Box',       desc: '1,000 ICP-matched verified leads delivered',    emoji: '🎯', path: `${MP}/outbound-list-builder` },
+      { title: 'Inbound Lead Funnel', desc: 'Landing page + lead magnet + nurture',         emoji: '⚡', path: `${MP}/inbound-aggregation` },
     ],
     'paid-ads': [
-      { title: 'Full Funnel Ads',     desc: 'Google + Meta + LinkedIn ads management',      emoji: '📈', path: '/project-marketplace' },
-      { title: 'Retargeting System',  desc: 'Pixel setup + retargeting campaigns',          emoji: '🔄', path: '/project-marketplace' },
+      { title: 'Full Funnel Ads',     desc: 'Google + Meta + LinkedIn ads management',      emoji: '📈', path: `${MP}/traffic-abm-agency` },
+      { title: 'Retargeting System',  desc: 'Pixel setup + retargeting campaigns',          emoji: '🔄', path: `${MP}/traffic-abm-agency` },
     ],
     'referral': [
-      { title: 'Referral Program',    desc: 'End-to-end referral system design & launch',   emoji: '🤝', path: '/project-marketplace' },
-      { title: 'Affiliate Setup',     desc: 'Affiliate program + partner recruitment',       emoji: '🌐', path: '/project-marketplace' },
+      { title: 'Referral Program',    desc: 'End-to-end referral system design & launch',   emoji: '🤝', path: `${MP}/connection-relationship-manager` },
+      { title: 'Affiliate Setup',     desc: 'Affiliate program + partner recruitment',       emoji: '🌐', path: `${MP}/connection-relationship-manager` },
     ],
     'retention': [
-      { title: 'Churn Reduction',     desc: 'Exit surveys, win-back & loyalty flows',       emoji: '🔄', path: '/project-marketplace' },
-      { title: 'Customer Success',    desc: 'Onboarding + NPS + upsell system',             emoji: '💎', path: '/project-marketplace' },
+      { title: 'Churn Reduction',     desc: 'Exit surveys, win-back & loyalty flows',       emoji: '🔄', path: `${MP}/demo-prep-crm-research` },
+      { title: 'Customer Success',    desc: 'Onboarding + NPS + upsell system',             emoji: '💎', path: `${MP}/demo-prep-crm-research` },
     ],
   };
   const featuredLauncherProjects = [
-    { title: 'Lead in a Box',        desc: '1,000 ICP-matched verified leads ready for outreach', emoji: '🎯', thumb: 'from-blue-600 via-blue-500 to-cyan-400',      img: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=640&h=360&fit=crop&auto=format',  path: '/leads',               tag: 'Most Popular' },
-    { title: 'GTM in a Box',         desc: '2 dedicated experts to win your first 50 customers',  emoji: '🚀', thumb: 'from-violet-600 via-purple-500 to-pink-400',  img: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace', tag: 'Featured' },
-    { title: 'Cold Email Machine',   desc: 'Multi-step automated outreach with personalisation',  emoji: '📧', thumb: 'from-emerald-600 via-teal-500 to-cyan-400',   img: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=640&h=360&fit=crop&auto=format', path: '/project-marketplace', tag: 'Outreach' },
-    { title: 'SEO Blog Engine',      desc: '4 fully optimised blog posts delivered every month',  emoji: '✍️', thumb: 'from-orange-500 via-amber-400 to-yellow-400', img: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace', tag: 'Content' },
-    { title: 'Brand Identity Kit',   desc: 'Logo, typography, color palette & brand voice guide', emoji: '🏆', thumb: 'from-rose-600 via-pink-500 to-fuchsia-400',   img: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace', tag: 'Branding' },
-    { title: 'Viral Content Engine', desc: 'Hooks, short-form formats & multi-platform reach',    emoji: '🔥', thumb: 'from-red-600 via-orange-500 to-amber-400',    img: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace', tag: 'Social' },
+    { title: 'Lead in a Box',        punchLine: 'Get 1,000 qualified leads for your startup — in 3 days.',       desc: '1,000 ICP-matched verified leads ready for outreach', emoji: '🎯', thumb: 'from-blue-600 via-blue-500 to-cyan-400',      img: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace/outbound-list-builder',          tag: 'Most Popular' },
+    { title: 'GTM in a Box',         punchLine: 'Your first 50 customers, expertly delivered in 90 days.',       desc: '2 dedicated experts to win your first 50 customers',  emoji: '🚀', thumb: 'from-violet-600 via-purple-500 to-pink-400',  img: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace/outbound-list-builder',          tag: 'Featured' },
+    { title: 'Cold Email Machine',   punchLine: 'Book 30+ meetings a month — fully on autopilot.',               desc: 'Multi-step automated outreach with personalisation',  emoji: '📧', thumb: 'from-emerald-600 via-teal-500 to-cyan-400',   img: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=640&h=360&fit=crop&auto=format', path: '/project-marketplace/ai-email-sales-agency',         tag: 'Outreach' },
+    { title: 'SEO Blog Engine',      punchLine: 'Rank on Google and drive inbound leads, every month.',          desc: '4 fully optimised blog posts delivered every month',  emoji: '✍️', thumb: 'from-orange-500 via-amber-400 to-yellow-400', img: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace/inbound-aggregation',            tag: 'Content' },
+    { title: 'Brand Identity Kit',   punchLine: 'A brand so sharp, customers trust you on sight.',               desc: 'Logo, typography, color palette & brand voice guide', emoji: '🏆', thumb: 'from-rose-600 via-pink-500 to-fuchsia-400',   img: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace/brand-voice-thought-leadership', tag: 'Branding' },
+    { title: 'Viral Content Engine', punchLine: 'Turn your story into content that spreads itself.',             desc: 'Hooks, short-form formats & multi-platform reach',    emoji: '🔥', thumb: 'from-red-600 via-orange-500 to-amber-400',    img: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace/brand-voice-thought-leadership', tag: 'Social' },
   ];
 
   const projectCardColors = [
@@ -394,7 +303,7 @@ function HomePage() {
   if (authLoading || isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-white font-sans overflow-x-hidden">
+    <div className="min-h-screen font-sans overflow-x-hidden bg-white">
 
       {/* ==================== NAVIGATION ==================== */}
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
@@ -491,10 +400,126 @@ function HomePage() {
         </div>
       </div>
 
-      {/* ==================== LAUNCH PAD (pre-login homepage section) ==================== */}
+      {/* ==================== SECTION 1: HERO (50vh — horizontal split) ==================== */}
       {!isAuthenticated && (
-        <section className="relative overflow-hidden border-b border-gray-200" style={{ height: 'calc(100vh - 65px)', background: '#ffffff' }}>
-          <div className="flex h-full overflow-hidden">
+        <section className="relative flex items-center border-b border-gray-100 bg-white overflow-hidden"
+          style={{ height: '50vh', minHeight: '300px' }}>
+          {/* Soft glow */}
+          <div className="absolute -top-16 -right-16 w-64 h-64 bg-blue-50/70 rounded-full blur-[80px] pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-52 h-52 bg-orange-50/50 rounded-full blur-[70px] pointer-events-none" />
+
+          <div className="relative w-full max-w-6xl mx-auto px-8 xl:px-14 flex items-center gap-10 lg:gap-16">
+
+            {/* Left — headline */}
+            <div className="flex-1 min-w-0 animate-fadeInUp">
+              <h1 className="font-black text-gray-900 leading-[1.08] mb-3">
+                <span className="block text-3xl sm:text-4xl xl:text-5xl">From Idea to</span>
+                <span className="block text-3xl sm:text-4xl xl:text-5xl">Customers in 90 Days.</span>
+              </h1>
+              <p className="text-gray-500 text-sm xl:text-[15px] leading-relaxed max-w-sm">
+                AI builds the strategy, matches vetted experts, and tracks real results for you.
+              </p>
+            </div>
+
+            {/* Right — chatbox */}
+            <div className="flex-shrink-0 w-[380px] xl:w-[440px] animate-fadeInUp animation-delay-200">
+              <div className="bg-white border border-gray-200 rounded-xl"
+                style={{ boxShadow: '0 2px 20px rgba(0,0,0,0.07)' }}>
+                <textarea
+                  value={heroInput}
+                  onChange={e => setHeroInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleProtectedRoute('/agent');
+                    }
+                  }}
+                  placeholder="Describe your GTM goal… e.g. I need 1,000 leads for my B2B SaaS targeting HR teams in India"
+                  rows={3}
+                  className="w-full px-4 pt-4 pb-2 text-gray-700 placeholder-gray-400 text-[13px] leading-relaxed bg-transparent border-none outline-none resize-none"
+                />
+                <div className="flex items-center justify-between px-3 pb-3">
+                  <button className="p-1 text-gray-300 hover:text-gray-500 transition-colors" type="button">
+                    <Paperclip className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={() => handleProtectedRoute('/agent')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-[12px] font-semibold transition-colors" type="button">
+                    Start for free <ArrowRight className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+              <p className="text-[11px] text-gray-400 mt-2 text-center">Press Enter to submit · Shift+Enter for new line</p>
+            </div>
+
+          </div>
+        </section>
+      )}
+
+      {/* ==================== SECTION 2: PLATFORM SHOWCASE — MacBook frame ==================== */}
+      {!isAuthenticated && (
+        <section className="relative py-5 sm:py-8 overflow-hidden"
+          style={{ background: 'linear-gradient(180deg, #f5f5f7 0%, #ffffff 55%)' }}>
+          <div className="relative max-w-[1560px] mx-auto px-3 sm:px-5">
+
+            {/* ── MacBook assembly — cinematic entrance ── */}
+            <div style={{ animation: 'macbookCinematic 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both' }}>
+
+              {/* Lid top edge — aluminum */}
+              <div style={{
+                height: '26px',
+                background: 'linear-gradient(180deg, #e8e8e8 0%, #c6c6c6 100%)',
+                borderRadius: '16px 16px 0 0',
+                border: '1.5px solid #b2b2b2',
+                borderBottom: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+              }}>
+                {/* Apple-style logo silhouette */}
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ opacity: 0.2 }}>
+                  <path d="M10.5 7.4c0-1.7 1.4-2.5 1.5-2.6-.8-1.2-2.1-1.3-2.5-1.3-1.1-.1-2.1.6-2.6.6-.5 0-1.3-.6-2.2-.6C3.2 3.5 2 4.4 1.3 5.7c-1.3 2.3-.3 5.7 1 7.5.6.9 1.4 1.9 2.4 1.9.9 0 1.3-.6 2.4-.6 1.1 0 1.4.6 2.4.6 1 0 1.7-.9 2.4-1.8.7-1 1-2 1-2.1 0 0-1.9-.7-1.4-3.8z" fill="#000"/>
+                  <path d="M8.7 2.3c.5-.7.9-1.6.8-2.3-.8 0-1.7.5-2.3 1.2-.5.6-.9 1.5-.8 2.2.9.1 1.8-.4 2.3-1.1z" fill="#000"/>
+                </svg>
+              </div>
+
+              {/* Screen — no bezel, content flush under lid */}
+              <div>
+
+                {/* ── Screen = existing platform showcase ── */}
+                <div className="rounded-2xl border border-gray-200 overflow-hidden shadow-[0_20px_60px_-10px_rgba(0,0,0,0.1)] flex flex-col mx-0.5"
+                  style={{ height: 'calc(100vh - 80px)', minHeight: '680px', maxHeight: '1080px' }}
+                  onMouseEnter={() => setShowcasePaused(true)}
+                  onMouseLeave={() => setShowcasePaused(false)}>
+
+
+              {/* Browser chrome */}
+              <div className="h-10 bg-white border-b border-gray-100 flex items-center px-4 gap-3 flex-shrink-0">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
+                </div>
+                <div className="flex-1 flex justify-center">
+                  <div className="w-[290px] bg-gray-100 rounded-md px-3 py-1 text-[11px] text-gray-400 flex items-center justify-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full border border-gray-300 flex-shrink-0" />
+                    {showcaseSlide === 0 ? 'app.karya-ai.com' : 'app.karya-ai.com/analyze'}
+                  </div>
+                </div>
+                <div className="w-28 flex justify-end items-center gap-1.5">
+                  <div className="w-5 h-5 bg-blue-600 rounded-md flex items-center justify-center flex-shrink-0">
+                    <Image src="/karya-ai-logo.png" alt="K" width={12} height={12} className="object-contain brightness-0 invert" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-gray-600">Karya AI</span>
+                </div>
+              </div>
+
+              {/* ── Slides area ── */}
+              <div className="flex-1 relative overflow-hidden">
+
+                {/* SLIDE 1: Launch Pad (project selector) */}
+                <div className={`absolute inset-0 transition-all duration-700 ease-in-out ${showcaseSlide === 0 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}`}>
+                  <div className="flex h-full overflow-hidden">
 
             {/* ── Icon Rail ── */}
             <div className="hidden md:flex w-[72px] flex-col items-center pt-6 pb-5 gap-1 bg-white border-r border-gray-100 flex-shrink-0 h-full">
@@ -596,9 +621,9 @@ function HomePage() {
                     })
                 }
                 {activeLauncherTab === 'custom' && [
-                  { label: 'Fill Manually',   Icon: FileText, desc: 'Step-by-step guided project builder', path: '/business-dashboard' },
-                  { label: 'Schedule a Call', Icon: Phone,    desc: 'Our team scopes the project with you', path: '/business-dashboard' },
-                  { label: 'By Agent',        Icon: Bot,      desc: 'AI chats with you & builds the brief', path: '/business-dashboard' },
+                  { label: 'Fill Manually',   Icon: FileText, desc: 'Step-by-step guided project builder', path: '/create-project' },
+                  { label: 'Schedule a Call', Icon: Phone,    desc: 'Our team scopes the project with you', path: '/business-dashboard/submit-project/schedule' },
+                  { label: 'By Agent',        Icon: Bot,      desc: 'AI chats with you & builds the brief', path: '/agent' },
                 ].map(opt => (
                   <button key={opt.label} onClick={() => handleProtectedRoute(opt.path)}
                     className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-left bg-white border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all">
@@ -618,64 +643,43 @@ function HomePage() {
             {/* ── Right Panel ── */}
             <div className="flex-1 flex flex-col h-full overflow-hidden bg-white">
 
-              {/* Desktop: 30/70 split */}
+              {/* Desktop: full-height layout */}
               <div className="hidden md:flex flex-col h-full">
 
-                {/* TOP 30% — Section title + big Ask Karya */}
-                <div className="flex flex-col border-b border-gray-100 px-8 pt-7 pb-6" style={{ height: '30%' }}>
-
-                  {/* Section heading — changes with selection */}
-                  <div className="flex-shrink-0 mb-4">
-                    {selectedLauncherOption && activeLauncherTab !== 'custom' ? (
-                      <>
-                        <button onClick={() => setSelectedLauncherOption(null)}
-                          className="flex items-center gap-1 text-gray-400 hover:text-gray-700 text-[12px] font-medium mb-2 transition-colors">
-                          <ChevronRight className="w-3.5 h-3.5 rotate-180" strokeWidth={2} /> Back
-                        </button>
-                        <h2 className="text-gray-900 font-bold text-[22px] tracking-tight leading-tight">
-                          {launcherOptions[activeLauncherTab]?.find(o => o.id === selectedLauncherOption)?.label}
-                        </h2>
-                        <p className="text-gray-400 text-[13px] mt-0.5">Recommended projects to get you started</p>
-                      </>
-                    ) : activeLauncherTab === 'custom' ? (
-                      <>
-                        <h2 className="text-gray-900 font-bold text-[22px] tracking-tight leading-tight">How would you like to build?</h2>
-                        <p className="text-gray-400 text-[13px] mt-0.5">Choose the method that works best for you</p>
-                      </>
-                    ) : (
-                      <>
-                        <h2 className="text-gray-900 font-bold text-[22px] tracking-tight leading-tight">Popular projects</h2>
-                        <p className="text-gray-400 text-[13px] mt-0.5">Recommended projects to get you started</p>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Ask Karya — fills remaining space of 30% */}
-                  <div className="flex-1 min-h-0 cursor-pointer" onClick={() => handleProtectedRoute('/agent')}>
-                    <div className="h-full flex items-center gap-4 bg-gray-50 hover:bg-white border-2 border-gray-200 hover:border-blue-400 rounded-2xl px-6 transition-all group">
-                      <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Image src="/karya-ai-logo.png" alt="Karya AI" width={18} height={18} className="object-contain brightness-0 invert" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-gray-400 text-[15px] leading-normal">
-                          {currentQuestion || 'Ask Karya about your GTM strategy…'}
-                          {currentQuestion && <span className="inline-block w-[2px] h-4 bg-blue-600 ml-0.5 animate-blink align-middle" />}
-                        </p>
-                        <p className="text-gray-300 text-[12px] mt-1">Get customers · Build content · Run ads · Find experts</p>
-                      </div>
-                      <span className="text-[13px] text-gray-500 bg-white border border-gray-200 px-4 py-2 rounded-xl font-semibold flex-shrink-0 group-hover:border-blue-400 group-hover:text-blue-600 transition-colors">Ask AI →</span>
-                    </div>
-                  </div>
+                {/* TOP — heading only, compact */}
+                <div className="flex-shrink-0 border-b border-gray-100 px-8 pt-5 pb-4">
+                  {selectedLauncherOption && activeLauncherTab !== 'custom' ? (
+                    <>
+                      <button onClick={() => setSelectedLauncherOption(null)}
+                        className="flex items-center gap-1 text-gray-400 hover:text-gray-700 text-[12px] font-medium mb-1.5 transition-colors">
+                        <ChevronRight className="w-3.5 h-3.5 rotate-180" strokeWidth={2} /> Back
+                      </button>
+                      <h2 className="text-gray-900 font-bold text-[20px] tracking-tight leading-tight">
+                        {launcherOptions[activeLauncherTab]?.find(o => o.id === selectedLauncherOption)?.label}
+                      </h2>
+                      <p className="text-gray-400 text-[12px] mt-0.5">Recommended projects to get you started</p>
+                    </>
+                  ) : activeLauncherTab === 'custom' ? (
+                    <>
+                      <h2 className="text-gray-900 font-bold text-[20px] tracking-tight leading-tight">How would you like to build?</h2>
+                      <p className="text-gray-400 text-[12px] mt-0.5">Choose the method that works best for you</p>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="text-gray-900 font-bold text-[20px] tracking-tight leading-tight">Popular projects</h2>
+                      <p className="text-gray-400 text-[12px] mt-0.5">Recommended projects to get you started</p>
+                    </>
+                  )}
                 </div>
 
-                {/* BOTTOM 70% — 2×2 card grid */}
-                <div className="flex-1 min-h-0 overflow-y-auto px-8 py-6">
+                {/* MAIN — full remaining height for project cards */}
+                <div className="flex-1 min-h-0 overflow-y-auto px-8 py-5">
 
                   {/* DEFAULT: 2×2 project cards (first 4 only) */}
                   {!selectedLauncherOption && activeLauncherTab !== 'custom' && (
-                    <div className="grid grid-cols-2 grid-rows-2 gap-5 h-full">
+                    <div className="grid grid-cols-2 gap-4 h-full" style={{ gridTemplateRows: '1fr 1fr' }}>
                       {featuredLauncherProjects.slice(0, 4).map((project, i) => (
-                        <button key={i} onClick={() => handleProtectedRoute(project.path)}
+                        <button key={i} onClick={() => router.push(project.path)}
                           className="group text-left flex flex-col rounded-xl overflow-hidden transition-colors animate-fadeInUp min-h-0"
                           style={{ animationDelay: `${i * 55}ms`, animationFillMode: 'both' }}>
                           <div className="relative flex-1 min-h-0 rounded-xl overflow-hidden">
@@ -691,9 +695,9 @@ function HomePage() {
                               </span>
                             )}
                           </div>
-                          <div className="flex-shrink-0 pt-2.5 pb-1">
+                          <div className="flex-shrink-0 pt-2 pb-1">
                             <p className="text-gray-900 font-semibold text-[13px] leading-tight">{project.title}</p>
-                            <p className="text-gray-500 text-[11px] mt-0.5 line-clamp-2 leading-relaxed">{project.desc}</p>
+                            <p className="text-gray-500 text-[11px] mt-0.5 line-clamp-1 leading-relaxed">{project.desc}</p>
                           </div>
                         </button>
                       ))}
@@ -704,7 +708,7 @@ function HomePage() {
                   {selectedLauncherOption && activeLauncherTab !== 'custom' && launcherProjects[selectedLauncherOption] && (
                     <div className="grid grid-cols-2 gap-5">
                       {launcherProjects[selectedLauncherOption].map((project, i) => (
-                        <button key={i} onClick={() => handleProtectedRoute(project.path)}
+                        <button key={i} onClick={() => router.push(project.path)}
                           className="group text-left rounded-xl overflow-hidden transition-colors animate-fadeInUp"
                           style={{ animationDelay: `${i * 65}ms`, animationFillMode: 'both' }}>
                           <div className="relative w-full overflow-hidden rounded-xl mb-2.5" style={{ aspectRatio: '16/9' }}>
@@ -726,9 +730,9 @@ function HomePage() {
                   {activeLauncherTab === 'custom' && (
                     <div className="grid grid-cols-3 gap-5">
                       {[
-                        { icon: '✏️', title: 'Fill Manually',   desc: 'Step-by-step guided project builder with full control.', path: '/business-dashboard', badge: 'Most Control' },
-                        { icon: '📞', title: 'Schedule a Call', desc: "Talk to our team — we'll scope the project for you.", path: '/business-dashboard', badge: 'Guided' },
-                        { icon: '🤖', title: 'By Agent',        desc: 'AI chats with you and builds your full project brief.', path: '/business-dashboard', badge: 'AI-Powered' },
+                        { icon: '✏️', title: 'Fill Manually',   desc: 'Step-by-step guided project builder with full control.', path: '/create-project', badge: 'Most Control' },
+                        { icon: '📞', title: 'Schedule a Call', desc: "Talk to our team — we'll scope the project for you.", path: '/business-dashboard/submit-project/schedule', badge: 'Guided' },
+                        { icon: '🤖', title: 'By Agent',        desc: 'AI chats with you and builds your full project brief.', path: '/agent', badge: 'AI-Powered' },
                       ].map((option, i) => (
                         <button key={i} onClick={() => handleProtectedRoute(option.path)}
                           className="group text-left bg-gray-50 hover:bg-gray-100 rounded-xl p-5 transition-colors animate-fadeInUp"
@@ -774,7 +778,7 @@ function HomePage() {
                 </div>
                 <div className="p-4 grid grid-cols-2 gap-3">
                   {featuredLauncherProjects.slice(0, 4).map((project, i) => (
-                    <button key={i} onClick={() => handleProtectedRoute(project.path)} className="group text-left rounded-xl overflow-hidden">
+                    <button key={i} onClick={() => router.push(project.path)} className="group text-left rounded-xl overflow-hidden">
                       <div className="relative w-full rounded-xl overflow-hidden mb-2" style={{ aspectRatio: '16/9' }}>
                         <div className={`absolute inset-0 bg-gradient-to-br ${project.thumb}`} />
                         {project.img && <img src={project.img} alt={project.title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
@@ -788,654 +792,321 @@ function HomePage() {
 
             </div>
 
-          </div>
+                  </div>{/* end Slide 1 inner flex */}
+                </div>{/* end Slide 1 */}
+
+                {/* ── SLIDE 2: GTM URL Analyzer ── */}
+                <div className={`absolute inset-0 flex transition-all duration-700 ease-in-out ${showcaseSlide === 1 ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}>
+
+                  {/* Left: description + URL input */}
+                  <div className="w-[38%] flex-shrink-0 flex flex-col justify-center px-8 py-8 border-r border-gray-100 bg-white">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-50 border border-orange-100 rounded-full mb-5 w-fit">
+                      <Sparkles className="w-3 h-3 text-orange-500" />
+                      <span className="text-orange-700 text-[11px] font-bold uppercase tracking-wide">AI GTM Intelligence</span>
+                    </div>
+                    <h3 className="text-gray-900 font-black text-[20px] leading-tight mb-3">
+                      Analyze your platform.<br />Get a 30/60/90 day<br />GTM roadmap.
+                    </h3>
+                    <p className="text-gray-500 text-[13px] leading-relaxed mb-6">
+                      Paste your website URL. Our AI scans your positioning, finds content gaps, benchmarks competitors, and delivers a personalized action plan with clear 30, 60, and 90 day milestones.
+                    </p>
+                    <div className="relative mb-3">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
+                      <input
+                        type="text"
+                        value={showcaseUrl}
+                        onChange={(e) => setShowcaseUrl(e.target.value)}
+                        placeholder="https://yourwebsite.com"
+                        className="w-full pl-9 pr-3 py-3 bg-white border border-gray-200 rounded-xl text-[13px] text-gray-700 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all"
+                      />
+                    </div>
+                    <button onClick={() => handleProtectedRoute('/agent')}
+                      className="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-xl text-white font-bold text-[13px] transition-colors flex items-center justify-center gap-2">
+                      Analyze My Platform Free
+                      <ArrowRight className="w-4 h-4" strokeWidth={2} />
+                    </button>
+                  </div>
+
+                  {/* Right: light panel + ping-pong scan */}
+                  <div className="flex-1 bg-[#F4F4F6] flex flex-col p-4 gap-3 overflow-hidden">
+
+                    {/* Scanning browser window */}
+                    <div className="rounded-xl overflow-hidden flex-shrink-0" style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.07), 0 4px 20px rgba(0,0,0,0.08)' }}>
+                      {/* Browser chrome */}
+                      <div className="h-8 bg-gray-200 flex items-center px-3 gap-2">
+                        <div className="flex gap-1 flex-shrink-0">
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
+                        </div>
+                        <div className="flex-1 mx-2 bg-white border border-gray-200 rounded px-2 py-0.5 text-[10px] text-gray-500 truncate text-center flex items-center justify-center gap-1.5">
+                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse flex-shrink-0" />
+                          {showcaseUrl.replace(/^https?:\/\//, '') || 'yourwebsite.com'}
+                        </div>
+                      </div>
+                      {/* Page being scanned */}
+                      <div className="relative overflow-hidden bg-white" style={{ height: '155px' }}>
+                        <div className="p-3 space-y-2">
+                          <div className="flex gap-2 items-center">
+                            <div className="w-5 h-5 rounded bg-blue-100 flex-shrink-0" />
+                            <div className="h-2.5 bg-gray-100 rounded w-28" />
+                            <div className="flex gap-1.5 ml-auto">
+                              {[1,2,3,4].map(j => <div key={j} className="h-2 bg-gray-100 rounded w-10" />)}
+                            </div>
+                          </div>
+                          <div className="h-5 bg-gray-200 rounded w-2/3" />
+                          <div className="h-3 bg-gray-100 rounded w-5/6" />
+                          <div className="h-3 bg-gray-50 rounded w-3/4" />
+                          <div className="grid grid-cols-4 gap-1.5 mt-1">
+                            <div className="h-9 bg-blue-50 rounded col-span-2" />
+                            <div className="h-9 bg-orange-50 rounded" />
+                            <div className="h-9 bg-green-50 rounded" />
+                          </div>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            <div className="h-12 bg-gray-50 border border-gray-100 rounded" />
+                            <div className="h-12 bg-gray-50 border border-gray-100 rounded" />
+                            <div className="h-12 bg-gray-50 border border-gray-100 rounded" />
+                          </div>
+                        </div>
+                        {/* Ping-pong scan line */}
+                        <div className="absolute left-0 right-0 h-[2px] pointer-events-none z-10"
+                          style={{
+                            background: 'linear-gradient(to right, transparent 0%, rgba(59,130,246,0.9) 15%, rgba(139,92,246,1) 50%, rgba(59,130,246,0.9) 85%, transparent 100%)',
+                            boxShadow: '0 0 10px 3px rgba(99,102,241,0.7)',
+                            animation: 'scanPingPong 1.6s cubic-bezier(0.45, 0, 0.55, 1) infinite',
+                          }} />
+                        {/* Trailing glow follows scan line */}
+                        <div className="absolute left-0 right-0 h-20 pointer-events-none z-10"
+                          style={{
+                            background: 'linear-gradient(to bottom, rgba(99,102,241,0.1), transparent)',
+                            animation: 'scanGlowPingPong 1.6s cubic-bezier(0.45, 0, 0.55, 1) infinite',
+                          }} />
+                      </div>
+                    </div>
+
+                    {/* Analysis output panel */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-3.5 flex-1 font-mono overflow-hidden">
+                      <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-gray-100">
+                        <div className="flex gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-[#FF5F57]" />
+                          <div className="w-2 h-2 rounded-full bg-[#FEBC2E]" />
+                          <div className="w-2 h-2 rounded-full bg-[#28C840]" />
+                        </div>
+                        <span className="text-[10px] text-gray-400">karya-ai — analysis</span>
+                      </div>
+                      <div className="space-y-1.5 mb-3">
+                        {[
+                          { text: '→ Crawling ' + (showcaseUrl.replace(/^https?:\/\//, '') || 'yourwebsite.com') + '…', color: 'text-gray-400', delay: '0s' },
+                          { text: '✓ Positioning & messaging parsed', color: 'text-green-600', delay: '0.7s' },
+                          { text: '✓ Competitor landscape mapped', color: 'text-green-600', delay: '1.3s' },
+                          { text: '⚡ 3 critical GTM gaps found', color: 'text-orange-600', delay: '1.9s' },
+                          { text: '◆ Building your 30/60/90 roadmap…', color: 'text-blue-600', delay: '2.5s' },
+                        ].map((line, i) => (
+                          <p key={i} className={`text-[11px] leading-relaxed ${line.color} animate-fadeInUp`}
+                            style={{ animationDelay: line.delay, animationFillMode: 'both', opacity: 0 }}>
+                            {line.text}
+                          </p>
+                        ))}
+                      </div>
+
+                      {/* Score chips */}
+                      <div className="grid grid-cols-3 gap-1.5 animate-fadeInUp"
+                        style={{ animationDelay: '3s', animationFillMode: 'both', opacity: 0 }}>
+                        {[
+                          { label: 'GTM Score',   value: 'B+',     vColor: 'text-blue-600',    bg: 'bg-blue-50',    border: 'border-blue-200' },
+                          { label: 'Content Gap', value: 'HIGH',   vColor: 'text-orange-600',  bg: 'bg-orange-50',  border: 'border-orange-200' },
+                          { label: 'SEO Health',  value: '68/100', vColor: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+                        ].map(m => (
+                          <div key={m.label} className={`${m.bg} border ${m.border} rounded-lg p-2 text-center`}>
+                            <p className={`font-black text-[13px] ${m.vColor}`}>{m.value}</p>
+                            <p className="text-gray-500 text-[9px] mt-0.5">{m.label}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* 30/60/90 roadmap rows */}
+                      <div className="mt-2.5 space-y-1 animate-fadeInUp"
+                        style={{ animationDelay: '3.5s', animationFillMode: 'both', opacity: 0 }}>
+                        <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1.5 font-bold">Generated Roadmap</p>
+                        {[
+                          { days: '30d', goal: 'Fix positioning & ICP definition',  color: 'text-blue-600',    num: '01' },
+                          { days: '60d', goal: 'Launch content engine + outreach',  color: 'text-orange-600',  num: '02' },
+                          { days: '90d', goal: 'Scale paid acquisition + referrals',color: 'text-emerald-600', num: '03' },
+                        ].map((p, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <span className={`text-[10px] font-black font-mono ${p.color} w-5 flex-shrink-0`}>{p.num}</span>
+                            <span className={`text-[10px] font-bold ${p.color} flex-shrink-0`}>{p.days}</span>
+                            <span className="text-[10px] text-gray-500 truncate">{p.goal}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>{/* end Slide 2 */}
+
+              </div>{/* end slides area */}
+
+              {/* ── Bottom navigation strip ── */}
+              <div className="h-11 bg-white border-t border-gray-100 flex items-center px-5 gap-4 flex-shrink-0">
+                {/* Auto progress bar */}
+                <div className="w-32 h-1 bg-gray-100 rounded-full overflow-hidden flex-shrink-0">
+                  <div key={`showcase-${showcaseSlide}`}
+                    className="h-full bg-blue-600 rounded-full animate-carouselBar"
+                    style={{ animationDuration: '5s', animationPlayState: showcasePaused ? 'paused' : 'running' }} />
+                </div>
+                {/* Slide tab labels */}
+                <div className="flex items-center gap-4">
+                  {['Project Selector', 'GTM Analyzer'].map((label, i) => (
+                    <button key={i} onClick={() => setShowcaseSlide(i)}
+                      className={`text-[11px] font-semibold transition-colors ${showcaseSlide === i ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {/* Controls */}
+                <div className="flex items-center gap-1.5 ml-auto">
+                  <button onClick={() => setShowcaseSlide(p => (p - 1 + 2) % 2)}
+                    className="w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:border-gray-400 transition-colors">
+                    <ChevronLeft className="w-3 h-3" />
+                  </button>
+                  <button onClick={() => setShowcasePaused(p => !p)}
+                    className="w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center text-[9px] text-gray-400 hover:border-gray-400 transition-colors leading-none">
+                    {showcasePaused ? '▶' : '⏸'}
+                  </button>
+                  <button onClick={() => setShowcaseSlide(p => (p + 1) % 2)}
+                    className="w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:border-gray-400 transition-colors">
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+
+                </div>{/* end showcase frame / screen content */}
+              </div>{/* end screen bezel */}
+
+              {/* ── Hinge strip ── */}
+              <div style={{
+                height: '5px',
+                background: 'linear-gradient(180deg, #a8a8a8, #d0d0d0)',
+                borderLeft: '13px solid #c0c0c0',
+                borderRight: '13px solid #c0c0c0',
+              }} />
+
+              {/* ── Base / keyboard deck ── */}
+              <div style={{
+                height: '28px',
+                background: 'linear-gradient(180deg, #d8d8d8 0%, #ebebeb 55%, #f5f5f5 100%)',
+                borderRadius: '0 0 10px 10px',
+                border: '1.5px solid #b8b8b8',
+                borderTop: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.2), 0 5px 15px rgba(0,0,0,0.08)',
+              }}>
+                {/* Trackpad */}
+                <div style={{ width: '18%', height: '55%', background: 'rgba(0,0,0,0.09)', borderRadius: '5px', border: '1px solid rgba(0,0,0,0.12)' }} />
+              </div>
+
+            </div>{/* end MacBook assembly */}
+          </div>{/* end max-w container */}
         </section>
       )}
 
-      {/* ==================== CAROUSEL: 6 Core Sections ==================== */}
-      <div
-        className="relative overflow-hidden h-[92vh] min-h-[600px]"
-        onMouseEnter={() => setCarouselPaused(true)}
-        onMouseLeave={() => setCarouselPaused(false)}
-      >
-        {/* Auto-progress bar */}
-        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gray-100 z-30 pointer-events-none">
-          <div key={`bar-${carouselSlide}`} className="h-full bg-gradient-to-r from-blue-600 to-orange-500 animate-carouselBar" />
-        </div>
-
-        {/* Slide counter + label */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 hidden sm:flex items-center gap-2 bg-white/90 backdrop-blur-md border border-gray-200 rounded-full px-3 py-1.5 shadow-sm pointer-events-none">
-          {['Hero','How It Works','Platform','Sound Familiar','Capabilities','Solutions'].map((l, i) => (
-            <span key={i} className={`text-xs font-bold transition-all ${carouselSlide === i ? 'text-blue-600' : 'hidden'}`}>{l}</span>
-          ))}
-          <span className="text-xs text-gray-400 font-normal">{carouselSlide + 1} / 6</span>
-        </div>
-
-        {/* Slides track */}
-        <div
-          className="flex h-full transition-transform duration-700 ease-in-out will-change-transform"
-          style={{ transform: `translateX(-${carouselSlide * 100}%)` }}
-        >
-
-          {/* ─── SLIDE 1: Hero ─── */}
-          <section className="w-full flex-shrink-0 relative h-full flex items-center overflow-hidden bg-white">
-        {/* Subtle grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:3rem_3rem] pointer-events-none" />
-        {/* Blobs */}
-        <div className="absolute top-10 left-0 w-[500px] h-[500px] bg-blue-100/50 rounded-full blur-[80px] pointer-events-none animate-blob" />
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-orange-100/50 rounded-full blur-[80px] pointer-events-none animate-blob animation-delay-2000" />
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center w-full">
-          {/* LEFT: Text */}
-          <div className="order-2 lg:order-1">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-full mb-8 animate-fadeInUp">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-blue-700 text-sm font-semibold tracking-wide">AI-Powered GTM Platform — Live Now</span>
-            </div>
-
-            <h1 className="font-black text-gray-900 leading-[1.05] mb-6 animate-fadeInUp animation-delay-100">
-              <span className="block text-4xl sm:text-5xl lg:text-6xl xl:text-7xl">From Idea to</span>
-              <span className="block text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-orange-500 mt-1">
-                Customers
-              </span>
-              <span className="block text-4xl sm:text-5xl lg:text-6xl xl:text-7xl mt-1">in 90 Days.</span>
-            </h1>
-
-            <p className="text-gray-500 text-base sm:text-lg lg:text-xl max-w-xl mb-10 leading-relaxed animate-fadeInUp animation-delay-200">
-              AI plans your go-to-market. Vetted experts execute it. You track real results — not just slides.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 mb-12 animate-fadeInUp animation-delay-300">
-              <button onClick={() => router.push('/register')} className="group px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-2xl text-white font-bold text-lg transition-all hover:shadow-2xl hover:shadow-blue-500/30 hover:-translate-y-0.5 flex items-center justify-center gap-2">
-                Start Free — No Card Needed
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-              <button className="px-8 py-4 border-2 border-gray-200 hover:border-blue-300 rounded-2xl text-gray-700 font-bold text-lg hover:bg-blue-50 transition-all flex items-center justify-center gap-2">
-                <Play className="w-5 h-5 text-blue-500 fill-blue-500" /> Watch Demo
-              </button>
-            </div>
-
-            {/* Stats row */}
-            <div className="flex flex-wrap gap-6 sm:gap-10 animate-fadeInUp animation-delay-400">
-              {[
-                { value: '743+', label: 'Projects Delivered' },
-                { value: '4.8★', label: 'Avg. Client Rating' },
-                { value: '180+', label: 'Vetted Experts' },
-              ].map(s => (
-                <div key={s.label}>
-                  <p className="text-2xl sm:text-3xl font-black text-gray-900">{s.value}</p>
-                  <p className="text-xs sm:text-sm text-gray-500 font-medium mt-0.5">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* RIGHT: Desktop Browser Mockup */}
-          <div className="order-1 lg:order-2 flex justify-center lg:justify-end relative">
-            {/* Floating sticker 1 */}
-            <div className="absolute -top-4 left-0 lg:-left-6 z-20 bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-2xl shadow-blue-500/10 animate-floatSlow flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center text-xl">✅</div>
-              <div>
-                <p className="text-xs text-gray-500 font-medium">Campaign live!</p>
-                <p className="font-bold text-gray-900 text-sm">+340% ROAS</p>
-              </div>
-            </div>
-
-            {/* Floating sticker 2 */}
-            <div className="absolute -bottom-4 right-0 lg:-right-2 z-20 bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-2xl shadow-orange-500/10 animate-floatSlow animation-delay-2000 flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-xl">🎯</div>
-              <div>
-                <p className="text-xs text-gray-500 font-medium">Leads matched</p>
-                <p className="font-bold text-gray-900 text-sm">1,000 ICPs found</p>
-              </div>
-            </div>
-
-            {/* Floating sticker 3 */}
-            <div className="absolute top-1/3 -right-2 lg:-right-8 z-20 bg-white border border-gray-200 rounded-2xl px-3 py-2 shadow-2xl shadow-purple-500/10 animate-floatSlow animation-delay-4000 flex items-center gap-2">
-              <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center text-base">⚡</div>
-              <div>
-                <p className="text-xs font-bold text-gray-900">AI Active</p>
-                <div className="flex gap-0.5 mt-0.5">{[1,2,3,4,5].map(i=><div key={i} className="w-1 h-3 bg-blue-500 rounded-full animate-equalizer" style={{animationDelay:`${i*100}ms`}}></div>)}</div>
-              </div>
-            </div>
-
-            {/* Desktop Browser Frame */}
-            <div className="relative w-full max-w-[480px] sm:max-w-[520px]">
-              <div className="bg-gray-950 rounded-2xl shadow-[0_40px_80px_-20px_rgba(59,130,246,0.35)] ring-1 ring-white/5 overflow-hidden">
-
-                {/* Browser chrome */}
-                <div className="bg-gray-900 px-4 py-3 flex items-center gap-3 border-b border-gray-800">
-                  {/* Traffic lights */}
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  </div>
-                  {/* URL bar */}
-                  <div className="flex-1 bg-gray-800 rounded-lg px-3 py-1.5 flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full border border-gray-600 flex-shrink-0" />
-                    <span className="text-gray-400 text-xs truncate">app.karya-ai.com/dashboard</span>
-                  </div>
-                </div>
-
-                {/* Browser content */}
-                <div className="bg-gray-50" style={{height:'420px'}}>
-                  {/* Top nav inside app */}
-                  <div className="bg-white border-b border-gray-100 px-4 py-2.5 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                        <Image src="/karya-ai-logo.png" alt="AI" width={14} height={14} className="object-contain" />
-                      </div>
-                      <span className="font-bold text-gray-900 text-xs">Karya AI</span>
-                      <div className="flex items-center gap-1 ml-2"><div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div><span className="text-xs text-green-600 font-medium">Active</span></div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-gray-100 rounded-full"></div>
-                      <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-[10px] font-bold">JD</div>
-                    </div>
-                  </div>
-
-                  {/* Main content area */}
-                  <div className="flex h-[calc(100%-44px)]">
-                    {/* Sidebar */}
-                    <div className="w-28 bg-white border-r border-gray-100 py-3 px-2 flex flex-col gap-0.5 flex-shrink-0">
-                      {[['📊','Dashboard'],['🎯','Projects'],['👥','Experts'],['🤖','Agent'],['⚙️','Settings']].map(([icon, label], i) => (
-                        <div key={i} className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[10px] font-medium cursor-pointer ${i===0 ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}>
-                          <span className="text-sm">{icon}</span>{label}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Dashboard content */}
-                    <div className="flex-1 p-3 space-y-3 overflow-hidden">
-                      {/* Stat row */}
-                      <div className="grid grid-cols-3 gap-2">
-                        {[['1,240','Leads Found','text-blue-600'],['68%','Open Rate','text-orange-500'],['23','Replies','text-emerald-600']].map(([val, lbl, cls], i) => (
-                          <div key={i} className="bg-white rounded-xl p-2.5 border border-gray-100 shadow-sm text-center">
-                            <p className={`font-black text-sm ${cls}`}>{val}</p>
-                            <p className="text-gray-400 text-[10px] mt-0.5">{lbl}</p>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* AI chat */}
-                      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 space-y-2">
-                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-wide">AI Planner</p>
-                        <div className="flex gap-2 items-end">
-                          <div className="w-5 h-5 bg-blue-600 rounded-full flex-shrink-0 flex items-center justify-center"><Sparkles className="w-2.5 h-2.5 text-white" /></div>
-                          <div className="bg-blue-50 rounded-xl rounded-bl-none px-3 py-2 text-[11px] text-gray-700 border border-blue-100 max-w-[80%]">
-                            Your ICP is ready — 1,240 verified contacts matched. Want to launch outreach?
-                          </div>
-                        </div>
-                        <div className="flex gap-2 items-end justify-end">
-                          <div className="bg-blue-600 rounded-xl rounded-br-none px-3 py-2 text-[11px] text-white max-w-[65%]">Yes, launch the sequence 🚀</div>
-                          <div className="w-5 h-5 bg-gray-200 rounded-full flex-shrink-0"></div>
-                        </div>
-                      </div>
-
-                      {/* Expert match card */}
-                      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3">
-                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-wide mb-2">Matched Experts</p>
-                        {[['SM','Sarah M.','Content Strategy','from-blue-400 to-cyan-400'],['MC','Marcus C.','Growth Marketing','from-purple-400 to-pink-400']].map(([initials, name, role, grad], i) => (
-                          <div key={i} className="flex items-center gap-2 py-1">
-                            <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${grad} flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0`}>{initials}</div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[11px] font-bold text-gray-900 truncate">{name}</p>
-                              <p className="text-[10px] text-gray-400 truncate">{role}</p>
-                            </div>
-                            <span className="text-yellow-500 text-[10px] font-bold">★5.0</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-          {/* ─── SLIDE 2: How Karya-AI Works ─── */}
-          <section className="w-full flex-shrink-0 h-full overflow-y-auto px-4 sm:px-6 bg-white py-10 sm:py-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full mb-5">
-              <Zap className="w-4 h-4 text-blue-600" />
-              <span className="text-blue-700 text-sm font-semibold">Simple 4-step process</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 mb-4">How Karya-AI Works</h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">From your first prompt to paying customers — in 90 days.</p>
-          </div>
-
-          <div className="relative grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Connecting line */}
-            <div className="hidden lg:block absolute h-0.5 bg-gradient-to-r from-blue-200 via-purple-400 via-orange-300 to-emerald-400 rounded-full" style={{top:'2rem', left:'12.5%', right:'12.5%'}} />
-
-            {[
-              { step: '01', title: 'Tell AI Your Goal', desc: 'Describe your business and growth objective. AI builds a 90-day GTM plan in minutes.', icon: '🤖', color: 'from-blue-500 to-cyan-500' },
-              { step: '02', title: 'AI Maps Your Plan', desc: 'AI breaks your goal into execution areas — outreach, content, campaigns, or sales.', icon: '🗺️', color: 'from-orange-500 to-amber-500', showProjects: true },
-              { step: '03', title: 'Find Your Expert', desc: 'We match you with pre-vetted specialists who have done exactly this before.', icon: '🎯', color: 'from-purple-500 to-pink-500' },
-              { step: '04', title: 'Track Real Results', desc: 'Experts execute while you watch leads, revenue, and growth move in real time.', icon: '📈', color: 'from-emerald-500 to-teal-500' },
-            ].map((step, i) => (
-              <div key={i} className="relative group animate-fadeInUp" style={{animationDelay:`${i*150}ms`}}>
-                <div className="relative bg-white border border-gray-200 rounded-2xl p-5 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300 hover:-translate-y-1 text-center h-full flex flex-col">
-                  <div className="relative inline-flex mb-4 mx-auto">
-                    <div className={`w-12 h-12 bg-gradient-to-br ${step.color} rounded-xl flex items-center justify-center text-xl shadow-md group-hover:scale-110 transition-transform`}>{step.icon}</div>
-                    <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center text-white text-[10px] font-black">{step.step.slice(-1)}</div>
-                  </div>
-                  <h3 className="text-sm font-black text-gray-900 mb-1.5">{step.title}</h3>
-                  <p className="text-gray-500 text-xs leading-relaxed flex-1">{step.desc}</p>
-                  {step.showProjects && (
-                    <Link href="/project-marketplace" className="mt-3 inline-flex items-center justify-center gap-1 text-[11px] font-semibold text-orange-600 hover:text-orange-700 border border-orange-200 bg-orange-50 hover:bg-orange-100 rounded-full px-2.5 py-0.5 transition-all">
-                      Browse our projects <ChevronRight className="w-3 h-3" />
-                    </Link>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Explainer Video */}
-          <div className="mt-10">
-            <div className="text-center mb-5">
-              <p className="text-gray-400 text-sm font-medium uppercase tracking-wide">See it in action</p>
-              <h3 className="text-xl sm:text-2xl font-black text-gray-900 mt-1">Watch how it all comes together</h3>
-            </div>
-            <div className="relative rounded-3xl overflow-hidden bg-gray-900 shadow-2xl shadow-blue-500/10 border border-gray-200 aspect-video max-w-4xl mx-auto group cursor-pointer">
-              {/* Thumbnail bg */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 via-gray-900 to-orange-900/50" />
-              {/* Grid overlay */}
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:3rem_3rem]" />
-              {/* Decorative blobs */}
-              <div className="absolute top-4 left-8 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl" />
-              <div className="absolute bottom-4 right-8 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl" />
-              {/* Center play button */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                <div className="relative">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
-                    <Play className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600 fill-blue-600 ml-1" />
-                  </div>
-                  <div className="absolute inset-0 bg-white/30 rounded-full animate-ping" style={{animationDuration:'2s'}} />
-                </div>
-                <p className="text-white/80 text-sm font-medium">Watch the 2-min explainer</p>
-              </div>
-              {/* Bottom label */}
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-3 py-2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                  <span className="text-white text-xs font-semibold">Karya-AI Demo</span>
-                </div>
-                <span className="text-white/50 text-xs">2:04</span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-          {/* ─── SLIDE 3: Everything in One Platform ─── */}
-          <section className="w-full flex-shrink-0 h-full overflow-y-auto px-4 sm:px-6 bg-gray-50 py-10 sm:py-12">
-            <div className="max-w-6xl mx-auto">
-              <div className="text-center mb-14">
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 mb-4">Everything in One Platform</h2>
-                <p className="text-gray-500 text-lg max-w-2xl mx-auto">No more juggling tools. Karya-AI handles strategy, hiring, and execution — together.</p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="sm:col-span-2 group relative overflow-hidden bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl p-8 text-white min-h-[220px] hover:shadow-2xl hover:shadow-blue-500/30 transition-all duration-300">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform" />
-                  <div className="absolute bottom-0 left-0 w-40 h-40 bg-orange-500/20 rounded-full translate-y-1/2 -translate-x-1/2" />
-                  <div className="relative">
-                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-5"><Zap className="w-6 h-6 text-white" /></div>
-                    <h3 className="text-xl font-black mb-2">AI Project Planning Engine</h3>
-                    <p className="text-blue-100 text-sm mb-4 max-w-sm">Transform your idea into a full 90-day roadmap with task breakdowns, expert recommendations, and timeline — in minutes.</p>
-                    <div className="flex flex-wrap gap-2">{['90-day roadmap','Task breakdown','Resource allocation','Workflow automation'].map(f=>(<span key={f} className="px-3 py-1 bg-white/15 rounded-full text-xs font-medium">{f}</span>))}</div>
-                  </div>
-                </div>
-                <div className="group bg-white border border-gray-200 rounded-3xl p-7 hover:border-purple-300 hover:shadow-xl transition-all duration-300 flex flex-col">
-                  <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center mb-5"><Users className="w-6 h-6 text-purple-600" /></div>
-                  <h3 className="text-lg font-black text-gray-900 mb-2">Smart Expert Matching</h3>
-                  <p className="text-gray-500 text-sm mb-5 flex-1">Our AI reads your project requirements and surfaces the best-fit expert from 180+ vetted professionals.</p>
-                  <div className="space-y-2">{['97% satisfaction rate','Background verified','Portfolio reviewed'].map((f,i)=>(<div key={i} className="flex items-center gap-2 text-sm text-gray-700"><Check className="w-4 h-4 text-green-500 flex-shrink-0" />{f}</div>))}</div>
-                </div>
-                <div className="group bg-white border border-gray-200 rounded-3xl p-7 hover:border-emerald-300 hover:shadow-xl transition-all duration-300">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mb-5"><TrendingUp className="w-6 h-6 text-emerald-600" /></div>
-                  <h3 className="text-lg font-black text-gray-900 mb-2">Live Analytics Dashboard</h3>
-                  <p className="text-gray-500 text-sm">Track leads, revenue, and campaign performance in real-time.</p>
-                </div>
-                <div className="group bg-white border border-gray-200 rounded-3xl p-7 hover:border-orange-300 hover:shadow-xl transition-all duration-300">
-                  <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-5"><Globe className="w-6 h-6 text-orange-600" /></div>
-                  <h3 className="text-lg font-black text-gray-900 mb-2">50+ Integrations</h3>
-                  <p className="text-gray-500 text-sm mb-4">HubSpot, Salesforce, Slack, Google Analytics, Zapier and more.</p>
-                  <div className="flex gap-2 flex-wrap">{['HubSpot','Slack','GA4','Zapier'].map(t=>(<span key={t} className="px-2.5 py-1 bg-orange-50 border border-orange-200 rounded-lg text-xs text-orange-700 font-medium">{t}</span>))}</div>
-                </div>
-                <div className="group bg-gray-950 rounded-3xl p-7 hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-transparent" />
-                  <div className="relative">
-                    <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-5"><Briefcase className="w-6 h-6 text-blue-400" /></div>
-                    <h3 className="text-lg font-black text-white mb-2">Unified Workspace</h3>
-                    <p className="text-gray-400 text-sm mb-4">Chat, files, project management, knowledge base — zero tool switching.</p>
-                    <div className="flex items-center gap-2 text-blue-400 text-sm font-medium group-hover:gap-3 transition-all cursor-pointer">Explore workspace <ChevronRight className="w-4 h-4" /></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ─── SLIDE 4: Sound Familiar? ─── */}
-          <section className="w-full flex-shrink-0 h-full flex flex-col justify-center px-4 sm:px-6 bg-white py-10">
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-14">
-                <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">Sound Familiar?</h2>
-                <p className="text-gray-500 text-lg">These are the problems Karya-AI was built to solve.</p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {painPoints.map((pt, i) => (
-                  <div key={i} className="group relative animate-fadeInUp" style={{animationDelay:`${i*100}ms`}}>
-                    <div className="absolute -inset-0.5 bg-gradient-to-br from-blue-500 to-orange-500 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity" />
-                    <div className="relative bg-white border border-gray-200 rounded-2xl p-6 hover:border-blue-200 transition-all h-full shadow-sm group-hover:shadow-xl">
-                      <span className="text-4xl mb-4 block">{pt.icon}</span>
-                      <h3 className="text-base font-black text-gray-900 mb-3">{pt.problem}</h3>
-                      <div className="h-1 w-10 bg-gradient-to-r from-blue-500 to-orange-500 rounded-full mb-4"></div>
-                      <p className="text-gray-500 text-sm leading-relaxed">{pt.solution}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* ─── SLIDE 5: Platform Capabilities ─── */}
-          <section className="w-full flex-shrink-0 h-full overflow-y-auto px-4 sm:px-6 bg-gray-50 py-10 sm:py-12">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-3">Platform Capabilities</h2>
-              <p className="text-gray-500 text-lg text-center mb-12">Everything you need to execute your go-to-market strategy</p>
-              <div className="space-y-3">
-                {capabilities.map((cap, i) => (
-                  <div key={cap.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-blue-200 transition-all shadow-sm animate-fadeInUp" style={{animationDelay:`${i*100}ms`}}>
-                    <button onClick={() => toggleAccordion(cap.id)} className="w-full p-5 flex items-center justify-between hover:bg-gray-50 transition-all">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
-                          {cap.id === 'ai-planning' && <Zap className="w-6 h-6 text-white" />}
-                          {cap.id === 'expert-marketplace' && <Users className="w-6 h-6 text-white" />}
-                          {cap.id === 'workspace' && <Briefcase className="w-6 h-6 text-white" />}
-                          {cap.id === 'integrations' && <Globe className="w-6 h-6 text-white" />}
-                        </div>
-                        <div className="text-left">
-                          <h3 className="text-base sm:text-lg font-black text-gray-900">{cap.title}</h3>
-                          <p className="text-gray-500 text-xs sm:text-sm">{cap.description}</p>
-                        </div>
-                      </div>
-                      <ChevronDown className={`w-5 h-5 text-blue-500 transition-transform duration-300 flex-shrink-0 ${openAccordion === cap.id ? 'rotate-180' : ''}`} />
-                    </button>
-                    <div className={`overflow-hidden transition-all duration-300 ${openAccordion === cap.id ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'}`}>
-                      <div className="px-5 pb-5 border-t border-gray-100">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
-                          {cap.deliverables.map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-3 text-gray-600 text-sm">
-                              <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0"><Check className="w-3 h-3 text-green-600" /></div>
-                              {item}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* ─── SLIDE 6: Solutions for Every Stage ─── */}
-          <section className="w-full flex-shrink-0 h-full overflow-y-auto px-4 sm:px-6 bg-white py-10 sm:py-12">
-            <div className="max-w-5xl mx-auto">
-              <h2 className="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-10">Solutions for Every Stage</h2>
-              <div className="flex justify-center gap-3 mb-8 flex-wrap">
-                {Object.entries(useCases).map(([key, stage]) => (
-                  <button key={key} onClick={() => setActiveTab(key)} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${activeTab === key ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25 scale-105' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'}`}>
-                    {stage.title}
-                  </button>
-                ))}
-              </div>
-              <div className="bg-gray-50 border border-gray-200 rounded-3xl p-6 sm:p-8 shadow-sm">
-                <div className="grid sm:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="font-black text-gray-900 mb-3 flex items-center gap-2"><span className="text-red-500">✗</span> Typical Challenges</h3>
-                    <ul className="space-y-2">
-                      {currentStage.challenges.map((c, i) => (
-                        <li key={i} className="flex items-start gap-3 text-gray-600 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-2.5"><X className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />{c}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="font-black text-gray-900 mb-3 flex items-center gap-2"><span className="text-blue-500">→</span> Recommended Experts</h3>
-                    <div className="flex flex-wrap gap-2 mb-5">{currentStage.experts.map((e, i) => (<span key={i} className="px-3 py-2 bg-blue-100 border border-blue-200 rounded-xl text-blue-800 text-xs font-bold">{e}</span>))}</div>
-                    <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
-                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">90-Day Plan</p>
-                      <p className="text-gray-700 text-sm">{currentStage.plan}</p>
-                    </div>
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
-                      <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Expected Outcomes</p>
-                      <p className="text-emerald-800 text-sm font-semibold">{currentStage.outcomes}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <button className="text-blue-600 hover:text-blue-700 font-bold flex items-center gap-2 group text-sm">
-                    <Star className="w-4 h-4" /> Read Case Study: {currentStage.caseStudy} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </section>
-
-        </div>{/* ─ end slides track ─ */}
-
-        {/* Prev / Next arrows */}
-        <button
-          onClick={() => setCarouselSlide(prev => (prev - 1 + 6) % 6)}
-          className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 bg-white rounded-full border border-gray-200 flex items-center justify-center shadow-xl hover:shadow-2xl hover:scale-110 hover:border-blue-300 transition-all duration-200 group"
-          style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.12)' }}
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-600 group-hover:text-blue-600 transition-colors" />
-        </button>
-        <button
-          onClick={() => setCarouselSlide(prev => (prev + 1) % 6)}
-          className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 bg-white rounded-full border border-gray-200 flex items-center justify-center shadow-xl hover:shadow-2xl hover:scale-110 hover:border-blue-300 transition-all duration-200 group"
-          style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.12)' }}
-        >
-          <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-blue-600 transition-colors" />
-        </button>
-
-        {/* Dot navigation */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full px-4 py-2 shadow-md">
-          {['From Idea to Customers','How It Works','Platform Features','Sound Familiar?','Capabilities','Solutions'].map((label, i) => (
-            <button key={i} onClick={() => setCarouselSlide(i)} title={label}
-              className={`transition-all duration-300 rounded-full ${carouselSlide === i ? 'w-6 h-2.5 bg-blue-600' : 'w-2.5 h-2.5 bg-gray-300 hover:bg-gray-500'}`}
-            />
-          ))}
-        </div>
-      </div>{/* ─ end carousel ─ */}
-
-      {/* ==================== DARK MARQUEE TICKER ==================== */}
-      <div className="bg-gray-950 border-y border-gray-800 py-4 overflow-hidden">
-        <div className="flex animate-marquee whitespace-nowrap">
-          {[...Array(3)].map((_, dupIdx) => (
-            <div key={dupIdx} className="flex items-center gap-0 flex-shrink-0">
-              {marqueeItems.map((item, i) => (
-                <span key={i} className="inline-flex items-center gap-3 mx-8 text-gray-400 font-medium text-sm">
-                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
-                  {item}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* ==================== TOP PROJECTS ==================== */}
-      <section className="py-20 px-4 sm:px-6 bg-gray-50">
+      <section className="pt-20 pb-16 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full mb-4 text-xs text-gray-600 font-medium shadow-sm">
-                <Package className="w-3.5 h-3.5 text-blue-500" /> Ready-to-launch packages
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-black text-gray-900">Top Projects</h2>
-            </div>
-            <button onClick={() => router.push('/project-marketplace')} className="text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 group text-sm sm:text-base shrink-0">
-              View All <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
+          <div className="rounded-3xl overflow-hidden border border-gray-200 flex flex-col lg:flex-row min-h-[400px]">
 
-          {/* Value pills */}
-          <div className="flex flex-wrap gap-2 mb-8">
-            {values.map((v, i) => (
-              <div key={i} className="group flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all hover:scale-105 shadow-sm">
-                <span className="text-blue-500">{v.icon}</span>
-                <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700">{v.label}</span>
-              </div>
-            ))}
-          </div>
+            {/* Dark left panel */}
+            <div className="lg:w-[320px] xl:w-[360px] flex-shrink-0 bg-gray-950 relative overflow-hidden flex flex-col justify-between p-8 lg:p-10">
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:3rem_3rem]" />
+              <div className="absolute -top-20 -left-20 w-56 h-56 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {topProjects.map((project, i) => (
-              <div key={project.id} className="group relative animate-fadeInUp" style={{animationDelay:`${i*150}ms`}}>
-                {/* Gradient border effect */}
-                <div className={`absolute -inset-0.5 bg-gradient-to-br ${project.color} rounded-3xl opacity-0 group-hover:opacity-100 transition-all duration-300 blur-sm`} />
-                <div className="relative bg-white rounded-3xl p-7 border border-gray-200 h-full flex flex-col group-hover:border-transparent transition-all duration-300 shadow-sm group-hover:shadow-2xl">
-                  <div className="flex items-start justify-between mb-5">
-                    <div className={`w-14 h-14 bg-gradient-to-br ${project.color} rounded-2xl flex items-center justify-center text-white group-hover:scale-110 group-hover:rotate-3 transition-all shadow-lg`}>
-                      {project.icon}
-                    </div>
-                    <span className="text-3xl">{project.emoji}</span>
-                  </div>
-                  <h3 className="text-xl font-black text-gray-900 mb-2">{project.title}</h3>
-                  <p className="text-gray-500 text-sm mb-5 flex-1">{project.description}</p>
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {project.features.map((f, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-gray-50 border border-gray-200 text-gray-600 text-xs rounded-full font-medium">{f}</span>
-                    ))}
-                  </div>
-                  <button onClick={() => { if (project.id === 1) router.push('/leads'); }} className={`w-full py-3.5 bg-gradient-to-r ${project.color} text-white font-bold rounded-2xl transition-all hover:shadow-lg hover:opacity-90 flex items-center justify-center gap-2 text-sm`}>
-                    <Rocket className="w-4 h-4" /> Launch {project.title.split(' ')[0]}
-                  </button>
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/20 rounded-full mb-6 w-fit">
+                  <Package className="w-3 h-3 text-orange-400" />
+                  <span className="text-white/70 text-[11px] font-semibold uppercase tracking-wide">Top Projects</span>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ==================== AI CHATBOT DEMO ==================== */}
-      <section className="py-20 px-4 sm:px-6 bg-white">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">Ask Karya-AI Anything</h2>
-            <p className="text-gray-500 text-lg">From content strategy to finding your next hire — just ask.</p>
-          </div>
-
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-orange-500 rounded-3xl opacity-20 blur-xl group-hover:opacity-30 transition-opacity" />
-            <div className="relative bg-white border border-gray-200 rounded-3xl p-6 sm:p-10 shadow-xl">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 animate-floatSlow">
-                  <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-                    <Image src="/karya-ai-logo.png" alt="Karya AI" width={32} height={32} className="object-contain" />
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-blue-500 font-semibold mb-2">Ask me anything...</p>
-                  <div className="text-lg sm:text-2xl text-gray-900 min-h-[36px] sm:min-h-[48px] flex items-center">
-                    <span className="break-words">{currentQuestion}</span>
-                    <span className="inline-block w-0.5 h-6 sm:h-8 bg-blue-500 ml-1 animate-blink flex-shrink-0 rounded-full"></span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <p className="text-xs text-gray-400 font-medium mb-3 uppercase tracking-wider">Quick prompts</p>
-                <div className="flex flex-wrap gap-2">
-                  {['📝 Content Strategy', '🔍 Find Expert', '🚀 Launch Plan', '📊 Growth Ops', '💡 GTM Roadmap'].map((btn, i) => (
-                    <button key={i} onClick={btn.includes('Find') ? () => router.push('/expert-marketplace') : undefined} className="px-3 py-2 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-xl text-sm text-gray-700 hover:text-blue-700 transition-all hover:scale-105">
-                      {btn}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ==================== FIND EXPERTS CTA ==================== */}
-      <section className="py-16 px-4 sm:px-6 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <div className="relative rounded-3xl overflow-hidden bg-gray-950">
-            {/* Grid pattern */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:3rem_3rem]" />
-            {/* Blobs */}
-            <div className="absolute -top-16 -left-16 w-72 h-72 bg-blue-600/20 rounded-full blur-3xl" />
-            <div className="absolute -bottom-16 -right-16 w-72 h-72 bg-orange-500/20 rounded-full blur-3xl" />
-
-            <div className="relative flex flex-col lg:flex-row items-center justify-between gap-8 px-8 sm:px-12 py-12">
-              {/* Left */}
-              <div className="text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 border border-white/20 rounded-full mb-5 text-xs text-white/70 font-medium">
-                  <MapPin className="w-3.5 h-3.5 text-blue-400" /> 180+ vetted specialists across India
-                </div>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-4">
-                  Find Your Marketing<br />
-                  <span className="bg-gradient-to-r from-blue-400 to-orange-400 bg-clip-text text-transparent">Expert Today</span>
+                <h2 className="text-2xl lg:text-[28px] font-black text-white leading-tight mb-4">
+                  What will you<br />launch today?
                 </h2>
-                <p className="text-white/60 text-base sm:text-lg max-w-xl">
-                  Browse pre-vetted specialists in outbound, content, paid ads, SEO, CRM, and more — matched to your exact growth goals.
+                <p className="text-white/50 text-sm leading-relaxed mb-8">
+                  200+ ready-to-launch GTM packages. Pick a goal, get matched with vetted experts, and see results in days.
                 </p>
-
-                {/* Mini stats */}
-                <div className="flex flex-wrap gap-6 mt-6 justify-center lg:justify-start">
-                  {[
-                    { value: '180+', label: 'Vetted Experts' },
-                    { value: '97%',  label: 'Client Satisfaction' },
-                    { value: '24h',  label: 'Avg. Match Time' },
-                  ].map(s => (
-                    <div key={s.label} className="text-center lg:text-left">
-                      <p className="text-2xl font-black text-white">{s.value}</p>
-                      <p className="text-white/50 text-xs">{s.label}</p>
-                    </div>
-                  ))}
-                </div>
+                <button onClick={() => router.push('/project-marketplace')}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-gray-100 text-gray-900 font-bold text-sm rounded-xl transition-colors">
+                  Explore all projects
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
 
-              {/* Right — CTA card */}
-              <div className="flex-shrink-0 w-full lg:w-auto">
-                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 sm:p-8 text-center lg:text-left min-w-[260px]">
-                  <p className="text-white font-semibold mb-1 text-sm">Ready to hire?</p>
-                  <p className="text-white/50 text-xs mb-6">No commitment. Browse for free.</p>
-                  <button
-                    onClick={() => router.push('/expert-marketplace')}
-                    className="w-full px-6 py-3.5 bg-gradient-to-r from-blue-500 to-orange-500 hover:from-blue-600 hover:to-orange-600 text-white font-bold rounded-xl transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-500/25 flex items-center justify-center gap-2 text-sm"
-                  >
-                    <Users className="w-4 h-4" /> Browse Experts
-                  </button>
-                  <button
-                    onClick={() => router.push('/project-marketplace')}
-                    className="w-full mt-3 px-6 py-3 border border-white/20 hover:border-white/40 text-white/80 hover:text-white font-semibold rounded-xl transition-all text-sm flex items-center justify-center gap-2"
-                  >
-                    <Package className="w-4 h-4" /> View Project Catalog
-                  </button>
-                  <p className="text-white/30 text-xs mt-4 text-center">
-                    AI matches you in &lt; 24 hours
-                  </p>
-                </div>
+              <div className="relative flex gap-8 mt-8 lg:mt-0">
+                {[{ value: '200+', label: 'Projects' }, { value: '743+', label: 'Delivered' }].map(s => (
+                  <div key={s.label}>
+                    <p className="text-white font-black text-xl">{s.value}</p>
+                    <p className="text-white/40 text-[11px]">{s.label}</p>
+                  </div>
+                ))}
               </div>
             </div>
+
+            {/* Right: horizontally scrollable project cards with images — 2.5 visible */}
+            <div className="flex-1 bg-white relative overflow-hidden">
+              <div ref={topProjectsScrollRef} className="flex gap-5 overflow-x-auto px-6 lg:px-8 py-7 h-full items-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                {featuredLauncherProjects.map((project, i) => (
+                  <button key={i}
+                    onClick={() => router.push(project.path)}
+                    className="flex-shrink-0 w-[260px] sm:w-[285px] group text-left">
+                    <div className="relative w-full rounded-2xl overflow-hidden mb-3" style={{ aspectRatio: '3/4' }}>
+                      <div className={`absolute inset-0 bg-gradient-to-br ${project.thumb}`} />
+                      {project.img && (
+                        <img src={project.img} alt={project.title}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                          loading="lazy" />
+                      )}
+                      {/* Dark overlay for punch line legibility */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+                      {project.tag && (
+                        <span className="absolute top-3 left-3 text-[10px] font-semibold text-white bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                          {project.tag}
+                        </span>
+                      )}
+                      {/* Punch line overlaid at bottom of image */}
+                      <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
+                        <p className="text-white font-bold text-[13px] leading-snug">{project.punchLine}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between px-0.5">
+                      <p className="text-gray-900 font-bold text-[14px] leading-tight flex-1 mr-2">{project.title}</p>
+                      <div className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600 group-hover:border-blue-600 transition-all duration-200">
+                        <ArrowRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-white transition-colors" />
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Right fade */}
+              <div className="absolute top-0 right-0 bottom-0 w-24 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+              {/* Functional scroll-right arrow */}
+              <button
+                onClick={() => topProjectsScrollRef.current?.scrollBy({ left: 320, behavior: 'smooth' })}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-md z-10 hover:bg-gray-50 hover:border-gray-400 transition-all cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+
           </div>
         </div>
       </section>
+
 
       {/* ==================== EXPERT TALENT ==================== */}
-      <section className="py-20 px-4 sm:px-6 bg-gray-50">
+      <section className="py-20 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
             <div>
@@ -1489,32 +1160,8 @@ function HomePage() {
         </div>
       </section>
 
-      {/* ==================== EXPERT CATEGORIES ==================== */}
-      <section className="py-20 px-4 sm:px-6 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-12">Expert Categories</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {expertCategories.map((cat, i) => (
-              <div key={i} className="group relative cursor-pointer animate-fadeInUp" style={{animationDelay:`${i*100}ms`}}>
-                <div className={`absolute -inset-0.5 bg-gradient-to-br ${cat.color} rounded-2xl opacity-0 group-hover:opacity-30 blur transition-opacity`} />
-                <div className="relative bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 group-hover:border-transparent transition-all shadow-sm group-hover:shadow-xl">
-                  <div className={`w-12 h-12 bg-gradient-to-br ${cat.color} rounded-xl flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
-                    {cat.icon}
-                  </div>
-                  <h3 className="font-black text-gray-900 mb-1 text-sm sm:text-base">{cat.name}</h3>
-                  <p className="text-gray-500 text-xs sm:text-sm mb-3">{cat.count}</p>
-                  <div className="flex items-center gap-1 text-blue-600 text-xs sm:text-sm font-bold group-hover:gap-2 transition-all">
-                    Explore <ChevronRight className="w-3.5 h-3.5" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ==================== TESTIMONIALS ==================== */}
-      <section className="py-20 px-4 sm:px-6 bg-white">
+      <section className="py-20 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">Trusted by Growing Businesses</h2>
@@ -1546,7 +1193,7 @@ function HomePage() {
       </section>
 
       {/* ==================== PRICING ==================== */}
-      <section id="pricing" className="py-20 px-4 sm:px-6 bg-gray-50">
+      <section id="pricing" className="py-20 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">Transparent Pricing</h2>
@@ -1600,7 +1247,7 @@ function HomePage() {
       </section>
 
       {/* ==================== FAQ ==================== */}
-      <section className="py-20 px-4 sm:px-6 bg-white">
+      <section className="py-20 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-12">Frequently Asked Questions</h2>
           <div className="space-y-3">
@@ -1697,6 +1344,21 @@ function HomePage() {
           0%,100%{transform:scaleY(0.4)} 25%{transform:scaleY(1)} 50%{transform:scaleY(0.6)} 75%{transform:scaleY(0.9)}
         }
         @keyframes carouselBar { from { width: 0% } to { width: 100% } }
+        @keyframes scanPingPong {
+          0%   { top: 0px; }
+          50%  { top: calc(100% - 2px); }
+          100% { top: 0px; }
+        }
+        @keyframes scanGlowPingPong {
+          0%   { top: -80px; }
+          50%  { top: calc(100% - 80px); }
+          100% { top: -80px; }
+        }
+        @keyframes macbookCinematic {
+          0%   { opacity: 0; transform: perspective(2000px) rotateX(14deg) rotateY(-6deg) scale(0.88); }
+          60%  { opacity: 1; }
+          100% { opacity: 1; transform: perspective(2000px) rotateX(0deg) rotateY(0deg) scale(1); }
+        }
 
         .animate-blob { animation: blob 8s infinite; }
         .animate-carouselBar { animation: carouselBar 4s linear forwards; }
@@ -1711,6 +1373,7 @@ function HomePage() {
         .animation-delay-200 { animation-delay: 200ms; }
         .animation-delay-300 { animation-delay: 300ms; }
         .animation-delay-400 { animation-delay: 400ms; }
+        .animation-delay-600 { animation-delay: 600ms; }
         .animation-delay-2000 { animation-delay: 2s; }
         .animation-delay-4000 { animation-delay: 4s; }
       `}</style>

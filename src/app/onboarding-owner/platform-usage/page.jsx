@@ -1,41 +1,40 @@
 'use client';
-// components/onboarding/PlatformUsage.jsx
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, ArrowLeft, Briefcase, Users, ShoppingBag, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Building2, Briefcase, Users2, Rocket, AlertCircle, Loader2 } from 'lucide-react';
 import { updatePlatformUsage } from '@/services/onboardingApi';
 
 function PlatformUsage() {
   const router = useRouter();
   const [selectedUsage, setSelectedUsage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [isLoading, setIsLoading]         = useState(false);
+  const [error, setError]                 = useState('');
 
   const usageOptions = [
     {
-      id: 'single-team',
-      icon: <Briefcase className="w-6 h-6" />,
-      title: 'Managing for a single team or brand',
-      description: 'I have one company and want to manage all marketing in one place'
+      id:          'business-owner',
+      icon:        <Building2 className="w-6 h-6" />,
+      title:       "I own or run a business",
+      description: "I'm a founder, CEO or entrepreneur and want AI-powered marketing for my own company",
     },
     {
-      id: 'agency',
-      icon: <Users className="w-6 h-6" />,
-      title: 'Managing as an agency for multiple clients',
-      description: 'I manage marketing for multiple businesses'
+      id:          'inhouse-marketer',
+      icon:        <Briefcase className="w-6 h-6" />,
+      title:       "I work in-house at a company",
+      description: "I'm a marketing manager, CMO or in-house marketer managing marketing for an employer",
     },
     {
-      id: 'portfolio',
-      icon: <ShoppingBag className="w-6 h-6" />,
-      title: 'Managing a portfolio of brands or companies',
-      description: 'I own or operate multiple brands/businesses'
+      id:          'agency',
+      icon:        <Users2 className="w-6 h-6" />,
+      title:       "I run a marketing agency or consultancy",
+      description: "I manage campaigns and strategies for multiple client businesses",
     },
     {
-      id: 'personal',
-      icon: <Sparkles className="w-6 h-6" />,
-      title: 'Personal/Freelance marketing work',
-      description: 'I want to explore marketing tools for personal projects'
-    }
+      id:          'freelancer',
+      icon:        <Rocket className="w-6 h-6" />,
+      title:       "I'm a freelancer or building a personal brand",
+      description: "Solopreneur, consultant or creator working on personal projects",
+    },
   ];
 
   const handleNext = async () => {
@@ -43,10 +42,8 @@ function PlatformUsage() {
       setError('Please select an option to continue');
       return;
     }
-
     setIsLoading(true);
     setError('');
-
     try {
       await updatePlatformUsage(selectedUsage);
       router.push('/onboarding-owner/company-details');
@@ -57,34 +54,30 @@ function PlatformUsage() {
     }
   };
 
-  const handleBack = () => {
-    router.back();
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="w-full max-w-3xl">
-        {/* Progress Bar */}
+
+        {/* Progress */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-500">Step 2 of 7</span>
-            <span className="text-sm text-gray-500">28% Complete</span>
+            <span className="text-sm text-gray-500">Step 1 of 5</span>
+            <span className="text-sm text-gray-500">20% Complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '28%' }}></div>
+            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '20%' }} />
           </div>
         </div>
 
-        {/* Main Card */}
+        {/* Card */}
         <div className="bg-white border border-gray-200 shadow-lg rounded-2xl p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             What are you looking to use the platform for?
           </h1>
           <p className="text-gray-500 mb-8">
-            Let me know how we should engage.
+            This helps us tailor your experience from day one.
           </p>
 
-          {/* Error Message */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
@@ -92,15 +85,11 @@ function PlatformUsage() {
             </div>
           )}
 
-          {/* Options */}
           <div className="space-y-4 mb-8">
             {usageOptions.map((option) => (
               <button
                 key={option.id}
-                onClick={() => {
-                  setSelectedUsage(option.id);
-                  setError('');
-                }}
+                onClick={() => { setSelectedUsage(option.id); setError(''); }}
                 disabled={isLoading}
                 className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center gap-4 disabled:opacity-50 ${
                   selectedUsage === option.id
@@ -109,61 +98,39 @@ function PlatformUsage() {
                 }`}
               >
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  selectedUsage === option.id
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-50 text-gray-500'
+                  selectedUsage === option.id ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500'
                 }`}>
                   {option.icon}
                 </div>
                 <div className="flex-1">
-                  <p className={`font-medium ${
-                    selectedUsage === option.id ? 'text-gray-900' : 'text-gray-600'
-                  }`}>
+                  <p className={`font-semibold ${selectedUsage === option.id ? 'text-gray-900' : 'text-gray-700'}`}>
                     {option.title}
                   </p>
-                  {option.description && (
-                    <p className="text-sm text-gray-400 mt-1">{option.description}</p>
-                  )}
+                  <p className="text-sm text-gray-400 mt-0.5">{option.description}</p>
                 </div>
-                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                  selectedUsage === option.id
-                    ? 'border-blue-500 bg-blue-500'
-                    : 'border-gray-300'
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  selectedUsage === option.id ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
                 }`}>
-                  {selectedUsage === option.id && (
-                    <div className="w-3 h-3 bg-white rounded-full"></div>
-                  )}
+                  {selectedUsage === option.id && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
                 </div>
               </button>
             ))}
           </div>
 
-          {/* Navigation Buttons */}
           <div className="flex gap-4">
             <button
-              onClick={handleBack}
+              onClick={() => router.back()}
               disabled={isLoading}
               className="flex-1 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <ArrowLeft className="w-5 h-5" />
-              Back
+              <ArrowLeft className="w-5 h-5" /> Back
             </button>
             <button
               onClick={handleNext}
               disabled={!selectedUsage || isLoading}
               className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  Next
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
+              {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Saving...</> : <>Next <ArrowRight className="w-5 h-5" /></>}
             </button>
           </div>
         </div>

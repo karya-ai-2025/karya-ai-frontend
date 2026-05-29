@@ -742,7 +742,7 @@ export default function ProjectDetailPage() {
                         </div>
 
                         <div className="mt-5">
-                          {project?.category === 'outbound' ? (
+                          {(project?.category === 'outbound' || projectId === 'brand-voice-social') ? (
                             <Link href={`/project-marketplace/${projectId}/overview?tier=${selectedPriceTier}&mode=${tier.id}`}
                               className={`w-full block py-2.5 text-center rounded-xl text-sm font-semibold transition-all ${
                                 tier.popular ? 'bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white shadow-md' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
@@ -1250,7 +1250,7 @@ function HireCard({ project, pricingTiers, dbPriceTiers, selectedHireMode, setSe
             className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-semibold rounded-xl transition-all shadow-md text-sm flex items-center justify-center gap-2">
             <Send className="w-4 h-4" /> Apply to This Project
           </button>
-        ) : project?.category === 'outbound' ? (
+        ) : (project?.category === 'outbound' || projectId === 'brand-voice-social') ? (
           <Link href={`/project-marketplace/${projectId}/overview?tier=${selectedPriceTier}&mode=${selectedHireMode}`}
             className="w-full block py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-semibold rounded-xl transition-all shadow-md text-sm text-center flex items-center justify-center gap-2">
             <CheckCircle className="w-4 h-4" /> Accept & Proceed

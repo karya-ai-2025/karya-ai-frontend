@@ -38,7 +38,8 @@ import {
   Clock,
   Star,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Upload,
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -58,6 +59,10 @@ function SettingsContent() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+
+  // Profile photo upload state
+  const [photoPreview, setPhotoPreview] = useState(user?.avatar || null);
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   // Credit usage state
   const [creditStats, setCreditStats] = useState({});
@@ -456,14 +461,79 @@ function SettingsContent() {
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Profile Photo</h3>
           <div className="flex items-center space-x-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-orange-500 rounded-full flex items-center justify-center">
-              <span className="text-2xl font-semibold text-white">{getUserInitials(formData.fullName)}</span>
+            {/* Avatar preview */}
+            <div className="relative flex-shrink-0">
+              {photoPreview ? (
+                <img
+                  src={photoPreview}
+                  alt="Profile"
+                  className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                />
+              ) : (
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-orange-500 rounded-full flex items-center justify-center">
+                  <span className="text-2xl font-semibold text-white">{getUserInitials(formData.fullName)}</span>
+                </div>
+              )}
+              {photoUploading && (
+                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 text-white animate-spin" />
+                </div>
+              )}
             </div>
+
             <div>
-              <button type="button" className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Change Photo
-              </button>
-              <p className="text-xs text-gray-500 mt-2">JPG, GIF or PNG. 2MB max.</p>
+              <label className={`cursor-pointer inline-flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors ${photoUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                <Upload className="w-4 h-4" />
+                {photoPreview ? 'Change Photo' : 'Upload Photo'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={photoUploading}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) { setError('Photo must be under 5 MB'); return; }
+                    if (!file.type.startsWith('image/')) { setError('Please select an image file'); return; }
+                    setError('');
+                    // Show preview immediately
+                    const reader = new FileReader();
+                    reader.onloadend = async () => {
+                      const base64 = reader.result;
+                      setPhotoPreview(base64);
+                      setPhotoUploading(true);
+                      try {
+                        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+                        const res = await fetch(`${API_URL}/onboarding/business/profile-setup`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                          body: JSON.stringify({ avatar: base64 }),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.message || 'Upload failed');
+                        setSuccess('Profile photo updated!');
+                        setTimeout(() => setSuccess(''), 3000);
+                      } catch (err) {
+                        setError(err.message || 'Failed to upload photo');
+                        setPhotoPreview(user?.avatar || null);
+                      } finally {
+                        setPhotoUploading(false);
+                      }
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                />
+              </label>
+              {photoPreview && (
+                <button
+                  type="button"
+                  onClick={() => { setPhotoPreview(null); setFormData(p => ({ ...p, avatar: '' })); }}
+                  className="ml-2 text-xs text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  Remove
+                </button>
+              )}
+              <p className="text-xs text-gray-500 mt-2">JPG, PNG or GIF — max 5 MB</p>
             </div>
           </div>
         </div>

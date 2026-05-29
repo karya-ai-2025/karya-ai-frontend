@@ -27,7 +27,7 @@ import {
 
 const navigationItems = [
   { id: 'home', label: 'Home', icon: Home, href: '/business-dashboard' },
-  { id: 'karya-ai', label: 'Karya AI', icon: Sparkles, href: '/business-dashboard/karya-ai' },
+  { id: 'karya-ai', label: 'Karya AI', icon: Sparkles, href: '/agent' },
   { id: 'messages', label: 'Messages', icon: MessageCircle, href: '/business-dashboard/messages' },
 ];
 
@@ -117,17 +117,6 @@ export default function Sidebar({ sidebarCollapsed, setSidebarCollapsed, activeI
           ) : (
             <ChevronLeft className="h-4 w-4 text-gray-500" />
           )}
-        </button>
-      </div>
-
-      {/* New Project CTA */}
-      <div className="px-3 pt-3">
-        <button
-          onClick={() => handleItemClick('create-project', '/create-project')}
-          className={`w-full flex items-center gap-2.5 px-3 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm ${sidebarCollapsed ? 'justify-center' : ''}`}
-        >
-          <PlusCircle className="h-4 w-4 flex-shrink-0" />
-          {!sidebarCollapsed && <span>New Project</span>}
         </button>
       </div>
 

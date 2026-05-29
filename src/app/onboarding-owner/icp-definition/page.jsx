@@ -1,116 +1,173 @@
 'use client';
-// components/onboarding/ICPDefinition.jsx
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, ArrowLeft, Sparkles, Plus, X, AlertCircle, Loader2, Check } from 'lucide-react';
-import { updateICPs, skipStep } from '@/services/onboardingApi';
+import {
+  ArrowRight, ArrowLeft, Sparkles, Plus, X,
+  AlertCircle, Loader2, Check, RefreshCw, User2,
+} from 'lucide-react';
+import { updateICPs, skipStep, generateICPName } from '@/services/onboardingApi';
 
-function ICPDefinition() {
+/* ── Each ICP goes through:
+   1. story  — user writes free-text description of their ideal customer
+   2. named  — AI has returned a name + cleaned description; user can confirm or regenerate
+   3. confirmed — saved ── */
+
+function ICPCard({ icp, index, onStoryChange, onGenerate, onRegenerate, onConfirm, onRemove, canRemove, isSubmitting }) {
+  const isGenerating = icp.generating;
+  const isNamed      = icp.aiName && !icp.confirmed;
+  const isConfirmed  = icp.confirmed;
+
+  return (
+    <div className={`rounded-xl border p-5 transition-colors ${
+      isConfirmed ? 'border-green-300 bg-green-50' :
+      isNamed     ? 'border-blue-300 bg-blue-50/40' :
+                    'border-gray-200 bg-gray-50'
+    }`}>
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
+            {index + 1}
+          </div>
+          <span className="text-sm font-semibold text-gray-700">Ideal Customer {index + 1}</span>
+          {isConfirmed && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 border border-green-200 px-2 py-0.5 rounded-full">
+              <Check className="w-3 h-3" /> Confirmed
+            </span>
+          )}
+        </div>
+        {canRemove && !isConfirmed && (
+          <button onClick={onRemove} disabled={isSubmitting} className="text-gray-400 hover:text-red-500 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Confirmed view */}
+      {isConfirmed ? (
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+            <User2 className="w-5 h-5 text-green-600" />
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">{icp.aiName}</p>
+            <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">{icp.aiDescription}</p>
+          </div>
+        </div>
+      ) : isNamed ? (
+        /* AI returned a name — show for confirmation */
+        <div>
+          <div className="flex items-start gap-3 p-4 bg-white border border-blue-200 rounded-xl mb-4">
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <User2 className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xs text-blue-500 font-medium mb-0.5">AI-generated ICP name</p>
+              <p className="font-semibold text-gray-900 text-lg">{icp.aiName}</p>
+              <p className="text-sm text-gray-500 mt-1 leading-relaxed">{icp.aiDescription}</p>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mb-3 italic">Based on your description: "{icp.story.length > 100 ? icp.story.slice(0, 100) + '…' : icp.story}"</p>
+          <div className="flex gap-2">
+            <button
+              onClick={onRegenerate}
+              disabled={isGenerating || isSubmitting}
+              className="flex-1 py-2.5 border border-gray-300 bg-white hover:bg-gray-50 rounded-lg text-sm font-medium text-gray-700 flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+            >
+              {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              Try again
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={isSubmitting}
+              className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold text-white flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+            >
+              <Check className="w-4 h-4" /> Looks good!
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Story input */
+        <div>
+          <label className="block text-sm font-medium text-gray-600 mb-1.5">
+            Describe your ideal customer in your own words
+          </label>
+          <textarea
+            value={icp.story}
+            onChange={(e) => onStoryChange(e.target.value)}
+            placeholder={`Example: "My ideal customer is a mid-sized B2B SaaS company with 50–200 employees. They're usually Series A or B funded, have a small marketing team of 2–3 people, and struggle with generating consistent leads. They want to scale content production but don't have the bandwidth..."`}
+            rows={5}
+            disabled={isGenerating || isSubmitting}
+            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 resize-none disabled:opacity-50"
+          />
+          <button
+            onClick={onGenerate}
+            disabled={!icp.story.trim() || isGenerating || isSubmitting}
+            className="mt-3 w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {isGenerating ? (
+              <><Loader2 className="w-5 h-5 animate-spin" /> Analysing your description…</>
+            ) : (
+              <><Sparkles className="w-5 h-5" /> Generate ICP Name with AI</>
+            )}
+          </button>
+          {!icp.story.trim() && (
+            <p className="text-xs text-gray-400 mt-1.5 text-center">Write a description above to unlock AI generation</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
+
+let nextId = 1;
+function makeICP() { return { id: nextId++, story: '', aiName: '', aiDescription: '', confirmed: false, generating: false }; }
+
+export default function ICPDefinition() {
   const router = useRouter();
-  const [icps, setIcps] = useState([
-    { id: 1, name: '', description: '', confirmed: false }
-  ]);
+  const [icps, setIcps]           = useState([makeICP()]);
   const [isLoading, setIsLoading] = useState(false);
-  const [generatingId, setGeneratingId] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError]         = useState('');
 
-  const handleICPChange = (id, field, value) => {
-    setIcps(icps.map(icp =>
-      icp.id === id ? { ...icp, [field]: value, confirmed: false } : icp
-    ));
-    setError('');
-  };
+  const update = (id, patch) => setIcps(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i));
 
-  const handleGenerateDescription = async (id) => {
+  const handleGenerate = async (id, regenerate = false) => {
     const icp = icps.find(i => i.id === id);
-    if (!icp.name.trim()) {
-      setError('Please enter an ICP name first');
-      return;
-    }
-
-    setGeneratingId(id);
-
-    // Simulate AI generation (replace with actual API call when available)
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    const sampleDescriptions = {
-      'founder': `A startup founder typically in their late 20s to early 40s, focused on building and scaling their business. They value data-driven decisions, innovative solutions, and efficient marketing strategies. They're time-poor but eager to see measurable results from their marketing investments.`,
-      'cmo': `A Chief Marketing Officer at a mid-to-large company, responsible for overall marketing strategy and brand positioning. They need comprehensive analytics, team collaboration tools, and enterprise-level solutions to manage complex marketing operations.`,
-      'marketing manager': `A marketing manager overseeing day-to-day marketing activities. They need practical tools for campaign management, content scheduling, and performance tracking. They value ease of use and clear ROI reporting.`,
-      'small business': `A small business owner wearing multiple hats, including marketing. They need simple, effective marketing solutions that don't require extensive training. Budget-conscious and results-focused.`,
-      'ecommerce': `An e-commerce entrepreneur focused on driving online sales and customer acquisition. They need tools for social media marketing, email campaigns, and conversion optimization.`
-    };
-
-    // Generate description based on keywords in name
-    let description = `A ${icp.name} is typically a professional who focuses on achieving their business goals through effective marketing. They value data-driven decisions, innovative solutions, and strategic partnerships to achieve their objectives. They're looking for tools that can help them save time while maximizing their marketing ROI.`;
-
-    const nameLower = icp.name.toLowerCase();
-    for (const [key, value] of Object.entries(sampleDescriptions)) {
-      if (nameLower.includes(key)) {
-        description = value;
-        break;
-      }
-    }
-
-    handleICPChange(id, 'description', description);
-    setGeneratingId(null);
-  };
-
-  const handleAddICP = () => {
-    const newId = Math.max(...icps.map(i => i.id)) + 1;
-    setIcps([...icps, { id: newId, name: '', description: '', confirmed: false }]);
-  };
-
-  const handleRemoveICP = (id) => {
-    if (icps.length <= 1) {
-      setError('You need at least one ICP');
-      return;
-    }
-    setIcps(icps.filter(icp => icp.id !== id));
-  };
-
-  const handleConfirmICP = (id) => {
-    const icp = icps.find(i => i.id === id);
-    if (!icp.name.trim() || !icp.description.trim()) {
-      setError('Please fill in both name and description');
-      return;
-    }
-    setIcps(icps.map(i =>
-      i.id === id ? { ...i, confirmed: true } : i
-    ));
+    if (!icp?.story.trim()) return;
+    update(id, { generating: true, ...(regenerate ? { aiName: '', aiDescription: '' } : {}) });
     setError('');
+    try {
+      const res = await generateICPName(icp.story);
+      update(id, { aiName: res.data.name, aiDescription: res.data.description, generating: false });
+    } catch (err) {
+      update(id, { generating: false });
+      setError(err.message || 'AI generation failed. Please try again.');
+    }
   };
+
+  const handleConfirm  = (id) => update(id, { confirmed: true });
+  const handleRemove   = (id) => setIcps(prev => prev.filter(i => i.id !== id));
+  const handleAddAnother = () => setIcps(prev => [...prev, makeICP()]);
 
   const handleSkip = async () => {
-    try {
-      setIsLoading(true);
-      await skipStep(5);
-      router.push('/onboarding-owner/marketing-activities');
-    } catch (err) {
-      router.push('/onboarding-owner/marketing-activities');
-    } finally {
-      setIsLoading(false);
-    }
+    try { setIsLoading(true); await skipStep(5); } catch {}
+    router.push('/onboarding-owner/marketing-activities');
+    setIsLoading(false);
   };
 
   const handleNext = async () => {
-    // Check if at least one ICP is defined
-    const validICPs = icps.filter(icp => icp.name.trim() && icp.description.trim());
-
-    if (validICPs.length === 0) {
-      setError('Please define at least one Ideal Customer Profile');
+    const confirmed = icps.filter(i => i.confirmed);
+    if (confirmed.length === 0) {
+      setError('Please confirm at least one Ideal Customer Profile before continuing.');
       return;
     }
-
     setIsLoading(true);
     setError('');
-
     try {
-      await updateICPs(validICPs.map(icp => ({
-        name: icp.name.trim(),
-        description: icp.description.trim(),
-        confirmed: icp.confirmed
-      })));
+      await updateICPs(confirmed.map(i => ({ name: i.aiName, description: i.aiDescription, confirmed: true })));
       router.push('/onboarding-owner/marketing-activities');
     } catch (err) {
       setError(err.message || 'Failed to save ICPs. Please try again.');
@@ -119,195 +176,98 @@ function ICPDefinition() {
     }
   };
 
-  const handleBack = () => {
-    router.back();
-  };
+  const confirmedCount = icps.filter(i => i.confirmed).length;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="w-full max-w-3xl">
-        {/* Progress Bar */}
+
+        {/* Progress */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-500">Step 5 of 7</span>
-            <span className="text-sm text-gray-500">71% Complete</span>
+            <span className="text-sm text-gray-500">Step 3 of 5</span>
+            <span className="text-sm text-gray-500">60% Complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '71%' }}></div>
+            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '60%' }} />
           </div>
         </div>
 
-        {/* Main Card */}
+        {/* Card */}
         <div className="bg-white border border-gray-200 shadow-lg rounded-2xl p-8">
-          <div className="text-center mb-8">
-            <p className="text-sm text-gray-500 mb-2">Brand Core</p>
+          <div className="mb-6">
+            <p className="text-sm text-gray-400 font-medium mb-1">Ideal Customer Profiles</p>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Let's work together to define your ICPs.
+              Who is your ideal customer?
             </h1>
-            <p className="text-gray-500">
-              Enter an ideal customer name and I'll generate the description.
+            <p className="text-gray-500 text-sm leading-relaxed">
+              Just describe them in your own words — like you're telling a friend. Our AI will read it and give them a name. You can confirm the name or generate again.
             </p>
           </div>
 
-          {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <div className="mb-5 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
-          {/* ICP Forms */}
-          <div className="space-y-6 mb-6">
+          {/* ICP cards */}
+          <div className="space-y-4 mb-5">
             {icps.map((icp, index) => (
-              <div key={icp.id} className={`bg-gray-50 border rounded-xl p-6 ${icp.confirmed ? 'border-green-500/50' : 'border-gray-200'}`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500">Ideal Customer {index + 1}</span>
-                    {icp.confirmed && (
-                      <span className="text-xs bg-green-500/20 text-green-600 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Confirmed
-                      </span>
-                    )}
-                  </div>
-                  {icps.length > 1 && (
-                    <button
-                      onClick={() => handleRemoveICP(icp.id)}
-                      disabled={isLoading}
-                      className="text-gray-500 hover:text-red-500 transition-colors disabled:opacity-50"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* ICP Name */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-600 mb-2">
-                    ICP Name
-                  </label>
-                  <input
-                    type="text"
-                    value={icp.name}
-                    onChange={(e) => handleICPChange(icp.id, 'name', e.target.value)}
-                    placeholder="Example: Sally the Series A Founder"
-                    disabled={isLoading}
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
-                  />
-                </div>
-
-                {/* Description */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-600 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={icp.description}
-                    onChange={(e) => handleICPChange(icp.id, 'description', e.target.value)}
-                    placeholder="Description will be generated..."
-                    rows={4}
-                    disabled={isLoading}
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all resize-none disabled:opacity-50"
-                  />
-                </div>
-
-                {/* Generate Description Button */}
-                <button
-                  onClick={() => handleGenerateDescription(icp.id)}
-                  disabled={isLoading || generatingId === icp.id || !icp.name.trim()}
-                  className="w-full mb-3 py-3 bg-gray-50 border border-gray-200 hover:bg-gray-100 rounded-lg text-gray-900 font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {generatingId === icp.id ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      Generate description
-                    </>
-                  )}
-                </button>
-
-                {/* Confirm Button */}
-                <button
-                  onClick={() => handleConfirmICP(icp.id)}
-                  disabled={isLoading || !icp.name.trim() || !icp.description.trim() || icp.confirmed}
-                  className={`w-full py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                    icp.confirmed
-                      ? 'bg-green-500/20 border border-green-500/50 text-green-600'
-                      : 'bg-gray-50 border border-gray-200 hover:bg-gray-100 text-gray-900'
-                  }`}
-                >
-                  {icp.confirmed ? (
-                    <>
-                      <Check className="w-5 h-5" />
-                      ICP Confirmed
-                    </>
-                  ) : (
-                    'Confirm This ICP'
-                  )}
-                </button>
-              </div>
+              <ICPCard
+                key={icp.id}
+                icp={icp}
+                index={index}
+                onStoryChange={(v) => update(icp.id, { story: v })}
+                onGenerate={() => handleGenerate(icp.id)}
+                onRegenerate={() => handleGenerate(icp.id, true)}
+                onConfirm={() => handleConfirm(icp.id)}
+                onRemove={() => handleRemove(icp.id)}
+                canRemove={icps.length > 1}
+                isSubmitting={isLoading}
+              />
             ))}
           </div>
 
-          {/* Add Another ICP Button */}
-          <button
-            onClick={handleAddICP}
-            disabled={isLoading}
-            className="w-full mb-6 py-3 bg-blue-50 border border-blue-300 hover:bg-blue-100 rounded-lg text-blue-600 font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            <Plus className="w-5 h-5" />
-            Add Another ICP
-          </button>
-
-          {/* Skip Link */}
-          <div className="text-center mb-6">
+          {/* Add another */}
+          {confirmedCount > 0 && (
             <button
-              onClick={handleSkip}
+              onClick={handleAddAnother}
               disabled={isLoading}
-              className="text-gray-500 hover:text-gray-900 text-sm transition-colors flex items-center gap-2 mx-auto disabled:opacity-50"
+              className="w-full mb-5 py-3 border-2 border-dashed border-blue-200 hover:border-blue-400 rounded-xl text-blue-600 font-medium text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
             >
-              Skip this step
-              <ArrowRight className="w-4 h-4" />
+              <Plus className="w-4 h-4" /> Add another ICP
+            </button>
+          )}
+
+          {confirmedCount > 0 && (
+            <div className="mb-5 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700 flex items-center gap-2">
+              <Check className="w-4 h-4 text-blue-500" />
+              {confirmedCount} ICP{confirmedCount > 1 ? 's' : ''} confirmed — you can add more or continue.
+            </div>
+          )}
+
+          {/* Skip */}
+          <div className="text-center mb-5">
+            <button onClick={handleSkip} disabled={isLoading} className="text-gray-400 hover:text-gray-700 text-sm transition-colors disabled:opacity-50 flex items-center gap-1.5 mx-auto">
+              Skip this step <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Help Text */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-            <p className="text-gray-600 text-sm text-center">
-              ICPs help us tailor marketing strategies specifically for your target customers
-            </p>
-          </div>
-
-          {/* Navigation Buttons */}
+          {/* Nav */}
           <div className="flex gap-4">
             <button
-              onClick={handleBack}
-              disabled={isLoading}
+              onClick={() => router.back()} disabled={isLoading}
               className="flex-1 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <ArrowLeft className="w-5 h-5" />
-              Back
+              <ArrowLeft className="w-5 h-5" /> Back
             </button>
             <button
-              onClick={handleNext}
-              disabled={isLoading}
-              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
+              onClick={handleNext} disabled={isLoading || confirmedCount === 0}
+              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  Next
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
+              {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Saving…</> : <>Next <ArrowRight className="w-5 h-5" /></>}
             </button>
           </div>
         </div>
@@ -315,5 +275,3 @@ function ICPDefinition() {
     </div>
   );
 }
-
-export default ICPDefinition;

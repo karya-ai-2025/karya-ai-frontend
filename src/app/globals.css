@@ -513,6 +513,27 @@ html {
   animation: carouselBar 4s linear forwards;
 }
 
+/* Scan line animation (Slide 2 GTM Analyzer) */
+@keyframes scanDown {
+  0%   { top: -4px; }
+  100% { top: 100%; }
+}
+@keyframes scanGlowDown {
+  0%   { top: -32px; }
+  100% { top: 100%; }
+}
+
+.animate-scanDown {
+  position: absolute;
+  left: 0; right: 0;
+  animation: scanDown 2s linear infinite;
+}
+.animate-scanGlow {
+  position: absolute;
+  left: 0; right: 0;
+  animation: scanGlowDown 2s linear infinite;
+}
+
 /* Print styles */
 @media print {
   .reduce-motion * {

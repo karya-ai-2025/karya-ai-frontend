@@ -75,6 +75,15 @@ export const skipStep = async (step) => {
   return apiCall(`/onboarding/business/skip/${step}`, 'POST');
 };
 
+// AI generation helpers
+export const generateICPName = async (description) => {
+  return apiCall('/onboarding/business/generate-icp-name', 'POST', { description });
+};
+
+export const generateMarketingGoals = async (currentActivities, desiredPlan) => {
+  return apiCall('/onboarding/business/generate-marketing-goals', 'POST', { currentActivities, desiredPlan });
+};
+
 export const saveAllOnboardingData = async (data) => {
   return apiCall('/onboarding/business/save-all', 'PUT', data);
 };

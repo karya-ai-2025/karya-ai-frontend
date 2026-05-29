@@ -98,7 +98,7 @@ function WelcomeOnboard() {
   };
 
   const handleManualOnboarding = () => {
-    router.replace('/onboarding-owner/profile-setup');
+    router.replace('/onboarding-owner/platform-usage');
   };
 
   const handleScheduleCall = async () => {
@@ -344,7 +344,7 @@ function WelcomeOnboard() {
                   </li>
                   <li className="flex items-center gap-2 text-gray-600">
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-sm">7 simple steps</span>
+                    <span className="text-sm">5 simple steps</span>
                   </li>
                 </ul>
                 <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg text-white font-semibold flex items-center justify-center gap-2 group-hover:from-blue-700 group-hover:to-orange-600 transition-all">

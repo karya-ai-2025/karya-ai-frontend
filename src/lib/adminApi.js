@@ -15,6 +15,13 @@ export async function getAdminUserAnalytics() {
   return json.data;
 }
 
+export async function getAzureAnalytics() {
+  const res  = await fetch(`${API_URL}/admin/analytics/azure`, { headers: authHeaders() });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || 'Failed to fetch Azure analytics');
+  return json.data;
+}
+
 export async function createCatalogProject(payload) {
   const res  = await fetch(`${API_URL}/admin/catalog`, {
     method:  'POST',

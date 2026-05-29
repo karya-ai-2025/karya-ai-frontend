@@ -39,12 +39,16 @@ function Login() {
   const role = searchParams.get('role') || ROLES.OWNER;
   const { login: authLogin, isAuthenticated, loading: authLoading, activeRole } = useAuth();
 
-  // Redirect already-logged-in users away from the login page
+  // Handle users who are ALREADY logged in when they land on the login page.
+  // Fires ONCE when the auth-loading check completes — NOT on every re-render.
+  // We intentionally omit other deps so it doesn't re-fire after handleSubmit navigates away.
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      router.replace(activeRole === 'expert' ? '/expert-dashboard' : '/business-dashboard');
+      const redirectTo = new URLSearchParams(window.location.search).get('redirect');
+      router.replace(redirectTo || (activeRole === 'expert' ? '/expert-dashboard' : '/business-dashboard'));
     }
-  }, [isAuthenticated, authLoading, activeRole, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading]); // ← only fires when loading state settles, not on every auth change
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -104,7 +108,9 @@ function Login() {
         throw new Error(result.error || 'Invalid credentials');
       }
 
-      router.replace(role === ROLES.EXPERT ? '/expert-dashboard' : '/business-dashboard');
+      // Read directly from window.location so React re-render timing can't affect it
+      const redirectTo = new URLSearchParams(window.location.search).get('redirect');
+      router.replace(redirectTo || (role === ROLES.EXPERT ? '/expert-dashboard' : '/business-dashboard'));
 
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');

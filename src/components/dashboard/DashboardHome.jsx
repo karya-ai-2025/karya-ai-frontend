@@ -321,7 +321,7 @@ export default function DashboardHome() {
                   <div
                     key={s._id}
                     onClick={() => router.push(`/business-dashboard/my-submissions/${s._id}`)}
-                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer group transition-colors"
+                    className="flex items-center gap3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer group transition-colors"
                   >
                     <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
                       <TypeIcon className="w-4 h-4 text-gray-500" />

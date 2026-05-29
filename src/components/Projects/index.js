@@ -1,9 +1,11 @@
 // Dynamic Project Components Registry
 import HotLeadInBox, { SideLeftBar as HotLeadSidebar } from './HotLeadInBox';
+import ContentProjectApp from './ContentProject';
 
 // Project Registry - Add new projects here
 export const PROJECT_COMPONENTS = {
-  'hotlead-in-a-box': HotLeadInBox,
+  'hotlead-in-a-box':              HotLeadInBox,
+  'brand-voice-social': ContentProjectApp,
 };
 
 // Project Sidebar Registry
@@ -21,6 +23,15 @@ export const PROJECT_METADATA = {
     features: ['Automated Outreach', 'Lead Scoring', 'Pipeline Tracking', 'Analytics'],
     requiredIntegrations: ['CRM', 'Email Provider'],
     estimatedSetupTime: '30 minutes'
+  },
+  'brand-voice-social': {
+    name: 'Brand Voice & Thought Leadership',
+    description: 'AI-generated LinkedIn posts and newsletter content tailored to your brand',
+    category: 'Content',
+    version: '1.0.0',
+    features: ['4 LinkedIn Posts/Month', 'Monthly Newsletter', 'Brand Voice Matching', 'Approve & Revise Workflow'],
+    requiredIntegrations: [],
+    estimatedSetupTime: '10 minutes',
   },
 };
 
