@@ -46,7 +46,7 @@ export default function SideLeftBar({
     { icon: Mail, label: 'Email Templates' },
     { icon: FileSpreadsheet, label: 'CSV Enrichment' },
     { icon: Database, label: 'API Enrichment' },
-    { icon: Database, label: 'CRM Integration' },
+    { icon: Database, label: 'Email Lists' },
     { icon: Bot, label: 'AI Assistant' },
     { icon: CreditCard, label: 'Billing & Invoices' },
     { icon: HelpCircle, label: 'Help & Support' }

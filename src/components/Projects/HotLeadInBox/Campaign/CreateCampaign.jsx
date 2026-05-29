@@ -126,7 +126,7 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
         (lead) => lead.email && lead.email.includes('@')
       );
       if (validLeads.length === 0) {
-        newErrors.leads = 'Select a CRM object with at least one valid email address.';
+        newErrors.leads = 'Select an email list with at least one valid email address.';
       }
     }
 
@@ -231,7 +231,7 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
         setCrmObjects([]);
         setErrors((prev) => ({
           ...prev,
-          leads: data.message || 'Failed to load your CRM objects.'
+          leads: data.message || 'Failed to load your email lists.'
         }));
       }
     } catch (error) {
@@ -239,7 +239,7 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
       setCrmObjects([]);
       setErrors((prev) => ({
         ...prev,
-        leads: 'Failed to load your CRM objects. Please try again.'
+        leads: 'Failed to load your email lists. Please try again.'
       }));
     } finally {
       setCrmObjectsLoading(false);
@@ -306,7 +306,7 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
       return;
     }
     if (!uploadCrmName.trim()) {
-      setErrors((prev) => ({ ...prev, leads: 'CRM name is required' }));
+      setErrors((prev) => ({ ...prev, leads: 'Email list name is required' }));
       return;
     }
 
@@ -621,7 +621,7 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
                 className="flex items-center justify-center space-x-3 px-5 py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors"
               >
                 <Database className="w-5 h-5" />
-                <span className="font-medium">Karya AI CRM</span>
+                <span className="font-medium">Email Lists</span>
               </button>
             </div>
           )}
@@ -632,7 +632,7 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
               {uploadStep === 'name' && (
                 <div className="border border-gray-200 rounded-xl p-5 bg-white">
                   <h4 className="text-base font-semibold text-gray-900 mb-1">Name Your Lead List</h4>
-                  <p className="text-sm text-gray-500 mb-4">This will be saved to your CRM for future use.</p>
+                  <p className="text-sm text-gray-500 mb-4">This will be saved as an email list for future use.</p>
                   <input
                     type="text"
                     value={uploadCrmName}
@@ -803,12 +803,12 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
                       {savingCrm ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          <span>Saving to CRM...</span>
+                          <span>Saving email list...</span>
                         </>
                       ) : (
                         <>
                           <Save className="w-4 h-4" />
-                          <span>Save {manualLeads.length} Lead{manualLeads.length !== 1 ? 's' : ''} to CRM & Continue</span>
+                          <span>Save {manualLeads.length} Lead{manualLeads.length !== 1 ? 's' : ''} as Email List & Continue</span>
                         </>
                       )}
                     </button>
@@ -822,8 +822,8 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-base font-semibold text-gray-900">Choose a CRM Object</h4>
-                  <p className="text-sm text-gray-600">Select one saved CRM object to use as your campaign audience.</p>
+                  <h4 className="text-base font-semibold text-gray-900">Choose an Email List</h4>
+                  <p className="text-sm text-gray-600">Select one saved email list to use as your campaign audience.</p>
                 </div>
                 <button
                   onClick={fetchUserCrmObjects}
@@ -837,14 +837,14 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
               {crmObjectsLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
-                  <span className="ml-2 text-gray-600">Loading CRM objects...</span>
+                  <span className="ml-2 text-gray-600">Loading email lists...</span>
                 </div>
               ) : crmObjects.length === 0 ? (
                 <div className="text-center py-10 border border-dashed border-gray-300 rounded-xl bg-gray-50">
                   <Database className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h4 className="text-lg font-medium text-gray-900 mb-2">No CRM objects found</h4>
+                  <h4 className="text-lg font-medium text-gray-900 mb-2">No email lists found</h4>
                   <p className="text-sm text-gray-600">
-                    Save an exported lead list to CRM first, then use it here for campaigns.
+                    Save an exported lead list as an email list first, then use it here for campaigns.
                   </p>
                 </div>
               ) : (
@@ -900,7 +900,7 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
                 <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between gap-3">
                   <div>
                     <div className="text-sm font-medium text-gray-700">
-                      Preview of selected CRM leads
+                      Preview of selected email list leads
                     </div>
                     <div className="text-xs text-gray-500 mt-0.5">
                       Email validation consumes credits per email.

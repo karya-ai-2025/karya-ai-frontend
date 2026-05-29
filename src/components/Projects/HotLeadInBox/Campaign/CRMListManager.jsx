@@ -118,11 +118,11 @@ export default function CRMListManager({ onBack, onCollapseSidebar }) {
       if (response.ok && data.success) {
         setCrmLists(data.data || []);
       } else {
-        setFormErrors({ submit: data.message || 'Failed to load CRM lists' });
+        setFormErrors({ submit: data.message || 'Failed to load email lists' });
       }
     } catch (error) {
       console.error('Error fetching CRM lists:', error);
-      setFormErrors({ submit: 'Failed to load CRM lists. Please try again.' });
+      setFormErrors({ submit: 'Failed to load email lists. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -226,7 +226,7 @@ export default function CRMListManager({ onBack, onCollapseSidebar }) {
       .filter((lead) => Object.values(lead).some(Boolean));
 
     if (!formData.crmObjectName.trim()) {
-      errors.crmObjectName = 'CRM list name is required';
+      errors.crmObjectName = 'Email list name is required';
     }
 
     if (trimmedLeads.length === 0) {
@@ -300,11 +300,11 @@ export default function CRMListManager({ onBack, onCollapseSidebar }) {
         resetForm();
         setActiveView('list');
       } else {
-        setFormErrors({ submit: data.message || 'Failed to save CRM list' });
+        setFormErrors({ submit: data.message || 'Failed to save email list' });
       }
     } catch (error) {
       console.error('Error saving CRM list:', error);
-      setFormErrors({ submit: 'Failed to save CRM list. Please try again.' });
+      setFormErrors({ submit: 'Failed to save email list. Please try again.' });
     } finally {
       setSaving(false);
     }
@@ -333,11 +333,11 @@ export default function CRMListManager({ onBack, onCollapseSidebar }) {
         }
         fetchCrmLists();
       } else {
-        alert(`Failed to delete CRM list: ${data.message}`);
+        alert(`Failed to delete email list: ${data.message}`);
       }
     } catch (error) {
       console.error('Error deleting CRM list:', error);
-      alert('Failed to delete CRM list. Please try again.');
+      alert('Failed to delete email list. Please try again.');
     }
   };
 
@@ -345,8 +345,8 @@ export default function CRMListManager({ onBack, onCollapseSidebar }) {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">CRM Lists</h2>
-          <p className="text-gray-600 mt-1">Create and manage saved lead lists from the userCRM collection</p>
+          <h2 className="text-2xl font-bold text-gray-900">Email Lists</h2>
+          <p className="text-gray-600 mt-1">Create and manage saved email lead lists</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -367,7 +367,7 @@ export default function CRMListManager({ onBack, onCollapseSidebar }) {
             className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
-            <span>New CRM List</span>
+            <span>New Email List</span>
           </button>
         </div>
       </div>
@@ -377,7 +377,7 @@ export default function CRMListManager({ onBack, onCollapseSidebar }) {
           <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search CRM lists..."
+            placeholder="Search email lists..."
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -397,7 +397,7 @@ export default function CRMListManager({ onBack, onCollapseSidebar }) {
         <button
           onClick={fetchCrmLists}
           className="inline-flex items-center justify-center p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-          title="Refresh CRM lists"
+          title="Refresh email lists"
         >
           <RefreshCw className="w-4 h-4" />
         </button>
@@ -413,17 +413,17 @@ export default function CRMListManager({ onBack, onCollapseSidebar }) {
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin" />
-          <span className="ml-3 text-gray-600">Loading CRM lists...</span>
+          <span className="ml-3 text-gray-600">Loading email lists...</span>
         </div>
       ) : filteredLists.length === 0 ? (
         <div className="text-center py-12">
           <Database className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {crmLists.length === 0 ? 'No CRM lists yet' : 'No CRM lists match your search'}
+            {crmLists.length === 0 ? 'No email lists yet' : 'No email lists match your search'}
           </h3>
           <p className="text-gray-600 mb-6">
             {crmLists.length === 0
-              ? 'Create a CRM list or save leads from lead generation to use them in campaigns.'
+              ? 'Create an email list or save leads from lead generation to use them in campaigns.'
               : 'Try adjusting your search or source filter.'
             }
           </p>
@@ -435,7 +435,7 @@ export default function CRMListManager({ onBack, onCollapseSidebar }) {
             className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Create CRM List
+            Create Email List
           </button>
         </div>
       ) : (
@@ -526,13 +526,13 @@ export default function CRMListManager({ onBack, onCollapseSidebar }) {
               setActiveView('list');
             }}
             className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
-            title="Back to CRM lists"
+            title="Back to email lists"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
-              {selectedList ? 'Edit CRM List' : 'Create CRM List'}
+              {selectedList ? 'Edit Email List' : 'Create Email List'}
             </h2>
             <p className="text-gray-600">
               {selectedList ? 'Update this saved lead list' : 'Create a saved lead list for campaign audiences'}
@@ -563,7 +563,7 @@ export default function CRMListManager({ onBack, onCollapseSidebar }) {
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                <span>{selectedList ? 'Update' : 'Save'} CRM List</span>
+                <span>{selectedList ? 'Update' : 'Save'} Email List</span>
               </>
             )}
           </button>
@@ -576,7 +576,7 @@ export default function CRMListManager({ onBack, onCollapseSidebar }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                CRM List Name *
+                Email List Name *
               </label>
               <input
                 type="text"

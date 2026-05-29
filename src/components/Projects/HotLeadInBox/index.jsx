@@ -356,7 +356,7 @@ export default function HotLeadInBox({ projectMetadata }) {
             <p className="mt-1 text-gray-600">
               {hasDashboardActivity
                 ? 'Your lead lists, campaigns, and credit activity in one place.'
-                : 'Start by finding leads, saving a CRM list, and launching your first campaign.'}
+                : 'Start by finding leads, saving an email list, and launching your first campaign.'}
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -405,7 +405,7 @@ export default function HotLeadInBox({ projectMetadata }) {
                   </div>
                   <h2 className="mt-4 text-xl font-semibold text-gray-900">Build your first outreach pipeline</h2>
                   <p className="mt-2 text-gray-600">
-                    Search for matching contacts, save the selected leads as a CRM list, then use that list as the audience for an email campaign.
+                    Search for matching contacts, save the selected leads as an email list, then use that list as the audience for an email campaign.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -439,7 +439,7 @@ export default function HotLeadInBox({ projectMetadata }) {
               <ActionCard
                 icon={Target}
                 title="Create Campaign"
-                description="Create templates, manage CRM lists, and start campaigns from saved lead inventory."
+                description="Create templates, manage email lists, and start campaigns from saved lead inventory."
                 buttonLabel="Open Campaigns"
                 onClick={() => setActiveTab('campaigns')}
                 color="purple"
@@ -449,7 +449,7 @@ export default function HotLeadInBox({ projectMetadata }) {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
               {[
                 { label: 'Search Leads', icon: Search, text: 'Find contacts from your ICP.' },
-                { label: 'Export CRM List', icon: FileSpreadsheet, text: 'Save selected leads to userCRM.' },
+                { label: 'Export Email List', icon: FileSpreadsheet, text: 'Save selected leads as an email list.' },
                 { label: 'Create Template', icon: Mail, text: 'Write a reusable email template.' },
                 { label: 'Launch Campaign', icon: Send, text: 'Send and track outreach.' }
               ].map((step, index) => {
@@ -478,7 +478,7 @@ export default function HotLeadInBox({ projectMetadata }) {
                 color="blue"
               />
               <StatTile
-                label="CRM Lists"
+                label="Email Lists"
                 value={formatNumber(dashboardMetrics.crmListCount)}
                 helper={`${formatNumber(dashboardMetrics.downloadedLeadCount)} leads downloaded`}
                 icon={ListChecks}
@@ -582,11 +582,11 @@ export default function HotLeadInBox({ projectMetadata }) {
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
               <div className="bg-white border border-gray-200 rounded-lg p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Recent CRM Lists</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">Recent Email Lists</h2>
                   <Database className="w-5 h-5 text-blue-600" />
                 </div>
                 {recentCrmLists.length === 0 ? (
-                  <p className="text-sm text-gray-500">No CRM lists saved yet.</p>
+                  <p className="text-sm text-gray-500">No email lists saved yet.</p>
                 ) : (
                   <div className="space-y-3">
                     {recentCrmLists.map((list) => (

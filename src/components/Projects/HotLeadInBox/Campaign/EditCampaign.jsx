@@ -489,7 +489,7 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
             className="flex items-center space-x-2 px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
           >
             <Database className="w-4 h-4" />
-            <span>Change CRM Object</span>
+            <span>Change Email List</span>
           </button>
         </div>
       </div>
@@ -599,7 +599,7 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
       {showLeadSourcePicker && (
         <div className="border border-indigo-200 bg-indigo-50 rounded-lg p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold text-gray-900">Select a CRM Object</h4>
+            <h4 className="text-sm font-semibold text-gray-900">Select an Email List</h4>
             <button
               onClick={() => setShowLeadSourcePicker(false)}
               className="text-gray-400 hover:text-gray-600"
@@ -614,7 +614,7 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
               <span className="ml-2 text-sm text-gray-600">Loading...</span>
             </div>
           ) : crmObjects.length === 0 ? (
-            <p className="text-sm text-gray-600 py-2">No CRM objects found.</p>
+            <p className="text-sm text-gray-600 py-2">No email lists found.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto edit-campaign-scroll">
               {crmObjects.map((obj) => (
@@ -707,7 +707,7 @@ export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, on
         <div className="text-center py-8 border border-dashed border-gray-300 rounded-xl bg-gray-50">
           <Users className="w-10 h-10 text-gray-400 mx-auto mb-3" />
           <h4 className="text-sm font-medium text-gray-900 mb-1">No leads in this campaign</h4>
-          <p className="text-xs text-gray-500">Add leads manually or select a CRM object above.</p>
+          <p className="text-xs text-gray-500">Add leads manually or select an email list above.</p>
         </div>
       )}
     </div>

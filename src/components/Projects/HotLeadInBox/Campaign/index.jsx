@@ -27,6 +27,14 @@ const initialCampaignStats = {
   averageClickRate: 0
 };
 
+const componentLabels = {
+  create: 'Create',
+  templates: 'Campaign Templates',
+  crmLists: 'Email Lists',
+  edit: 'Edit Campaign',
+  stats: 'Stats'
+};
+
 export default function Campaign({ onCollapseSidebar, onExpandSidebar }) {
   const { user } = useAuth();
 
@@ -217,7 +225,7 @@ export default function Campaign({ onCollapseSidebar, onExpandSidebar }) {
                 Dashboard
               </button>
               <span>/</span>
-              <span className="text-gray-900 capitalize">{activeComponent}</span>
+              <span className="text-gray-900">{componentLabels[activeComponent] || activeComponent}</span>
             </div>
           )}
         </div>
@@ -229,7 +237,7 @@ export default function Campaign({ onCollapseSidebar, onExpandSidebar }) {
               className="flex items-center space-x-2 px-3 py-2 text-sm bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
             >
               <Database className="w-4 h-4" />
-              <span>CRM Lists</span>
+              <span>Email Lists</span>
             </button>
 
             <button

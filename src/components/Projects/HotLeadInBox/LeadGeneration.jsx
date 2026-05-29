@@ -375,7 +375,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
     const result = await response.json();
 
     if (!response.ok || !result.success) {
-      throw new Error(result.message || 'Failed to save CRM object');
+      throw new Error(result.message || 'Failed to save email list');
     }
 
     return result;
@@ -493,7 +493,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
     if (!crmObjectName.trim()) {
       setCrmStatus({
         type: 'error',
-        message: 'First please name your CRM object.'
+        message: 'First please name your email list.'
       });
       return;
     }
@@ -501,7 +501,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
     if (!user?.id) {
       setCrmStatus({
         type: 'error',
-        message: 'Please log in to save this CRM object.'
+        message: 'Please log in to save this email list.'
       });
       return;
     }
@@ -521,13 +521,13 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
       setSavedCrmSelectionKey(getCurrentSelectionKey());
       setCrmStatus({
         type: 'success',
-        message: `Saved to CRM as "${crmObjectName.trim()}".`
+        message: `Saved as email list "${crmObjectName.trim()}".`
       });
     } catch (error) {
       console.error('Error saving CRM object:', error);
       setCrmStatus({
         type: 'error',
-        message: error.message || 'Failed to save CRM object.'
+        message: error.message || 'Failed to save email list.'
       });
     } finally {
       setCrmSaveLoading(false);
@@ -1540,7 +1540,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
                 {showCrmNameInput && (
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-gray-700 block">
-                      First please name your CRM object
+                      First please name your email list
                     </label>
                     <input
                       type="text"
@@ -1571,7 +1571,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
                   disabled={crmSaveLoading}
                   className="flex-1 px-3 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 hover:border-gray-300 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:hover:scale-100 cursor-pointer"
                 >
-                  {crmSaveLoading ? 'Saving...' : showCrmNameInput ? 'Save List' : 'Save to CRM'}
+                  {crmSaveLoading ? 'Saving...' : showCrmNameInput ? 'Save List' : 'Save as Email List'}
                 </button>
                 <button
                   onClick={confirmDownload}
