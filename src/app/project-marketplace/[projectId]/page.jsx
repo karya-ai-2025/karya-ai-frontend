@@ -624,6 +624,71 @@ export default function ProjectDetailPage() {
                     })}
                   </div>
                 </section>
+
+                {/* Guarantees / Project Highlights */}
+                {project.guarantees?.length > 0 && (
+                  <section>
+                    <h2 className="text-lg font-bold text-gray-900 mb-4">Project Highlights</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {project.guarantees.map((g, i) => (
+                        <div key={i} className="flex items-start gap-3 p-4 bg-white border border-gray-200 rounded-xl">
+                          <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="w-4 h-4 text-green-600" />
+                          </div>
+                          <p className="text-sm font-medium text-gray-800 leading-relaxed">{g}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* KPIs */}
+                {project.kpis?.length > 0 && (
+                  <section>
+                    <h2 className="text-lg font-bold text-gray-900 mb-2">KPIs We Track</h2>
+                    <p className="text-sm text-gray-500 mb-4">Key metrics measured throughout the project to ensure quality and results.</p>
+                    <div className="flex flex-wrap gap-2">
+                      {project.kpis.map((kpi, i) => (
+                        <span key={i} className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-800 rounded-lg">
+                          <BarChart3 className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                          {kpi}
+                        </span>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Outcomes / OKRs */}
+                {project.outcomes?.length > 0 && (
+                  <section>
+                    <h2 className="text-lg font-bold text-gray-900 mb-4">Expected Outcomes</h2>
+                    <div className="space-y-2">
+                      {project.outcomes.map((o, i) => (
+                        <div key={i} className="flex items-start gap-3 py-2">
+                          <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Target className="w-3 h-3 text-orange-600" />
+                          </div>
+                          <p className="text-sm text-gray-700 leading-relaxed">{o}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* ROI callout */}
+                {project.roi && (
+                  <section className="bg-gray-950 rounded-2xl p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 bg-orange-500/20 border border-orange-500/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <TrendingUp className="w-5 h-5 text-orange-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">ROI Logic</p>
+                        <p className="text-sm text-gray-200 leading-relaxed">{project.roi}</p>
+                      </div>
+                    </div>
+                  </section>
+                )}
               </div>
             )}
 
@@ -631,32 +696,40 @@ export default function ProjectDetailPage() {
             {activeTab === 'how' && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900 mb-2">Step-by-Step Process</h2>
-                  <p className="text-sm text-gray-500 mb-6">Here's exactly how this project runs from start to delivery.</p>
+                  <h2 className="text-lg font-bold text-gray-900 mb-1">Step-by-Step Process</h2>
+                  <p className="text-sm text-gray-500 mb-6">Here's exactly what happens — from kickoff to delivery — in plain detail.</p>
                 </div>
                 <div className="relative">
-                  {/* Vertical line */}
                   <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-gradient-to-b from-blue-200 via-blue-300 to-orange-200 hidden sm:block" />
                   <div className="space-y-4">
-                    {project.howItWorks.map((step, i) => (
-                      <div key={i} className="flex items-start gap-5">
-                        <div className={`relative z-10 w-12 h-12 rounded-2xl bg-gradient-to-br ${project.gradient} flex items-center justify-center text-white font-bold text-lg shadow-md flex-shrink-0`}>
-                          {i + 1}
+                    {project.howItWorks.map((step, i) => {
+                      // Parse "Title — Detail" format if present
+                      const sepIdx = step.indexOf(' — ');
+                      const stepTitle = sepIdx > 0 ? step.slice(0, sepIdx) : `Step ${i + 1}`;
+                      const stepDetail = sepIdx > 0 ? step.slice(sepIdx + 3) : step;
+                      return (
+                        <div key={i} className="flex items-start gap-5">
+                          <div className={`relative z-10 w-12 h-12 rounded-2xl bg-gradient-to-br ${project.gradient} flex items-center justify-center text-white font-bold text-lg shadow-md flex-shrink-0`}>
+                            {i + 1}
+                          </div>
+                          <div className="flex-1 bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-200 transition-colors">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <p className="text-base font-bold text-gray-900 leading-tight">{stepTitle}</p>
+                              <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5">Step {i + 1}</span>
+                            </div>
+                            <p className="text-sm text-gray-600 leading-relaxed">{stepDetail}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-blue-100 hover:shadow-md transition-all">
-                          <p className="text-base font-semibold text-gray-900 mb-1">Step {i + 1}</p>
-                          <p className="text-sm text-gray-600 leading-relaxed">{step}</p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {/* Final delivery step */}
                     <div className="flex items-start gap-5">
                       <div className="relative z-10 w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-md flex-shrink-0">
                         <CheckCircle className="w-6 h-6 text-white" />
                       </div>
-                      <div className="flex-1 bg-green-50 border border-green-200 rounded-xl p-5 shadow-sm">
-                        <p className="text-base font-semibold text-green-800 mb-1">Project Complete</p>
-                        <p className="text-sm text-green-700 leading-relaxed">All deliverables handed over, reviewed, and approved. Post-delivery support included for 7 days.</p>
+                      <div className="flex-1 bg-green-50 border border-green-200 rounded-xl p-5">
+                        <p className="text-base font-bold text-green-800 mb-2">Project Complete</p>
+                        <p className="text-sm text-green-700 leading-relaxed">All deliverables handed over, reviewed, and approved. Post-delivery support included for 7 days. Your expert remains available for follow-up questions.</p>
                       </div>
                     </div>
                   </div>
@@ -670,9 +743,88 @@ export default function ProjectDetailPage() {
                   <div>
                     <p className="text-sm font-bold text-blue-800 mb-0.5">Estimated Timeline</p>
                     <p className="text-lg font-bold text-blue-900">{project.duration}</p>
-                    <p className="text-xs text-blue-600 mt-0.5">Varies slightly by scope. Your expert confirms timeline before starting.</p>
+                    <p className="text-xs text-blue-600 mt-0.5">Varies slightly by scope. Your expert confirms exact timeline at kickoff.</p>
                   </div>
                 </div>
+
+                {/* AI / Human split */}
+                {(project.aiWorkflow?.length > 0 || project.expertEnsures?.length > 0 || project.humanApprovalTasks?.length > 0) && (
+                  <section>
+                    <h2 className="text-lg font-bold text-gray-900 mb-2">AI + Expert + You</h2>
+                    <p className="text-sm text-gray-500 mb-5">How work is divided between AI automation, your fractional expert, and your team.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {project.aiWorkflow?.length > 0 && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
+                              <Bot className="w-4 h-4 text-white" />
+                            </div>
+                            <p className="text-sm font-bold text-blue-900">AI Does</p>
+                          </div>
+                          <ul className="space-y-2">
+                            {project.aiWorkflow.map((item, i) => (
+                              <li key={i} className="flex items-start gap-2 text-xs text-blue-800 leading-relaxed">
+                                <span className="w-1 h-1 rounded-full bg-blue-400 flex-shrink-0 mt-1.5" />
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {project.expertEnsures?.length > 0 && (
+                        <div className="bg-orange-50 border border-orange-200 rounded-xl p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-7 h-7 bg-orange-500 rounded-lg flex items-center justify-center">
+                              <UserCheck className="w-4 h-4 text-white" />
+                            </div>
+                            <p className="text-sm font-bold text-orange-900">Expert Ensures</p>
+                          </div>
+                          <ul className="space-y-2">
+                            {project.expertEnsures.map((item, i) => (
+                              <li key={i} className="flex items-start gap-2 text-xs text-orange-800 leading-relaxed">
+                                <span className="w-1 h-1 rounded-full bg-orange-400 flex-shrink-0 mt-1.5" />
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {project.humanApprovalTasks?.length > 0 && (
+                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-7 h-7 bg-gray-700 rounded-lg flex items-center justify-center">
+                              <Shield className="w-4 h-4 text-white" />
+                            </div>
+                            <p className="text-sm font-bold text-gray-900">You Approve</p>
+                          </div>
+                          <ul className="space-y-2">
+                            {project.humanApprovalTasks.map((item, i) => (
+                              <li key={i} className="flex items-start gap-2 text-xs text-gray-700 leading-relaxed">
+                                <span className="w-1 h-1 rounded-full bg-gray-400 flex-shrink-0 mt-1.5" />
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                )}
+
+                {/* Dependencies */}
+                {project.dependencies?.length > 0 && (
+                  <section>
+                    <h2 className="text-lg font-bold text-gray-900 mb-3">What You Need to Bring</h2>
+                    <div className="space-y-2">
+                      {project.dependencies.map((dep, i) => (
+                        <div key={i} className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                          <Zap className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                          <p className="text-sm text-amber-900 font-medium">{dep}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
               </div>
             )}
 
@@ -742,7 +894,7 @@ export default function ProjectDetailPage() {
                         </div>
 
                         <div className="mt-5">
-                          {(project?.category === 'outbound' || projectId === 'brand-voice-social') ? (
+                          {(project?.category === 'outbound' || project?.category === 'email' || projectId === 'brand-voice-social') ? (
                             <Link href={`/project-marketplace/${projectId}/overview?tier=${selectedPriceTier}&mode=${tier.id}`}
                               className={`w-full block py-2.5 text-center rounded-xl text-sm font-semibold transition-all ${
                                 tier.popular ? 'bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white shadow-md' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
@@ -1250,7 +1402,7 @@ function HireCard({ project, pricingTiers, dbPriceTiers, selectedHireMode, setSe
             className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-semibold rounded-xl transition-all shadow-md text-sm flex items-center justify-center gap-2">
             <Send className="w-4 h-4" /> Apply to This Project
           </button>
-        ) : (project?.category === 'outbound' || projectId === 'brand-voice-social') ? (
+        ) : (project?.category === 'outbound' || project?.category === 'email' || projectId === 'brand-voice-social') ? (
           <Link href={`/project-marketplace/${projectId}/overview?tier=${selectedPriceTier}&mode=${selectedHireMode}`}
             className="w-full block py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-semibold rounded-xl transition-all shadow-md text-sm text-center flex items-center justify-center gap-2">
             <CheckCircle className="w-4 h-4" /> Accept & Proceed

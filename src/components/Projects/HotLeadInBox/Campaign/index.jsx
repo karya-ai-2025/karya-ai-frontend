@@ -8,11 +8,13 @@ import {
   Plus,
   Settings,
   Zap,
-  Database
+  Database,
+  UserCheck
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import CampaignDashboard from './CampaignDashboard';
 import CreateCampaign from './CreateCampaign';
+import EmailDraftReview from './EmailDraftReview';
 import EmailTemplateBuilder from './EmailTemplateBuilder';
 import CampaignStats from './CampaignStats';
 import EditCampaign from './EditCampaign';
@@ -35,7 +37,18 @@ const componentLabels = {
   stats: 'Stats'
 };
 
-export default function Campaign({ onCollapseSidebar, onExpandSidebar }) {
+export default function Campaign({
+  onCollapseSidebar,
+  onExpandSidebar,
+  onEnterCreate,
+  emailDraft,
+  onAcceptDraft,
+  onRequestExpert,
+  draftBusy,
+  draftNotice,
+  onClearDraft,
+  initialTemplate,
+}) {
   const { user } = useAuth();
 
   // Active component state
@@ -87,6 +100,10 @@ export default function Campaign({ onCollapseSidebar, onExpandSidebar }) {
     if (campaignData) {
       setSelectedCampaign(campaignData);
     }
+    // Entering the create flow opens the right-side email assistant.
+    if (component === 'create') {
+      onEnterCreate?.();
+    }
   };
 
   // Handle campaign creation success
@@ -107,11 +124,42 @@ export default function Campaign({ onCollapseSidebar, onExpandSidebar }) {
   const renderActiveComponent = () => {
     switch (activeComponent) {
       case 'create':
+        // After "get an expert", show a confirmation instead of the form.
+        if (draftNotice) {
+          return (
+            <div className="max-w-xl mx-auto text-center py-12">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100">
+                <UserCheck className="h-6 w-6 text-indigo-600" />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">Sent to our expert</h2>
+              <p className="mt-2 text-sm text-gray-600">{draftNotice}</p>
+              <button
+                onClick={() => { onClearDraft?.(); setActiveComponent('dashboard'); }}
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+              >
+                Back to campaigns
+              </button>
+            </div>
+          );
+        }
+        // While a fresh AI draft is awaiting the user's decision, show the review
+        // in the middle instead of the campaign form.
+        if (emailDraft) {
+          return (
+            <EmailDraftReview
+              draft={emailDraft}
+              busy={draftBusy}
+              onAccept={onAcceptDraft}
+              onRequestExpert={onRequestExpert}
+            />
+          );
+        }
         return (
           <CreateCampaign
             onCampaignCreated={handleCampaignCreated}
             onCancel={() => setActiveComponent('dashboard')}
             onCollapseSidebar={onCollapseSidebar}
+            initialTemplate={initialTemplate}
           />
         );
 

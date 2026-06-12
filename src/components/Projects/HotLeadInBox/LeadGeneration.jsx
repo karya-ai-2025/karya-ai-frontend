@@ -23,7 +23,7 @@ import {
 import { getIndustries } from '../../../services/industriesApi';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
+export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, injectedResult }) {
   const { user, getAuthHeader } = useAuth();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -69,6 +69,31 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar }) {
       setSelectAll(false);
     }
   }, [allLeads, currentPage]);
+
+  // Inject results produced by the conversational assistant — render them in the
+  // native results box (beside the filters), exactly like a manual filter search.
+  // Handles real DB results (and an empty result set → native "no leads" state).
+  useEffect(() => {
+    if (injectedResult && Array.isArray(injectedResult.leads)) {
+      const list = injectedResult.leads;
+      if (injectedResult.criteria) {
+        setSearchCriteria((prev) => ({ ...prev, ...injectedResult.criteria }));
+      }
+      setAllLeads(list);
+      setLeads(list.slice(0, itemsPerPage));
+      setTotalPages(Math.max(1, Math.ceil(list.length / itemsPerPage)));
+      setCurrentPage(1);
+      setSearchStats({
+        matched: injectedResult.matched ?? list.length,
+        available: injectedResult.available ?? list.length,
+      });
+      setVisibleEmails(new Set());
+      setVisiblePhones(new Set());
+      setSelectedLeads(new Set());
+      setSelectAll(false);
+      setShowResults(true);
+    }
+  }, [injectedResult]);
 
   // Credit management state
   const [creditCosts, setCreditCosts] = useState({

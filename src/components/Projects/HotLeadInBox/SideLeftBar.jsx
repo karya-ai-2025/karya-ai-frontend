@@ -28,7 +28,8 @@ export default function SideLeftBar({
   setActiveTab,
   mobileMenuOpen,
   setMobileMenuOpen,
-  projectMetadata
+  projectMetadata,
+  tabAccess = { leads: true, campaigns: true },
 }) {
   const router = useRouter();
   const { user } = useAuth();
@@ -131,24 +132,37 @@ export default function SideLeftBar({
         {/* Main Navigation */}
         <nav className="p-2 flex-1 overflow-y-auto custom-scrollbar">
           <div className="mb-4">
-            {mainTabs.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full flex items-center px-3 py-2 rounded-lg text-left transition-colors mb-1 ${
-                  activeTab === item.id
-                    ? 'bg-white/20 text-white'
-                    : 'text-indigo-200 hover:bg-white/10 hover:text-white'
-                } ${collapsed ? 'justify-center' : 'space-x-3'}`}
-                title={collapsed ? item.label : ''}
-              >
-                <item.icon size={18} />
-                {!collapsed && <span className="text-sm">{item.label}</span>}
-              </button>
-            ))}
+            {mainTabs.map((item) => {
+              const isLocked = (item.id === 'leads' && !tabAccess.leads) ||
+                               (item.id === 'campaigns' && !tabAccess.campaigns);
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center px-3 py-2 rounded-lg text-left transition-colors mb-1 ${
+                    activeTab === item.id
+                      ? 'bg-white/20 text-white'
+                      : isLocked
+                      ? 'text-indigo-400/50 hover:bg-white/5 hover:text-indigo-300'
+                      : 'text-indigo-200 hover:bg-white/10 hover:text-white'
+                  } ${collapsed ? 'justify-center' : 'space-x-3'}`}
+                  title={collapsed ? item.label : isLocked ? `${item.label} — upgrade required` : ''}
+                >
+                  <item.icon size={18} />
+                  {!collapsed && (
+                    <span className="text-sm flex-1">{item.label}</span>
+                  )}
+                  {!collapsed && isLocked && (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-400/60 flex-shrink-0">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* Additional Menu Items */}
@@ -175,16 +189,16 @@ export default function SideLeftBar({
           }
 
           .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(79, 70, 229, 0.1);
+            background: rgba(255, 255, 255, 0.08);
           }
 
           .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(79, 70, 229, 0.4);
+            background: rgba(255, 255, 255, 0.25);
             border-radius: 3px;
           }
 
           .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(79, 70, 229, 0.6);
+            background: rgba(255, 255, 255, 0.4);
           }
         `}</style>
       </div>

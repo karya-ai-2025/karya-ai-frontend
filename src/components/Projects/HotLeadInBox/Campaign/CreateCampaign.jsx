@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import {
   Users,
   Mail,
@@ -47,7 +48,7 @@ const scrollbarStyles = `
   }
 `;
 
-export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapseSidebar }) {
+export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapseSidebar, initialTemplate }) {
   const { getAuthHeader } = useAuth();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -98,6 +99,11 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
   const [newLead, setNewLead] = useState({ firstName: '', email: '', lastName: '', company: '', jobTitle: '', industry: '' });
   const [leadErrors, setLeadErrors] = useState({});
   const [savingCrm, setSavingCrm] = useState(false);
+
+  // Spreadsheet bulk-upload state
+  const fileInputRef = useRef(null);
+  const [parsingFile, setParsingFile] = useState(false);
+  const [uploadFileInfo, setUploadFileInfo] = useState(null); // { name, added, skipped } | { name, error }
   const [emailValidationLoading, setEmailValidationLoading] = useState(false);
   const [emailValidationSummary, setEmailValidationSummary] = useState(null);
   const [emailValidationError, setEmailValidationError] = useState('');
@@ -107,6 +113,20 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
       onCollapseSidebar();
     }
   }, [onCollapseSidebar]);
+
+  // Pre-fill the campaign with an email saved from the AI assistant flow.
+  useEffect(() => {
+    if (initialTemplate?._id) {
+      setCampaignData((prev) => ({
+        ...prev,
+        emailTemplateId: initialTemplate._id,
+        emailTemplate: initialTemplate
+      }));
+      setEmailTemplates((prev) =>
+        prev.some((t) => t._id === initialTemplate._id) ? prev : [initialTemplate, ...prev]
+      );
+    }
+  }, [initialTemplate]);
 
   useEffect(() => {
     if (currentStep === 3 && emailTemplates.length === 0) {
@@ -298,6 +318,144 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
 
   const handleRemoveManualLead = (index) => {
     setManualLeads((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // ---- Spreadsheet (.xlsx / .xls / .csv) bulk upload ----
+  const normalizeKey = (k) => String(k).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  const FIELD_ALIASES = {
+    email: ['email', 'emailaddress', 'mail', 'workemail', 'emailid', 'email'],
+    firstName: ['firstname', 'first', 'fname', 'givenname'],
+    lastName: ['lastname', 'last', 'lname', 'surname', 'familyname'],
+    company: ['company', 'companyname', 'organization', 'organisation', 'org', 'account', 'accountname', 'business'],
+    jobTitle: ['jobtitle', 'title', 'position', 'role', 'designation', 'jobrole'],
+    industry: ['industry', 'sector', 'vertical'],
+    fullName: ['fullname', 'name', 'contactname', 'contact', 'leadname']
+  };
+
+  const buildKeyMap = (sampleRow) => {
+    const map = {};
+    const keys = Object.keys(sampleRow);
+    for (const [field, aliases] of Object.entries(FIELD_ALIASES)) {
+      const match = keys.find((k) => aliases.includes(normalizeKey(k)));
+      if (match) map[field] = match;
+    }
+    return map;
+  };
+
+  const mapRowToLead = (row, keyMap) => {
+    const get = (field) => (keyMap[field] != null ? String(row[keyMap[field]] ?? '').trim() : '');
+    let firstName = get('firstName');
+    let lastName = get('lastName');
+    if (!firstName && !lastName) {
+      const full = get('fullName');
+      if (full) {
+        const parts = full.split(/\s+/);
+        firstName = parts.shift() || '';
+        lastName = parts.join(' ');
+      }
+    }
+    return {
+      firstName,
+      lastName,
+      email: get('email'),
+      company: get('company'),
+      jobTitle: get('jobTitle'),
+      industry: get('industry')
+    };
+  };
+
+  const handleLeadFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (e.target) e.target.value = ''; // allow re-uploading the same file
+    if (!file) return;
+
+    if (!uploadCrmName.trim()) {
+      setErrors((prev) => ({ ...prev, leads: 'Please enter a name for your lead list first' }));
+      return;
+    }
+
+    const name = file.name.toLowerCase();
+    if (name.endsWith('.pdf')) {
+      setUploadFileInfo({
+        name: file.name,
+        error: "PDFs can't be parsed reliably. Please export your leads to .xlsx or .csv and upload that."
+      });
+      return;
+    }
+    if (!/\.(xlsx|xls|csv)$/.test(name)) {
+      setUploadFileInfo({ name: file.name, error: 'Unsupported file type. Upload .xlsx, .xls, or .csv.' });
+      return;
+    }
+
+    try {
+      setParsingFile(true);
+      setUploadFileInfo(null);
+      setErrors((prev) => ({ ...prev, leads: undefined }));
+
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data, { type: 'array' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+      if (rows.length === 0) {
+        setUploadFileInfo({ name: file.name, error: 'No rows found in the file.' });
+        return;
+      }
+
+      const keyMap = buildKeyMap(rows[0]);
+      if (keyMap.email == null) {
+        setUploadFileInfo({
+          name: file.name,
+          error: 'No "Email" column found. Make sure your sheet has a column header named Email.'
+        });
+        return;
+      }
+
+      const existing = new Set(manualLeads.map((l) => l.email.toLowerCase()));
+      const seen = new Set();
+      let skipped = 0;
+      const parsed = [];
+
+      rows.forEach((row, i) => {
+        const m = mapRowToLead(row, keyMap);
+        const email = m.email.toLowerCase();
+        if (!email || !email.includes('@')) {
+          skipped++;
+          return;
+        }
+        if (existing.has(email) || seen.has(email)) {
+          skipped++;
+          return;
+        }
+        seen.add(email);
+        parsed.push({
+          id: `upload-${Date.now()}-${i}`,
+          leadId: `upload-${Date.now()}-${i}`,
+          firstName: m.firstName,
+          lastName: m.lastName,
+          email,
+          company: m.company,
+          jobTitle: m.jobTitle,
+          industry: m.industry,
+          fullName: `${m.firstName} ${m.lastName}`.trim()
+        });
+      });
+
+      if (parsed.length === 0) {
+        setUploadFileInfo({ name: file.name, error: 'No valid leads with email addresses found in the file.' });
+        return;
+      }
+
+      setManualLeads((prev) => [...prev, ...parsed]);
+      setUploadFileInfo({ name: file.name, added: parsed.length, skipped });
+      setUploadStep('entry');
+    } catch (err) {
+      console.error('Lead file parse error:', err);
+      setUploadFileInfo({ name: file.name, error: "Could not read this file. Please check it's a valid Excel/CSV." });
+    } finally {
+      setParsingFile(false);
+    }
   };
 
   const handleSaveManualLeadsToCrm = async () => {
@@ -605,15 +763,11 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
           {!selectedLeadSource && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
               <button
-                disabled
-                title="Upload leads is coming soon"
-                className="flex items-center justify-center space-x-3 px-5 py-5 bg-gray-50 border border-gray-200 rounded-xl cursor-not-allowed"
+                onClick={() => handleLeadSourceSelection('upload')}
+                className="flex items-center justify-center space-x-3 px-5 py-5 bg-white border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 rounded-xl transition-colors"
               >
-                <Upload className="w-5 h-5 text-gray-400" />
-                <span className="font-medium text-gray-500">Upload Your Leads</span>
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                  Coming Soon
-                </span>
+                <Upload className="w-5 h-5 text-indigo-600" />
+                <span className="font-medium text-gray-900">Upload Your Leads</span>
               </button>
 
               <button
@@ -656,12 +810,56 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
                       <span className="font-medium">Add Leads One by One</span>
                     </button>
                     <button
-                      disabled
-                      className="flex items-center justify-center space-x-2 px-4 py-3 bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed border border-gray-200"
+                      onClick={() => {
+                        if (!uploadCrmName.trim()) {
+                          setErrors((prev) => ({ ...prev, leads: 'Please enter a name for your lead list' }));
+                          return;
+                        }
+                        setErrors((prev) => ({ ...prev, leads: undefined }));
+                        fileInputRef.current?.click();
+                      }}
+                      disabled={parsingFile}
+                      className="flex items-center justify-center space-x-2 px-4 py-3 bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      <FileSpreadsheet className="w-4 h-4" />
-                      <span className="font-medium">Bulk Upload (Coming Soon)</span>
+                      {parsingFile ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
+                      <span className="font-medium">{parsingFile ? 'Reading file…' : 'Upload Excel / CSV'}</span>
                     </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      onChange={handleLeadFileUpload}
+                      className="hidden"
+                    />
+                  </div>
+
+                  {/* Bulk-upload helper / file schema card */}
+                  <div className="mt-4 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
+                        <FileSpreadsheet className="h-5 w-5 text-indigo-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">Bulk upload from a spreadsheet</p>
+                        <p className="mt-0.5 text-xs text-gray-500">
+                          Your file needs an{' '}
+                          <span className="font-medium text-gray-700">Email</span> column. Optional columns:{' '}
+                          First Name, Last Name, Company, Job Title, Industry. Accepted: .xlsx, .xls, .csv.
+                        </p>
+                        {uploadFileInfo?.error && (
+                          <p className="mt-2 text-xs font-medium text-red-600">{uploadFileInfo.error}</p>
+                        )}
+                        {uploadFileInfo && !uploadFileInfo.error && (
+                          <p className="mt-2 text-xs font-medium text-green-600">
+                            Imported {uploadFileInfo.added} lead{uploadFileInfo.added !== 1 ? 's' : ''} from{' '}
+                            {uploadFileInfo.name}
+                            {uploadFileInfo.skipped > 0
+                              ? ` · skipped ${uploadFileInfo.skipped} (missing or duplicate email)`
+                              : ''}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

@@ -29,7 +29,7 @@ function HomePage() {
   const [launcherSearch, setLauncherSearch] = useState('');
   const [showcaseSlide, setShowcaseSlide] = useState(0);
   const [showcasePaused, setShowcasePaused] = useState(false);
-  const [showcaseUrl, setShowcaseUrl] = useState('https://yourwebsite.com');
+  const [showcaseUrl, setShowcaseUrl] = useState('');
   const topProjectsScrollRef = useRef(null);
 
   const getInitials = (name) => {
@@ -431,6 +431,7 @@ function HomePage() {
                   onKeyDown={e => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
+                      if (heroInput.trim()) sessionStorage.setItem('pendingAgentMessage', heroInput.trim());
                       handleProtectedRoute('/agent');
                     }
                   }}
@@ -442,7 +443,10 @@ function HomePage() {
                   <button className="p-1 text-gray-300 hover:text-gray-500 transition-colors" type="button">
                     <Paperclip className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={() => handleProtectedRoute('/agent')}
+                  <button onClick={() => {
+                    if (heroInput.trim()) sessionStorage.setItem('pendingAgentMessage', heroInput.trim());
+                    handleProtectedRoute('/agent');
+                  }}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-[12px] font-semibold transition-colors" type="button">
                     Start for free <ArrowRight className="w-3 h-3" />
                   </button>
@@ -455,46 +459,20 @@ function HomePage() {
         </section>
       )}
 
-      {/* ==================== SECTION 2: PLATFORM SHOWCASE — MacBook frame ==================== */}
+      {/* ==================== SECTION 2: PLATFORM SHOWCASE ==================== */}
       {!isAuthenticated && (
-        <section className="relative py-5 sm:py-8 overflow-hidden"
-          style={{ background: 'linear-gradient(180deg, #f5f5f7 0%, #ffffff 55%)' }}>
+        <section className="relative overflow-hidden bg-white">
           <div className="relative max-w-[1560px] mx-auto px-3 sm:px-5">
 
-            {/* ── MacBook assembly — cinematic entrance ── */}
-            <div style={{ animation: 'macbookCinematic 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both' }}>
-
-              {/* Lid top edge — aluminum */}
-              <div style={{
-                height: '26px',
-                background: 'linear-gradient(180deg, #e8e8e8 0%, #c6c6c6 100%)',
-                borderRadius: '16px 16px 0 0',
-                border: '1.5px solid #b2b2b2',
-                borderBottom: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-              }}>
-                {/* Apple-style logo silhouette */}
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ opacity: 0.2 }}>
-                  <path d="M10.5 7.4c0-1.7 1.4-2.5 1.5-2.6-.8-1.2-2.1-1.3-2.5-1.3-1.1-.1-2.1.6-2.6.6-.5 0-1.3-.6-2.2-.6C3.2 3.5 2 4.4 1.3 5.7c-1.3 2.3-.3 5.7 1 7.5.6.9 1.4 1.9 2.4 1.9.9 0 1.3-.6 2.4-.6 1.1 0 1.4.6 2.4.6 1 0 1.7-.9 2.4-1.8.7-1 1-2 1-2.1 0 0-1.9-.7-1.4-3.8z" fill="#000"/>
-                  <path d="M8.7 2.3c.5-.7.9-1.6.8-2.3-.8 0-1.7.5-2.3 1.2-.5.6-.9 1.5-.8 2.2.9.1 1.8-.4 2.3-1.1z" fill="#000"/>
-                </svg>
-              </div>
-
-              {/* Screen — no bezel, content flush under lid */}
-              <div>
-
-                {/* ── Screen = existing platform showcase ── */}
-                <div className="rounded-2xl border border-gray-200 overflow-hidden shadow-[0_20px_60px_-10px_rgba(0,0,0,0.1)] flex flex-col mx-0.5"
+                {/* ── Platform showcase ── */}
+                <div className="rounded-2xl border border-gray-200 overflow-hidden shadow-[0_12px_40px_-8px_rgba(0,0,0,0.08)] flex flex-col"
                   style={{ height: 'calc(100vh - 80px)', minHeight: '680px', maxHeight: '1080px' }}
                   onMouseEnter={() => setShowcasePaused(true)}
                   onMouseLeave={() => setShowcasePaused(false)}>
 
 
               {/* Browser chrome */}
-              <div className="h-10 bg-white border-b border-gray-100 flex items-center px-4 gap-3 flex-shrink-0">
+              <div className="h-10 bg-white border-b border-gray-100 flex items-center px-4 gap-3 flex-shrink-0" style={{ display: 'none' }}>
                 <div className="flex gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
                   <div className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
@@ -820,7 +798,11 @@ function HomePage() {
                         className="w-full pl-9 pr-3 py-3 bg-white border border-gray-200 rounded-xl text-[13px] text-gray-700 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all"
                       />
                     </div>
-                    <button onClick={() => handleProtectedRoute('/agent')}
+                    <button onClick={() => {
+                      const msg = showcaseUrl.trim() ? `Analyze my platform: ${showcaseUrl.trim()}` : 'Analyze my platform';
+                      sessionStorage.setItem('pendingAgentMessage', msg);
+                      handleProtectedRoute('/agent');
+                    }}
                       className="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-xl text-white font-bold text-[13px] transition-colors flex items-center justify-center gap-2">
                       Analyze My Platform Free
                       <ArrowRight className="w-4 h-4" strokeWidth={2} />
@@ -982,40 +964,13 @@ function HomePage() {
                 </div>
               </div>
 
-                </div>{/* end showcase frame / screen content */}
-              </div>{/* end screen bezel */}
-
-              {/* ── Hinge strip ── */}
-              <div style={{
-                height: '5px',
-                background: 'linear-gradient(180deg, #a8a8a8, #d0d0d0)',
-                borderLeft: '13px solid #c0c0c0',
-                borderRight: '13px solid #c0c0c0',
-              }} />
-
-              {/* ── Base / keyboard deck ── */}
-              <div style={{
-                height: '28px',
-                background: 'linear-gradient(180deg, #d8d8d8 0%, #ebebeb 55%, #f5f5f5 100%)',
-                borderRadius: '0 0 10px 10px',
-                border: '1.5px solid #b8b8b8',
-                borderTop: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.2), 0 5px 15px rgba(0,0,0,0.08)',
-              }}>
-                {/* Trackpad */}
-                <div style={{ width: '18%', height: '55%', background: 'rgba(0,0,0,0.09)', borderRadius: '5px', border: '1px solid rgba(0,0,0,0.12)' }} />
-              </div>
-
-            </div>{/* end MacBook assembly */}
+                </div>{/* end showcase frame */}
           </div>{/* end max-w container */}
         </section>
       )}
 
       {/* ==================== TOP PROJECTS ==================== */}
-      <section className="pt-20 pb-16 px-4 sm:px-6">
+      <section className="pt-8 pb-16 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="rounded-3xl overflow-hidden border border-gray-200 flex flex-col lg:flex-row min-h-[400px]">
 

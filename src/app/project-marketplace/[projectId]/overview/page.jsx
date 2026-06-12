@@ -386,7 +386,11 @@ export default function ProjectOverviewPage() {
     );
   }
 
-  const howItWorks = project.howItWorks || [];
+  // milestones has {label, description} — the structured phase data for this section
+  const howItWorks = (project.milestones || []).map(m => ({
+    title: m.label,
+    description: m.description,
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50">

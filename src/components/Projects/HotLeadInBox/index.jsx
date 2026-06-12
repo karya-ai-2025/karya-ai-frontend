@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import TopNavbar from '@/components/TopNavbar';
 import SideLeftBar from './SideLeftBar';
@@ -28,6 +28,10 @@ import {
 } from 'lucide-react';
 import LeadGeneration from './LeadGeneration';
 import Campaign from './Campaign';
+import { PROJECT_TAB_ACCESS } from '../index';
+import AgentPanel, { LEAD_PLAYBOOK, EMAIL_PLAYBOOK } from '../AgentPanel';
+import { Sparkles } from 'lucide-react';
+import { getIndustries } from '../../../services/industriesApi';
 
 const hotLeadScrollbarStyles = `
   .hotlead-page-scroll::-webkit-scrollbar {
@@ -127,12 +131,201 @@ const getActivityLabel = (actionType) => ({
   VIEW_PHONE: 'Viewed phone'
 }[actionType] || actionType?.replaceAll('_', ' ') || 'Credit activity');
 
-export default function HotLeadInBox({ projectMetadata }) {
+// Locked tab placeholder
+function LockedTab({ tabName, unlockedIn }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full min-h-[400px] py-20 text-center px-6">
+      <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-5">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+      </div>
+      <h3 className="text-lg font-bold text-gray-800 mb-2">{tabName} not included</h3>
+      <p className="text-sm text-gray-500 max-w-sm leading-relaxed mb-6">
+        {tabName} is part of <span className="font-semibold text-gray-700">HotLead in a Box</span> — the full outbound package that includes both Lead Generation and Email Campaigns.
+        {unlockedIn && <><br /><span className="mt-1 inline-block">Your current plan includes: <span className="font-semibold text-gray-700">{unlockedIn}</span>.</span></>}
+      </p>
+      <a href="/project-marketplace/hotlead-in-a-box"
+        className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors">
+        Upgrade to HotLead in a Box
+      </a>
+    </div>
+  );
+}
+
+export default function HotLeadInBox({ projectMetadata, projectSlug }) {
   const { user, getAuthHeader } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dashboardState, setDashboardState] = useState(initialDashboardState);
+
+  // Conversational assistant (right-side panel)
+  const [agentOpen, setAgentOpen]   = useState(false);
+  const [agentMode, setAgentMode]   = useState('lead'); // 'lead' | 'email'
+  const [agentResult, setAgentResult] = useState(null); // { criteria, leads } — drives the Leads page
+  const [emailDraft, setEmailDraft] = useState(null);   // AI email awaiting the user's decision
+  const [draftBusy, setDraftBusy]   = useState(false);
+  const [draftNotice, setDraftNotice] = useState(null); // confirmation after "request expert"
+  const [prefillTemplate, setPrefillTemplate] = useState(null); // saved email → campaign builder
+
+  const [industries, setIndustries] = useState([]); // real industries from Postgres for the lead playbook
+
+  const openAgent = (mode) => {
+    setAgentMode(mode);
+    setAgentOpen(true);
+    setSidebarCollapsed(true);
+  };
+
+  // Load the real industry list so the lead assistant's options map to actual DB rows.
+  useEffect(() => {
+    let active = true;
+    getIndustries()
+      .then((res) => { if (active && res?.data) setIndustries(res.data); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  // Lead playbook with real industry chips (so the search returns real contacts).
+  const leadPlaybook = useMemo(() => {
+    if (!industries.length) return LEAD_PLAYBOOK;
+    const chips = industries.slice(0, 8).map((i) => i.label).filter(Boolean);
+    return {
+      ...LEAD_PLAYBOOK,
+      steps: LEAD_PLAYBOOK.steps.map((s) =>
+        s.id === 'industry' ? { ...s, question: 'Which industry are you targeting?', chips } : s
+      ),
+    };
+  }, [industries]);
+
+  // When the assistant finishes its Q&A: run the REAL Postgres lead search and
+  // surface the matching contacts in the native Leads results box.
+  const handleAgentComplete = async (answers) => {
+    const a = answers || {};
+    // Map the chosen industry label back to its API value (slug); fall back to raw text.
+    const match = industries.find((i) => (i.label || '').toLowerCase() === (a.industry || '').toLowerCase());
+    const industry = match?.value || a.industry || '';
+
+    setActiveTab('leads');
+
+    try {
+      const res = await fetch(`${apiBaseUrl}/leads/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // Industry is the reliable filter against the DB; segment/location use
+        // strict matching, so we leave them blank to guarantee real results.
+        body: JSON.stringify({ industry, company: '', companySegment: '', location: '' }),
+      });
+      const data = await res.json();
+      setAgentResult({
+        criteria: { industry: match?.value || industry, companySegment: '', location: '' },
+        leads: data.success ? (data.data || []) : [],
+        matched: data.pagination?.totalMatched,
+        available: data.pagination?.totalAvailable,
+      });
+    } catch (e) {
+      console.error('Lead search failed:', e);
+      setAgentResult({ criteria: { industry }, leads: [] });
+    } finally {
+      setTimeout(() => setAgentOpen(false), 600);
+    }
+  };
+
+  // Email project: generate an AI draft from the assistant's answers.
+  const handleGenerateDraft = async (answers) => {
+    const res = await fetch(`${apiBaseUrl}/agent/draft-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+      credentials: 'include',
+      body: JSON.stringify({
+        tone: answers.tone || '',
+        company: answers.company || '',
+        audience: answers.audience || '',
+        product: answers.product || '',
+        cta: answers.cta || '',
+        extra: answers.extra || ''
+      })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Failed to draft email');
+    return data.data; // { subject, body }
+  };
+
+  // Email assistant finished drafting → hand the draft to the middle and close the panel.
+  const handleEmailDraftReady = (draft, answers) => {
+    setEmailDraft({ ...draft, _answers: answers || {} });
+    setTimeout(() => setAgentOpen(false), 700);
+  };
+
+  // Save the approved email as a reusable Email Template in the DB.
+  const saveEmailAsTemplate = async (draft) => {
+    const res = await fetch(`${apiBaseUrl}/email-templates`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+      credentials: 'include',
+      body: JSON.stringify({
+        templateName: draft.subject ? draft.subject.slice(0, 80) : 'AI outbound email',
+        subject: draft.subject || 'Outbound email',
+        emailBody: draft.body || ''
+      })
+    });
+    const data = await res.json();
+    if (!data.success && !data.data) throw new Error(data.message || 'Failed to save template');
+    return data.data;
+  };
+
+  // "Looks good — start campaign": save the email, then open the builder pre-filled.
+  const handleAcceptDraft = async () => {
+    if (!emailDraft) return;
+    try {
+      setDraftBusy(true);
+      const tmpl = await saveEmailAsTemplate(emailDraft);
+      setPrefillTemplate(tmpl);
+      setEmailDraft(null); // → CreateCampaign renders, pre-filled with this template
+    } catch (e) {
+      console.error('save template failed', e);
+      alert('Could not save the email. Please try again.');
+    } finally {
+      setDraftBusy(false);
+    }
+  };
+
+  // "Get an expert to refine it": create a HITL request for the expert review queue.
+  const handleRequestExpert = async () => {
+    if (!emailDraft) return;
+    const answers = emailDraft._answers || {};
+    try {
+      setDraftBusy(true);
+      const res = await fetch(`${apiBaseUrl}/hitl`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        credentials: 'include',
+        body: JSON.stringify({
+          projectSlug,
+          type: 'email_approval',
+          status: 'with_expert',
+          title: emailDraft.subject ? `Email refine: ${emailDraft.subject}` : 'Outbound email — expert refine',
+          payload: { subject: emailDraft.subject || '', body: emailDraft.body || '', audience: answers.audience || '', tone: answers.tone || '' },
+          context: answers
+        })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || 'Failed to send to expert');
+      setEmailDraft(null);
+      setDraftNotice('Your draft is with our expert. They will refine it and send it back for your approval — watch the HITL Approvals page and your dashboard Attention Center.');
+    } catch (e) {
+      console.error('request expert failed', e);
+      alert('Could not send to the expert. Please try again.');
+    } finally {
+      setDraftBusy(false);
+    }
+  };
+
+  // Open the lead assistant whenever the user enters the Leads page.
+  useEffect(() => {
+    if (activeTab === 'leads') openAgent('lead');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const userId = user?.id || user?._id;
 
@@ -331,11 +524,20 @@ export default function HotLeadInBox({ projectMetadata }) {
   };
 
   const renderDashboard = () => {
+    // Project-specific labels
+    const PROJECT_LABELS = {
+      'hotlead-in-a-box':      { title: 'HotLead in a Box Dashboard',          sub: 'Your lead lists, campaigns, and credit activity in one place.' },
+      'outbound-list-builder': { title: 'B2B Contact Intelligence Dashboard',   sub: 'Your enriched lead lists and contact pipeline in one place.' },
+      'ai-email-sales-agency': { title: 'AI Email Outbound Dashboard',          sub: 'Your email campaigns, sequences, and outreach stats in one place.' },
+    };
+    const label = PROJECT_LABELS[projectSlug] || PROJECT_LABELS['hotlead-in-a-box'];
+    const UPGRADE_URL = '/project-marketplace/hotlead-in-a-box/overview';
+
     if (dashboardState.loading) {
       return (
         <div className="flex items-center justify-center py-16">
           <RefreshCw className="w-7 h-7 text-indigo-600 animate-spin" />
-          <span className="ml-3 text-gray-600">Loading HotLead dashboard...</span>
+          <span className="ml-3 text-gray-600">Loading dashboard...</span>
         </div>
       );
     }
@@ -352,11 +554,9 @@ export default function HotLeadInBox({ projectMetadata }) {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">HotLead InBox Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{label.title}</h1>
             <p className="mt-1 text-gray-600">
-              {hasDashboardActivity
-                ? 'Your lead lists, campaigns, and credit activity in one place.'
-                : 'Start by finding leads, saving an email list, and launching your first campaign.'}
+              {hasDashboardActivity ? label.sub : 'Get started by exploring the features available in your plan.'}
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -367,20 +567,36 @@ export default function HotLeadInBox({ projectMetadata }) {
               <RefreshCw className="w-4 h-4" />
               <span>Refresh</span>
             </button>
-            <button
-              onClick={() => setActiveTab('leads')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors cursor-pointer"
-            >
-              <TrendingUp className="w-4 h-4" />
-              <span>Get Leads</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('campaigns')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors cursor-pointer"
-            >
-              <Target className="w-4 h-4" />
-              <span>Create Campaign</span>
-            </button>
+            {access.leads ? (
+              <button
+                onClick={() => setActiveTab('leads')}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors cursor-pointer"
+              >
+                <TrendingUp className="w-4 h-4" />
+                <span>Get Leads</span>
+              </button>
+            ) : (
+              <a href={UPGRADE_URL}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-lg transition-colors">
+                <TrendingUp className="w-4 h-4" />
+                <span>Upgrade to get leads</span>
+              </a>
+            )}
+            {access.campaigns ? (
+              <button
+                onClick={() => setActiveTab('campaigns')}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors cursor-pointer"
+              >
+                <Target className="w-4 h-4" />
+                <span>Create Campaign</span>
+              </button>
+            ) : (
+              <a href={UPGRADE_URL}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm text-purple-700 bg-purple-50 border border-purple-200 hover:bg-purple-100 rounded-lg transition-colors">
+                <Target className="w-4 h-4" />
+                <span>Upgrade to run campaigns</span>
+              </a>
+            )}
           </div>
         </div>
 
@@ -428,22 +644,56 @@ export default function HotLeadInBox({ projectMetadata }) {
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <ActionCard
-                icon={TrendingUp}
-                title="Find Leads"
-                description="Search by industry, company, segment, and location, then unlock or export the contacts you need."
-                buttonLabel="Open Lead Search"
-                onClick={() => setActiveTab('leads')}
-                color="indigo"
-              />
-              <ActionCard
-                icon={Target}
-                title="Create Campaign"
-                description="Create templates, manage email lists, and start campaigns from saved lead inventory."
-                buttonLabel="Open Campaigns"
-                onClick={() => setActiveTab('campaigns')}
-                color="purple"
-              />
+              {access.leads ? (
+                <ActionCard
+                  icon={TrendingUp}
+                  title="Find Leads"
+                  description="Search by industry, company, segment, and location, then unlock or export the contacts you need."
+                  buttonLabel="Open Lead Search"
+                  onClick={() => setActiveTab('leads')}
+                  color="indigo"
+                />
+              ) : (
+                <div className="bg-white border border-gray-200 rounded-lg p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-gray-100 rounded-lg flex-shrink-0">
+                      <TrendingUp className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base font-semibold text-gray-900">Lead Generation</h3>
+                      <p className="mt-1 text-sm text-gray-500">Not included in your current plan. Upgrade to access lead search, enrichment, and CRM export.</p>
+                      <a href={UPGRADE_URL} className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-gray-700 hover:bg-gray-800 transition-colors">
+                        Upgrade to get leads <ArrowRight className="w-4 h-4" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {access.campaigns ? (
+                <ActionCard
+                  icon={Target}
+                  title="Create Campaign"
+                  description="Create templates, manage email lists, and start campaigns from saved lead inventory."
+                  buttonLabel="Open Campaigns"
+                  onClick={() => setActiveTab('campaigns')}
+                  color="purple"
+                />
+              ) : (
+                <div className="bg-white border border-gray-200 rounded-lg p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-gray-100 rounded-lg flex-shrink-0">
+                      <Target className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base font-semibold text-gray-900">Email Campaigns</h3>
+                      <p className="mt-1 text-sm text-gray-500">Not included in your current plan. Upgrade to build sequences, manage templates, and launch campaigns.</p>
+                      <a href={UPGRADE_URL} className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-gray-700 hover:bg-gray-800 transition-colors">
+                        Upgrade to run campaigns <ArrowRight className="w-4 h-4" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -470,34 +720,43 @@ export default function HotLeadInBox({ projectMetadata }) {
         ) : (
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <StatTile
-                label="Saved Leads"
-                value={formatNumber(dashboardMetrics.totalCrmLeads)}
-                helper={`${formatNumber(dashboardMetrics.emailReadyLeads)} email ready`}
-                icon={Database}
-                color="blue"
-              />
-              <StatTile
-                label="Email Lists"
-                value={formatNumber(dashboardMetrics.crmListCount)}
-                helper={`${formatNumber(dashboardMetrics.downloadedLeadCount)} leads downloaded`}
-                icon={ListChecks}
-                color="emerald"
-              />
-              <StatTile
-                label="Campaigns"
-                value={formatNumber(dashboardMetrics.totalCampaigns)}
-                helper={`${formatNumber(dashboardMetrics.activeCampaigns)} active, ${formatNumber(dashboardMetrics.draftCampaigns)} draft`}
-                icon={Target}
-                color="purple"
-              />
-              <StatTile
-                label="Credits"
-                value={formatNumber(dashboardMetrics.remainingCredits)}
-                helper={`${formatNumber(dashboardMetrics.totalCreditsUsed)} used`}
-                icon={Zap}
-                color="amber"
-              />
+              {access.leads ? (
+                <StatTile label="Saved Leads" value={formatNumber(dashboardMetrics.totalCrmLeads)} helper={`${formatNumber(dashboardMetrics.emailReadyLeads)} email ready`} icon={Database} color="blue" />
+              ) : (
+                <div className="bg-white border border-gray-200 rounded-lg p-4 relative overflow-hidden">
+                  <p className="text-sm font-medium text-gray-400">Saved Leads</p>
+                  <div className="mt-2 text-2xl font-bold text-gray-200">—</div>
+                  <a href={UPGRADE_URL} className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:underline">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    Upgrade to get leads
+                  </a>
+                </div>
+              )}
+              {access.leads ? (
+                <StatTile label="Email Lists" value={formatNumber(dashboardMetrics.crmListCount)} helper={`${formatNumber(dashboardMetrics.downloadedLeadCount)} leads downloaded`} icon={ListChecks} color="emerald" />
+              ) : (
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <p className="text-sm font-medium text-gray-400">Email Lists</p>
+                  <div className="mt-2 text-2xl font-bold text-gray-200">—</div>
+                  <a href={UPGRADE_URL} className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:underline">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    Upgrade to get leads
+                  </a>
+                </div>
+              )}
+              {access.campaigns ? (
+                <StatTile label="Campaigns" value={formatNumber(dashboardMetrics.totalCampaigns)} helper={`${formatNumber(dashboardMetrics.activeCampaigns)} active, ${formatNumber(dashboardMetrics.draftCampaigns)} draft`} icon={Target} color="purple" />
+              ) : (
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <p className="text-sm font-medium text-gray-400">Campaigns</p>
+                  <div className="mt-2 text-2xl font-bold text-gray-200">—</div>
+                  <a href={UPGRADE_URL} className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-purple-600 hover:underline">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    Upgrade to run campaigns
+                  </a>
+                </div>
+              )}
+              <StatTile label="Credits" value={formatNumber(dashboardMetrics.remainingCredits)} helper={`${formatNumber(dashboardMetrics.totalCreditsUsed)} used`} icon={Zap} color="amber" />
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -531,12 +790,19 @@ export default function HotLeadInBox({ projectMetadata }) {
                     <h2 className="text-lg font-semibold text-gray-900">Campaign Overview</h2>
                     <p className="text-sm text-gray-600">Status mix across created campaigns.</p>
                   </div>
-                  <button
-                    onClick={() => setActiveTab('campaigns')}
-                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer"
-                  >
-                    Manage Campaigns
-                  </button>
+                  {access.campaigns ? (
+                    <button
+                      onClick={() => setActiveTab('campaigns')}
+                      className="text-sm text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer"
+                    >
+                      Manage Campaigns
+                    </button>
+                  ) : (
+                    <a href={UPGRADE_URL} className="text-sm text-gray-500 hover:text-gray-700 font-medium flex items-center gap-1">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      Upgrade to run campaigns
+                    </a>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                   {[
@@ -568,13 +834,21 @@ export default function HotLeadInBox({ projectMetadata }) {
                     <span className="text-sm text-gray-600">Campaign audience</span>
                     <span className="font-semibold text-gray-900">{formatNumber(dashboardMetrics.totalCampaignAudience)}</span>
                   </div>
-                  <button
-                    onClick={() => setActiveTab('leads')}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
-                  >
-                    <TrendingUp className="w-4 h-4" />
-                    <span>Find More Leads</span>
-                  </button>
+                  {access.leads ? (
+                    <button
+                      onClick={() => setActiveTab('leads')}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                    >
+                      <TrendingUp className="w-4 h-4" />
+                      <span>Find More Leads</span>
+                    </button>
+                  ) : (
+                    <a href={UPGRADE_URL}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      <span>Upgrade to get leads</span>
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -657,19 +931,39 @@ export default function HotLeadInBox({ projectMetadata }) {
     );
   };
 
+  // Determine which tabs this slug can access (default: full access)
+  const access = PROJECT_TAB_ACCESS[projectSlug] || { leads: true, campaigns: true };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return renderDashboard();
       case 'leads':
-        return <LeadGeneration
-          onCollapseSidebar={() => setSidebarCollapsed(true)}
-          onExpandSidebar={() => setSidebarCollapsed(false)}
-        />;
+        if (!access.leads) {
+          return <LockedTab tabName="Lead Generation" unlockedIn="Email Campaigns" />;
+        }
+        return (
+          <LeadGeneration
+            onCollapseSidebar={() => setSidebarCollapsed(true)}
+            onExpandSidebar={() => setSidebarCollapsed(false)}
+            injectedResult={agentResult}
+          />
+        );
       case 'campaigns':
+        if (!access.campaigns) {
+          return <LockedTab tabName="Email Campaigns" unlockedIn="Lead Generation" />;
+        }
         return <Campaign
           onCollapseSidebar={() => setSidebarCollapsed(true)}
           onExpandSidebar={() => setSidebarCollapsed(false)}
+          onEnterCreate={() => openAgent('email')}
+          emailDraft={emailDraft}
+          draftBusy={draftBusy}
+          onAcceptDraft={handleAcceptDraft}
+          onRequestExpert={handleRequestExpert}
+          draftNotice={draftNotice}
+          onClearDraft={() => { setDraftNotice(null); setEmailDraft(null); }}
+          initialTemplate={prefillTemplate}
         />;
       default:
         return <div className="text-center py-12 text-gray-500">Feature coming soon...</div>;
@@ -690,13 +984,14 @@ export default function HotLeadInBox({ projectMetadata }) {
           mobileMenuOpen={mobileMenuOpen}
           setMobileMenuOpen={setMobileMenuOpen}
           projectMetadata={projectMetadata}
+          tabAccess={access}
         />
       </div>
 
-      {/* Main Content Area with left margin for sidebar */}
+      {/* Main Content Area with left margin for sidebar (and right margin for the assistant panel) */}
       <div className={`flex flex-col h-full min-h-0 overflow-hidden transition-all duration-300 ${
         sidebarCollapsed ? 'ml-16' : 'ml-64'
-      }`}>
+      } ${agentOpen ? 'lg:mr-[400px]' : ''}`}>
         {/* TopNavbar - spans the remaining width after sidebar */}
         <TopNavbar />
 
@@ -755,6 +1050,30 @@ export default function HotLeadInBox({ projectMetadata }) {
           </div>
         </div>
       </div>
+
+      {/* Right-side conversational assistant */}
+      <AgentPanel
+        open={agentOpen}
+        onClose={() => setAgentOpen(false)}
+        onComplete={handleAgentComplete}
+        onGenerateDraft={handleGenerateDraft}
+        onEmailDraftReady={handleEmailDraftReady}
+        playbook={agentMode === 'email' ? EMAIL_PLAYBOOK : leadPlaybook}
+        projectName={projectMetadata?.name}
+      />
+
+      {/* Floating launcher — toggles the assistant; shifts left when the panel is open */}
+      <button
+        onClick={() => setAgentOpen((v) => !v)}
+        aria-label={agentOpen ? 'Close assistant' : 'Open assistant'}
+        title="Ask Karya AI"
+        className={`group fixed bottom-6 z-[60] flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-[0_8px_30px_-6px_rgba(79,70,229,0.55)] transition-all hover:scale-105 active:scale-95 ${
+          agentOpen ? 'lg:right-[416px] right-6' : 'right-6'
+        }`}
+      >
+        <span className="absolute inset-1.5 rounded-xl border border-white/20" />
+        <Sparkles className="relative h-6 w-6" strokeWidth={2} fill="currentColor" fillOpacity={0.15} />
+      </button>
     </div>
     </>
   );

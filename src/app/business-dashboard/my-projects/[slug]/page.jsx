@@ -170,7 +170,7 @@ export default function ProjectWorkspacePage() {
   const RegisteredComponent = getProjectComponent(slug);
   if (RegisteredComponent) {
     const metadata = getProjectMetadata(slug);
-    return <RegisteredComponent projectMetadata={metadata} />;
+    return <RegisteredComponent projectMetadata={metadata} projectSlug={slug} />;
   }
 
   // ── Generic workspace ─────────────────────────────────────────────────────

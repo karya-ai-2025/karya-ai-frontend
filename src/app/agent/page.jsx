@@ -21,9 +21,11 @@ import {
   CalendarDays,
   BarChart3,
   Link,
+  ChevronRight,
 } from 'lucide-react';
 import * as conversationApi from '@/services/conversationApi';
 import * as agentApi from '@/services/agentApi';
+import Sidebar from '@/components/Sidebar';
 
 function KaryaLogo({ size = 28, className = '' }) {
   return (
@@ -634,6 +636,17 @@ function AgentChat({ sidebarOpen, onToggleSidebar, conversationId, onTitleUpdate
     conversationIdRef.current = conversationId;
   }, [conversationId]);
 
+  // Pre-populate input with message stored before login redirect
+  useEffect(() => {
+    if (!conversationId && typeof window !== 'undefined') {
+      const pending = sessionStorage.getItem('pendingAgentMessage');
+      if (pending) {
+        setInputText(pending);
+        sessionStorage.removeItem('pendingAgentMessage');
+      }
+    }
+  }, [conversationId]);
+
   useEffect(() => {
     if (!conversationId) {
       setMessages([]);
@@ -1055,12 +1068,90 @@ function AgentChat({ sidebarOpen, onToggleSidebar, conversationId, onTitleUpdate
   );
 }
 
+// ── A single chat strip (thin vertical column) ─────────────────────────────────
+function StripColumn({ conv, number, isActive, onSelect, onDelete, parked, delay = 0, stackIndex = 0 }) {
+  return (
+    <div
+      onClick={() => onSelect(conv._id)}
+      title={conv.title || 'New conversation'}
+      style={parked ? {
+        animationDelay: `${delay}ms`,
+        marginLeft: stackIndex > 0 ? '-32px' : 0, // overlap like stairs (left rail only)
+        zIndex: stackIndex,
+      } : undefined}
+      className={`group relative flex-shrink-0 w-[56px] rounded-[22px] border flex flex-col items-center pt-5 pb-6 cursor-pointer transition-all duration-200 ${parked ? 'animate-strip-park hover:!z-50' : ''} ${
+        isActive
+          ? 'bg-white border-gray-300 shadow-[0_12px_30px_-8px_rgba(0,0,0,0.28)] -translate-y-1'
+          : 'bg-white border-gray-200 shadow-[0_3px_14px_-4px_rgba(0,0,0,0.14)] hover:border-gray-300 hover:shadow-[0_12px_28px_-8px_rgba(0,0,0,0.24)] hover:-translate-y-1'
+      }`}
+    >
+      {/* number badge */}
+      <span className={`flex items-center justify-center w-6 h-6 rounded-full text-[12px] font-black leading-none mb-4 transition-colors ${
+        isActive ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'
+      }`}>
+        {number}
+      </span>
+      {/* chat topic, vertical — black text */}
+      <span
+        className="flex-1 text-[13.5px] font-bold tracking-wide text-gray-900"
+        style={{ writingMode: 'vertical-rl', maxHeight: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+      >
+        {conv.title || 'New conversation'}
+      </span>
+      {/* status dot */}
+      <span className={`mt-4 w-1.5 h-1.5 rounded-full transition-colors ${isActive ? 'bg-gray-900' : 'bg-gray-300'}`} />
+      {/* delete on hover */}
+      <span
+        onClick={e => { e.stopPropagation(); onDelete(conv._id); }}
+        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-gray-300 hover:text-red-500"
+      >
+        <Trash2 className="h-3 w-3" />
+      </span>
+    </div>
+  );
+}
+
+// ── A rail of strips (horizontal row of vertical columns) ──────────────────────
+function StripRail({ items, activeId, onSelect, onDelete, parked, className = '' }) {
+  if (!items.length) return null;
+  return (
+    <div
+      className={`w-full h-full flex items-stretch overflow-x-auto pt-3 pb-7 pl-2 pr-8 ${parked ? '' : 'gap-3.5'} ${className}`}
+      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+    >
+      {items.map(({ conv, idx }, k) => (
+        <StripColumn
+          key={conv._id}
+          conv={conv}
+          number={idx + 1}
+          isActive={activeId === conv._id}
+          onSelect={onSelect}
+          onDelete={onDelete}
+          parked={parked}
+          delay={k * 45}
+          stackIndex={k}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function AgentPage() {
   const { isAuthenticated, loading } = useAuth();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [conversations, setConversations] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+  const [chatAnim, setChatAnim] = useState(null);   // 'open' | null
+
+  // Open a chat: chats before it park on the left, this one opens in the middle.
+  const switchConversation = (id) => {
+    if (id === activeConversationId) return;
+    setActiveConversationId(id);
+    setChatAnim('open');
+    setTimeout(() => setChatAnim(null), 320);
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -1128,28 +1219,83 @@ export default function AgentPage() {
     );
   }
 
+  // Split strips: those BEFORE the open chat park on the left, the rest stay right
+  const activeIndex = conversations.findIndex(c => c._id === activeConversationId);
+  const leftItems  = (activeIndex > 0 ? conversations.slice(0, activeIndex) : [])
+    .map((conv, idx) => ({ conv, idx }));
+  const rightItems = (activeIndex >= 0 ? conversations.slice(activeIndex + 1) : conversations)
+    .map((conv, k) => ({ conv, idx: (activeIndex >= 0 ? activeIndex + 1 : 0) + k }));
+
   return (
-    <div className="flex h-screen bg-white">
-      <ChatSidebar
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-        conversations={conversations}
-        activeId={activeConversationId}
-        onSelect={setActiveConversationId}
-        onNew={handleNewChat}
-        onDelete={handleDeleteConversation}
-        isLoading={isLoadingConversations}
+    <div className="flex h-screen bg-white overflow-hidden">
+      {/* Left: Business dashboard sidebar */}
+      <Sidebar
+        sidebarCollapsed={sidebarCollapsed}
+        setSidebarCollapsed={setSidebarCollapsed}
+        activeItem="karya-ai"
+        setActiveItem={() => {}}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Parked rail — chats opened before the current one (next to the sidebar).
+          Capped width + overlapping strips so the chat barely shifts. */}
+      {leftItems.length > 0 && (
+        <div className="flex-shrink-0 border-r border-gray-100 bg-white overflow-hidden" style={{ width: '150px' }}>
+          <StripRail
+            key={`left-${activeConversationId}`}
+            items={leftItems}
+            activeId={activeConversationId}
+            onSelect={switchConversation}
+            onDelete={handleDeleteConversation}
+            parked
+          />
+        </div>
+      )}
+
+      {/* Center: TopNavbar + Chat (shifts right when strips are parked) */}
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <TopNavbar />
-        <AgentChat
-          sidebarOpen={sidebarOpen}
-          onToggleSidebar={() => setSidebarOpen(true)}
-          conversationId={activeConversationId}
-          onTitleUpdate={handleTitleUpdate}
-          onConversationCreated={handleConversationCreated}
-        />
+        <div className="relative flex-1 min-h-0 overflow-hidden">
+          <div className={`h-full flex flex-col ${chatAnim === 'open' ? 'animate-chat-open' : ''}`}>
+            <AgentChat
+              sidebarOpen={true}
+              onToggleSidebar={() => {}}
+              conversationId={activeConversationId}
+              onTitleUpdate={handleTitleUpdate}
+              onConversationCreated={handleConversationCreated}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Right rail — New button + the remaining chats */}
+      <div className="flex-shrink-0 flex flex-col bg-white" style={{ width: '280px' }}>
+        <div className="px-4 pt-4 pb-1 flex items-center justify-end">
+          <button
+            onClick={handleNewChat}
+            className="flex items-center gap-1.5 text-[12px] font-bold text-blue-600 hover:text-white border border-blue-200 hover:bg-blue-600 hover:border-blue-600 px-3 py-1.5 rounded-lg transition-all"
+          >
+            <Plus className="h-3.5 w-3.5" /> New
+          </button>
+        </div>
+        {isLoadingConversations ? (
+          <div className="flex items-center justify-center flex-1 px-6">
+            <Loader2 className="h-5 w-5 text-gray-300 animate-spin" />
+          </div>
+        ) : conversations.length === 0 ? (
+          <div className="flex flex-col items-center justify-center flex-1 px-6 text-center">
+            <MessageSquare className="h-7 w-7 text-gray-200 mb-2" />
+            <p className="text-xs text-gray-400">No chats yet</p>
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <StripRail
+              items={rightItems}
+              activeId={activeConversationId}
+              onSelect={switchConversation}
+              onDelete={handleDeleteConversation}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

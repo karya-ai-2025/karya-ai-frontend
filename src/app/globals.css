@@ -1,4 +1,55 @@
 @import "tailwindcss";
+
+/* ===== PLATFORM THEME OVERRIDE (revertable) ===== */
+/* Palette: "Teal" — #2b6777 (primary) · #52ab98 (secondary/mint) · #c8d8e4
+   (pale-blue light accent) · #f2f2f2 / #ffffff (neutrals).
+   - TEAL ramp replaces blue/indigo/violet/purple/fuchsia/sky/cyan/red/rose/pink.
+   - MINT ramp replaces emerald/green/teal/lime/amber/orange/yellow.
+   - GREY ramp replaces gray/slate/zinc/neutral.
+   Font: Plus Jakarta Sans. */
+@theme {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* ── TEAL #2b6777 (primary) · #c8d8e4 = the 200 light tint ───────────── */
+  --color-blue-50:#eef4f6;--color-indigo-50:#eef4f6;--color-violet-50:#eef4f6;--color-purple-50:#eef4f6;--color-fuchsia-50:#eef4f6;--color-sky-50:#eef4f6;--color-cyan-50:#eef4f6;--color-red-50:#eef4f6;--color-rose-50:#eef4f6;--color-pink-50:#eef4f6;
+  --color-blue-100:#d8e6ec;--color-indigo-100:#d8e6ec;--color-violet-100:#d8e6ec;--color-purple-100:#d8e6ec;--color-fuchsia-100:#d8e6ec;--color-sky-100:#d8e6ec;--color-cyan-100:#d8e6ec;--color-red-100:#d8e6ec;--color-rose-100:#d8e6ec;--color-pink-100:#d8e6ec;
+  --color-blue-200:#c8d8e4;--color-indigo-200:#c8d8e4;--color-violet-200:#c8d8e4;--color-purple-200:#c8d8e4;--color-fuchsia-200:#c8d8e4;--color-sky-200:#c8d8e4;--color-cyan-200:#c8d8e4;--color-red-200:#c8d8e4;--color-rose-200:#c8d8e4;--color-pink-200:#c8d8e4;
+  --color-blue-300:#9fbecb;--color-indigo-300:#9fbecb;--color-violet-300:#9fbecb;--color-purple-300:#9fbecb;--color-fuchsia-300:#9fbecb;--color-sky-300:#9fbecb;--color-cyan-300:#9fbecb;--color-red-300:#9fbecb;--color-rose-300:#9fbecb;--color-pink-300:#9fbecb;
+  --color-blue-400:#5f93a4;--color-indigo-400:#5f93a4;--color-violet-400:#5f93a4;--color-purple-400:#5f93a4;--color-fuchsia-400:#5f93a4;--color-sky-400:#5f93a4;--color-cyan-400:#5f93a4;--color-red-400:#5f93a4;--color-rose-400:#5f93a4;--color-pink-400:#5f93a4;
+  --color-blue-500:#36768a;--color-indigo-500:#36768a;--color-violet-500:#36768a;--color-purple-500:#36768a;--color-fuchsia-500:#36768a;--color-sky-500:#36768a;--color-cyan-500:#36768a;--color-red-500:#36768a;--color-rose-500:#36768a;--color-pink-500:#36768a;
+  --color-blue-600:#2b6777;--color-indigo-600:#2b6777;--color-violet-600:#2b6777;--color-purple-600:#2b6777;--color-fuchsia-600:#2b6777;--color-sky-600:#2b6777;--color-cyan-600:#2b6777;--color-red-600:#2b6777;--color-rose-600:#2b6777;--color-pink-600:#2b6777;
+  --color-blue-700:#245460;--color-indigo-700:#245460;--color-violet-700:#245460;--color-purple-700:#245460;--color-fuchsia-700:#245460;--color-sky-700:#245460;--color-cyan-700:#245460;--color-red-700:#245460;--color-rose-700:#245460;--color-pink-700:#245460;
+  --color-blue-800:#21454f;--color-indigo-800:#21454f;--color-violet-800:#21454f;--color-purple-800:#21454f;--color-fuchsia-800:#21454f;--color-sky-800:#21454f;--color-cyan-800:#21454f;--color-red-800:#21454f;--color-rose-800:#21454f;--color-pink-800:#21454f;
+  --color-blue-900:#1e3a43;--color-indigo-900:#1e3a43;--color-violet-900:#1e3a43;--color-purple-900:#1e3a43;--color-fuchsia-900:#1e3a43;--color-sky-900:#1e3a43;--color-cyan-900:#1e3a43;--color-red-900:#1e3a43;--color-rose-900:#1e3a43;--color-pink-900:#1e3a43;
+  --color-blue-950:#11242b;--color-indigo-950:#11242b;--color-violet-950:#11242b;--color-purple-950:#11242b;--color-fuchsia-950:#11242b;--color-sky-950:#11242b;--color-cyan-950:#11242b;--color-red-950:#11242b;--color-rose-950:#11242b;--color-pink-950:#11242b;
+
+  /* ── MINT #52ab98 (secondary / positive) ────────────────────────────── */
+  --color-emerald-50:#eef7f4;--color-green-50:#eef7f4;--color-teal-50:#eef7f4;--color-lime-50:#eef7f4;--color-amber-50:#eef7f4;--color-orange-50:#eef7f4;--color-yellow-50:#eef7f4;
+  --color-emerald-100:#d6ede7;--color-green-100:#d6ede7;--color-teal-100:#d6ede7;--color-lime-100:#d6ede7;--color-amber-100:#d6ede7;--color-orange-100:#d6ede7;--color-yellow-100:#d6ede7;
+  --color-emerald-200:#aedccf;--color-green-200:#aedccf;--color-teal-200:#aedccf;--color-lime-200:#aedccf;--color-amber-200:#aedccf;--color-orange-200:#aedccf;--color-yellow-200:#aedccf;
+  --color-emerald-300:#7fc4b2;--color-green-300:#7fc4b2;--color-teal-300:#7fc4b2;--color-lime-300:#7fc4b2;--color-amber-300:#7fc4b2;--color-orange-300:#7fc4b2;--color-yellow-300:#7fc4b2;
+  --color-emerald-400:#52ab98;--color-green-400:#52ab98;--color-teal-400:#52ab98;--color-lime-400:#52ab98;--color-amber-400:#52ab98;--color-orange-400:#52ab98;--color-yellow-400:#52ab98;
+  --color-emerald-500:#3f9684;--color-green-500:#3f9684;--color-teal-500:#3f9684;--color-lime-500:#3f9684;--color-amber-500:#3f9684;--color-orange-500:#3f9684;--color-yellow-500:#3f9684;
+  --color-emerald-600:#347b6d;--color-green-600:#347b6d;--color-teal-600:#347b6d;--color-lime-600:#347b6d;--color-amber-600:#347b6d;--color-orange-600:#347b6d;--color-yellow-600:#347b6d;
+  --color-emerald-700:#2d6258;--color-green-700:#2d6258;--color-teal-700:#2d6258;--color-lime-700:#2d6258;--color-amber-700:#2d6258;--color-orange-700:#2d6258;--color-yellow-700:#2d6258;
+  --color-emerald-800:#285047;--color-green-800:#285047;--color-teal-800:#285047;--color-lime-800:#285047;--color-amber-800:#285047;--color-orange-800:#285047;--color-yellow-800:#285047;
+  --color-emerald-900:#23433c;--color-green-900:#23433c;--color-teal-900:#23433c;--color-lime-900:#23433c;--color-amber-900:#23433c;--color-orange-900:#23433c;--color-yellow-900:#23433c;
+  --color-emerald-950:#11241f;--color-green-950:#11241f;--color-teal-950:#11241f;--color-lime-950:#11241f;--color-amber-950:#11241f;--color-orange-950:#11241f;--color-yellow-950:#11241f;
+
+  /* ── GREY (#f2f2f2 light → neutral dark) ─────────────────────────────── */
+  --color-gray-50:#f7f8f9;--color-slate-50:#f7f8f9;--color-zinc-50:#f7f8f9;--color-neutral-50:#f7f8f9;
+  --color-gray-100:#f2f2f2;--color-slate-100:#f2f2f2;--color-zinc-100:#f2f2f2;--color-neutral-100:#f2f2f2;
+  --color-gray-200:#e6e7e9;--color-slate-200:#e6e7e9;--color-zinc-200:#e6e7e9;--color-neutral-200:#e6e7e9;
+  --color-gray-300:#d4d6d9;--color-slate-300:#d4d6d9;--color-zinc-300:#d4d6d9;--color-neutral-300:#d4d6d9;
+  --color-gray-400:#a9adb3;--color-slate-400:#a9adb3;--color-zinc-400:#a9adb3;--color-neutral-400:#a9adb3;
+  --color-gray-500:#80858c;--color-slate-500:#80858c;--color-zinc-500:#80858c;--color-neutral-500:#80858c;
+  --color-gray-600:#5f646b;--color-slate-600:#5f646b;--color-zinc-600:#5f646b;--color-neutral-600:#5f646b;
+  --color-gray-700:#474b51;--color-slate-700:#474b51;--color-zinc-700:#474b51;--color-neutral-700:#474b51;
+  --color-gray-800:#33363b;--color-slate-800:#33363b;--color-zinc-800:#33363b;--color-neutral-800:#33363b;
+  --color-gray-900:#1f2125;--color-slate-900:#1f2125;--color-zinc-900:#1f2125;--color-neutral-900:#1f2125;
+  --color-gray-950:#131417;--color-slate-950:#131417;--color-zinc-950:#131417;--color-neutral-950:#131417;
+}
+/* ===== END PLATFORM THEME OVERRIDE ===== */
 @plugin "@tailwindcss/typography";
 
 /* ============================================ */
@@ -502,6 +553,33 @@ html {
 /* Background size utility */
 .bg-size-200 {
   background-size: 200% 200%;
+}
+
+/* Agent chat switch — the chats before the opened one park on the left (slide in
+   from the right and settle), while the opened chat fades in. */
+@keyframes stripParkLeft {
+  0%   { transform: translateX(70px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+.animate-strip-park {
+  animation: stripParkLeft 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes chatShutterOpen {
+  0%   { opacity: 0; transform: scale(0.97); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-chat-open {
+  animation: chatShutterOpen 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* GTM Orchestrator drawer — slide in from the right */
+@keyframes orchSlideIn {
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(0); }
+}
+.animate-orch-in {
+  animation: orchSlideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Carousel progress bar */
