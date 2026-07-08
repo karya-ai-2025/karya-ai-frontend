@@ -16,9 +16,13 @@ import {
   Target,
   Package
 } from 'lucide-react';
-import { getPlans, getPackagesByPlan } from '@/services/planService';
+import { getPlans, getPackagesByPlan, simpleUpgrade, checkUserPlanAccess } from '@/services/planService';
 import { useAuth } from '@/contexts/AuthContext';
-import CashfreePaymentGateway from '@/components/payments/CashfreePaymentGateway';
+// ⚠️ TEMP TEST BYPASS: Cashfree checkout is disabled until payment credentials are set.
+// The "Choose plan" button below calls simpleUpgrade() (POST /user/simple-upgrade) to grant
+// credits without payment. To restore real payments, re-enable this import and swap the
+// button back to <CashfreePaymentGateway> (see the marked block in the package card).
+// import CashfreePaymentGateway from '@/components/payments/CashfreePaymentGateway';
 
 const PlanSelection = () => {
   const { user } = useAuth();
@@ -79,6 +83,39 @@ const PlanSelection = () => {
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
     fetchPackages(plan._id);
+  };
+
+  // ⚠️ TEMP TEST BYPASS: grant credits without going through Cashfree.
+  // Calls the existing /user/simple-upgrade endpoint, then refreshes the navbar credits.
+  const handleSimpleUpgrade = async (pkg) => {
+    if (!user || !selectedPlan) {
+      setError('Please login to upgrade your plan');
+      return;
+    }
+    try {
+      setSelectedPackage(pkg);
+      setIsUpgrading(true);
+      setUpgradeSuccess(false);
+      setError('');
+
+      const token = localStorage.getItem('token');
+      await simpleUpgrade(selectedPlan._id, pkg._id, token);
+
+      // Refresh the credit balance shown in the navbar/dashboard.
+      try {
+        const access = await checkUserPlanAccess(token);
+        const remaining = access?.data?.limits?.remainingCredits;
+        if (typeof remaining === 'number') {
+          window.dispatchEvent(new CustomEvent('creditsUpdated', { detail: { remainingCredits: remaining } }));
+        }
+      } catch { /* non-fatal — credits still granted server-side */ }
+
+      setUpgradeSuccess(true);
+    } catch (err) {
+      setError(err.message || 'Failed to upgrade plan. Please try again.');
+    } finally {
+      setIsUpgrading(false);
+    }
   };
 
   const getPlanIcon = (planType) => {
@@ -289,30 +326,12 @@ const PlanSelection = () => {
                         )}
                       </div>
 
-                      {/* Select Button */}
-                      <CashfreePaymentGateway
-                        paymentType="plan_package"
-                        payload={{
-                          planId: selectedPlan._id,
-                          planPackageId: pkg._id
-                        }}
+                      {/* Select Button — ⚠️ TEMP TEST BYPASS (no payment).
+                          Restore the <CashfreePaymentGateway> block to re-enable real checkout. */}
+                      <button
+                        type="button"
+                        onClick={() => handleSimpleUpgrade(pkg)}
                         disabled={isUpgrading || !selectedPlan}
-                        onStart={() => {
-                          if (!user || !selectedPlan) {
-                            setError('Please login to upgrade your plan');
-                            return false;
-                          }
-                          setSelectedPackage(pkg);
-                          setIsUpgrading(true);
-                          setUpgradeSuccess(false);
-                          setError('');
-                          return true;
-                        }}
-                        onError={(message) => {
-                          setError(message || 'Failed to start payment. Please try again.');
-                          setIsUpgrading(false);
-                          setSelectedPackage(null);
-                        }}
                         className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors cursor-pointer flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                           upgradeSuccess && selectedPackage?._id === pkg._id
                             ? 'bg-green-600 text-white'
@@ -323,26 +342,24 @@ const PlanSelection = () => {
                             : 'bg-gray-900 text-white hover:bg-gray-800'
                         }`}
                       >
-                        {({ isProcessing }) => (
-                          isProcessing || (isUpgrading && selectedPackage?._id === pkg._id) ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              <span>Opening checkout...</span>
-                            </>
-                          ) : upgradeSuccess && selectedPackage?._id === pkg._id ? (
-                            <>
-                              <Check className="h-4 w-4" />
-                              <span>Upgraded!</span>
-                            </>
-                          ) : (
-                            <>
-                              <CreditCard className="h-4 w-4" />
-                              <span>Choose {pkg.name}</span>
-                              <ArrowRight className="h-4 w-4" />
-                            </>
-                          )
+                        {isUpgrading && selectedPackage?._id === pkg._id ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Activating...</span>
+                          </>
+                        ) : upgradeSuccess && selectedPackage?._id === pkg._id ? (
+                          <>
+                            <Check className="h-4 w-4" />
+                            <span>Upgraded!</span>
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="h-4 w-4" />
+                            <span>Choose {pkg.name}</span>
+                            <ArrowRight className="h-4 w-4" />
+                          </>
                         )}
-                      </CashfreePaymentGateway>
+                      </button>
                     </div>
                   </div>
                 );

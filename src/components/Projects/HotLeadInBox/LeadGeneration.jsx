@@ -18,10 +18,30 @@ import {
   AlertCircle,
   Zap,
   Download,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 import { getIndustries } from '../../../services/industriesApi';
 import { useAuth } from '@/contexts/AuthContext';
+
+// The backend returns leads using the raw DB column names (with spaces), e.g. "First Name".
+// The table/CSV read underscore keys (First_Name). Map the spaced columns onto those keys
+// (keeping the originals too) so the UI works regardless of which naming the API uses.
+function normalizeLead(l = {}) {
+  return {
+    ...l,
+    First_Name:          l.First_Name          ?? l['First Name']          ?? '',
+    Last_Name:           l.Last_Name           ?? l['Last Name']           ?? '',
+    Account_Name:        l.Account_Name        ?? l['Account Name']        ?? '',
+    GTM_Industry:        l.GTM_Industry        ?? l['GTM Industry']        ?? '',
+    Mailing_Country:     l.Mailing_Country     ?? l['Mailing Country']     ?? '',
+    Account_Sub_Segment: l.Account_Sub_Segment ?? l['Account Sub Segment'] ?? '',
+    title:               l.title  ?? '',
+    email:               l.email  ?? '',
+    phone:               l.phone  ?? '',
+    mobile:              l.mobile ?? '',
+  };
+}
 
 export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, injectedResult }) {
   const { user, getAuthHeader } = useAuth();
@@ -44,6 +64,9 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
   const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage] = useState(20); // Fixed at 20 items per page
   const [pageDropdownOpen, setPageDropdownOpen] = useState(false);
+  const [cursor, setCursor] = useState(null);      // backend keyset cursor (nextCursor)
+  const [hasMore, setHasMore] = useState(false);   // backend has more leads beyond the loaded buffer
+  const [loadingMore, setLoadingMore] = useState(false);
 
 
 
@@ -75,7 +98,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
   // Handles real DB results (and an empty result set → native "no leads" state).
   useEffect(() => {
     if (injectedResult && Array.isArray(injectedResult.leads)) {
-      const list = injectedResult.leads;
+      const list = injectedResult.leads.map(normalizeLead);
       if (injectedResult.criteria) {
         setSearchCriteria((prev) => ({ ...prev, ...injectedResult.criteria }));
       }
@@ -87,6 +110,8 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
         matched: injectedResult.matched ?? list.length,
         available: injectedResult.available ?? list.length,
       });
+      setCursor(injectedResult.nextCursor ?? null);
+      setHasMore(!!injectedResult.hasMore);
       setVisibleEmails(new Set());
       setVisiblePhones(new Set());
       setSelectedLeads(new Set());
@@ -568,7 +593,9 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeader(),
         },
+        credentials: 'include',
         body: JSON.stringify({
           ...searchCriteria,
           downloadFormat: downloadFormat,
@@ -580,7 +607,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
       const data = await response.json();
 
       if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-        return data.data;
+        return data.data.map(normalizeLead);
       }
     } catch (error) {
       console.error('Error fetching leads for download:', error);
@@ -796,30 +823,35 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...getAuthHeader(),
           },
-          body: JSON.stringify(searchCriteria),
+          credentials: 'include',
+          body: JSON.stringify({ ...searchCriteria, cursor: null, limit: 100 }),
         });
 
         const data = await response.json();
         console.log('API Response received:', data);
 
         if (data.success) {
-          // Store all leads for client-side pagination
-          setAllLeads(data.data);
+          // Normalize the backend's column names, then store for client-side pagination
+          const normalized = (data.data || []).map(normalizeLead);
+          setAllLeads(normalized);
 
           // Calculate pagination based on total leads received
-          const totalLeads = data.data.length;
+          const totalLeads = normalized.length;
           const pages = Math.ceil(totalLeads / itemsPerPage);
           setTotalPages(pages);
 
           // Set current page leads (first page)
-          const currentPageLeads = data.data.slice(0, itemsPerPage);
+          const currentPageLeads = normalized.slice(0, itemsPerPage);
           setLeads(currentPageLeads);
 
           setSearchStats({
-            matched: data.pagination?.totalMatched || totalLeads,
-            available: data.pagination?.totalAvailable || totalLeads
+            matched: data.totalMatched ?? data.pagination?.totalMatched ?? totalLeads,
+            available: data.totalMatched ?? data.pagination?.totalAvailable ?? totalLeads
           });
+          setCursor(data.nextCursor ?? null);
+          setHasMore(!!data.hasMore);
 
           setCurrentPage(1);
           setVisibleEmails(new Set());
@@ -876,10 +908,40 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
     }
   };
 
-  // Handle next page
-  const handleNextPage = () => {
+  // Fetch the next batch from the backend using the keyset cursor, append it to the buffer.
+  const loadNextBatch = async () => {
+    if (!hasMore || loadingMore) return false;
+    setLoadingMore(true);
+    try {
+      const response = await fetch(`${apiBaseUrl}/leads/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        credentials: 'include',
+        body: JSON.stringify({ ...searchCriteria, cursor, limit: 100 }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        const normalized = (data.data || []).map(normalizeLead);
+        setAllLeads((prev) => [...prev, ...normalized]);
+        setCursor(data.nextCursor ?? null);
+        setHasMore(!!data.hasMore);
+        return normalized.length > 0;
+      }
+    } catch (error) {
+      console.error('Error loading more leads:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+    return false;
+  };
+
+  // Handle next page — page within the loaded buffer, or fetch the next batch when at the end.
+  const handleNextPage = async () => {
     if (currentPage < totalPages) {
       handlePageChange(currentPage + 1);
+    } else if (hasMore && !loadingMore) {
+      const got = await loadNextBatch();
+      if (got) setCurrentPage((p) => p + 1);
     }
   };
 
@@ -1329,7 +1391,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
           )}
 
           {/* Pagination Controls - Below Table */}
-          {totalPages > 1 && (
+          {(totalPages > 1 || hasMore) && (
             <div className="px-6 py-1.5 bg-gray-50 border-t border-gray-200">
               <div className="flex items-center justify-center space-x-4">
                 <div className="flex items-center space-x-2">
@@ -1375,16 +1437,18 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
                   {/* Next Button */}
                   <button
                     onClick={handleNextPage}
-                    disabled={currentPage >= totalPages}
+                    disabled={(currentPage >= totalPages && !hasMore) || loadingMore}
                     className="p-1 rounded-md border border-gray-300 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <ChevronRight className="w-4 h-4 text-gray-600" />
+                    {loadingMore
+                      ? <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
+                      : <ChevronRight className="w-4 h-4 text-gray-600" />}
                   </button>
                 </div>
 
                 {/* Page Information - right side */}
                 <div className="text-sm text-gray-700">
-                  Page {currentPage} of {totalPages}
+                  Page {currentPage} of {totalPages}{hasMore ? '+' : ''}
                 </div>
               </div>
             </div>

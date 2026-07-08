@@ -32,6 +32,7 @@ import { PROJECT_TAB_ACCESS } from '../index';
 import AgentPanel, { LEAD_PLAYBOOK, EMAIL_PLAYBOOK } from '../AgentPanel';
 import { Sparkles } from 'lucide-react';
 import { getIndustries } from '../../../services/industriesApi';
+import { getRegions, getSegments, getSeniority } from '../../../services/leadFiltersApi';
 
 const hotLeadScrollbarStyles = `
   .hotlead-page-scroll::-webkit-scrollbar {
@@ -168,8 +169,13 @@ export default function HotLeadInBox({ projectMetadata, projectSlug }) {
   const [draftBusy, setDraftBusy]   = useState(false);
   const [draftNotice, setDraftNotice] = useState(null); // confirmation after "request expert"
   const [prefillTemplate, setPrefillTemplate] = useState(null); // saved email → campaign builder
+  const [prefillName, setPrefillName] = useState(''); // campaign name collected in the AI flow
 
   const [industries, setIndustries] = useState([]); // real industries from Postgres for the lead playbook
+  const [regions, setRegions]     = useState([]);   // refinement lookups (region/segment/seniority)
+  const [segments, setSegments]   = useState([]);
+  const [seniority, setSeniority] = useState([]);
+  const [leadCriteria, setLeadCriteria] = useState({}); // accumulated filters, for progressive refinement
 
   const openAgent = (mode) => {
     setAgentMode(mode);
@@ -186,6 +192,18 @@ export default function HotLeadInBox({ projectMetadata, projectSlug }) {
     return () => { active = false; };
   }, []);
 
+  // Load the refinement lookups (regions / segments / seniority) for the agent's suggestions.
+  useEffect(() => {
+    let active = true;
+    Promise.allSettled([getRegions(), getSegments(), getSeniority()]).then(([r, s, se]) => {
+      if (!active) return;
+      if (r.status === 'fulfilled')  setRegions(r.value || []);
+      if (s.status === 'fulfilled')  setSegments(s.value || []);
+      if (se.status === 'fulfilled') setSeniority(se.value || []);
+    });
+    return () => { active = false; };
+  }, []);
+
   // Lead playbook with real industry chips (so the search returns real contacts).
   const leadPlaybook = useMemo(() => {
     if (!industries.length) return LEAD_PLAYBOOK;
@@ -198,8 +216,30 @@ export default function HotLeadInBox({ projectMetadata, projectSlug }) {
     };
   }, [industries]);
 
-  // When the assistant finishes its Q&A: run the REAL Postgres lead search and
-  // surface the matching contacts in the native Leads results box.
+  // Run the REAL Postgres lead search for a given criteria object (fresh keyset: cursor 0)
+  // and surface results in the native Leads box. Shared by the first search and refinements.
+  const runLeadSearch = async (criteria) => {
+    const res = await fetch(`${apiBaseUrl}/leads/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+      credentials: 'include',
+      // Only send the keys the backend knows; all are lowercase values, never display names.
+      body: JSON.stringify({ ...criteria, cursor: 0, limit: 100 }),
+    });
+    const data = await res.json();
+    setAgentResult({
+      criteria,
+      leads: data.success ? (data.data || []) : [],
+      matched: data.totalMatched ?? data.pagination?.totalMatched,
+      available: data.totalMatched ?? data.pagination?.totalAvailable,
+      nextCursor: data.nextCursor ?? null,
+      hasMore: !!data.hasMore,
+    });
+    return data;
+  };
+
+  // When the assistant finishes its Q&A: build the initial criteria, run the search,
+  // and KEEP the panel open so the user can refine ("only decision makers", "in apac", …).
   const handleAgentComplete = async (answers) => {
     const a = answers || {};
     // Map the chosen industry label back to its API value (slug); fall back to raw text.
@@ -207,27 +247,26 @@ export default function HotLeadInBox({ projectMetadata, projectSlug }) {
     const industry = match?.value || a.industry || '';
 
     setActiveTab('leads');
+    const criteria = { industry, company: '', companySegment: '', location: '', segment: '', seniority: '' };
+    setLeadCriteria(criteria);
 
     try {
-      const res = await fetch(`${apiBaseUrl}/leads/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // Industry is the reliable filter against the DB; segment/location use
-        // strict matching, so we leave them blank to guarantee real results.
-        body: JSON.stringify({ industry, company: '', companySegment: '', location: '' }),
-      });
-      const data = await res.json();
-      setAgentResult({
-        criteria: { industry: match?.value || industry, companySegment: '', location: '' },
-        leads: data.success ? (data.data || []) : [],
-        matched: data.pagination?.totalMatched,
-        available: data.pagination?.totalAvailable,
-      });
+      await runLeadSearch(criteria);
     } catch (e) {
       console.error('Lead search failed:', e);
-      setAgentResult({ criteria: { industry }, leads: [] });
-    } finally {
-      setTimeout(() => setAgentOpen(false), 600);
+      setAgentResult({ criteria, leads: [] });
+    }
+  };
+
+  // Apply a refinement from the agent (e.g. { seniority: 'decision maker' } or { location: 'apac' }).
+  // Merge it into the running criteria and re-query from the top (cursor 0).
+  const handleRefine = async (patch) => {
+    const merged = { ...leadCriteria, ...patch };
+    setLeadCriteria(merged);
+    try {
+      await runLeadSearch(merged);
+    } catch (e) {
+      console.error('Refine failed:', e);
     }
   };
 
@@ -281,7 +320,8 @@ export default function HotLeadInBox({ projectMetadata, projectSlug }) {
       setDraftBusy(true);
       const tmpl = await saveEmailAsTemplate(emailDraft);
       setPrefillTemplate(tmpl);
-      setEmailDraft(null); // → CreateCampaign renders, pre-filled with this template
+      setPrefillName(emailDraft._answers?.campaignName || ''); // carry the name into the builder
+      setEmailDraft(null); // → CreateCampaign renders, pre-filled with this template (jumps to Select Leads)
     } catch (e) {
       console.error('save template failed', e);
       alert('Could not save the email. Please try again.');
@@ -964,6 +1004,8 @@ export default function HotLeadInBox({ projectMetadata, projectSlug }) {
           draftNotice={draftNotice}
           onClearDraft={() => { setDraftNotice(null); setEmailDraft(null); }}
           initialTemplate={prefillTemplate}
+          initialName={prefillName}
+          onResetPrefill={() => { setPrefillTemplate(null); setPrefillName(''); }}
         />;
       default:
         return <div className="text-center py-12 text-gray-500">Feature coming soon...</div>;
@@ -1060,6 +1102,8 @@ export default function HotLeadInBox({ projectMetadata, projectSlug }) {
         onEmailDraftReady={handleEmailDraftReady}
         playbook={agentMode === 'email' ? EMAIL_PLAYBOOK : leadPlaybook}
         projectName={projectMetadata?.name}
+        refineOptions={{ regions, segments, seniority }}
+        onRefine={handleRefine}
       />
 
       {/* Floating launcher — toggles the assistant; shifts left when the panel is open */}

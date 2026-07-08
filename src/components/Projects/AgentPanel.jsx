@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Sparkles, X, Send } from 'lucide-react';
 
 /**
@@ -36,6 +36,7 @@ export const EMAIL_PLAYBOOK = {
   intro:
     "Hi! I'll write your outbound email. Answer a few quick questions and I'll draft it for your review.",
   steps: [
+    { id: 'campaignName', question: 'First, what should we name this campaign? (this is how it appears in your dashboard so you can start it later)' },
     { id: 'tone', question: 'What tone / voice should the email have?', chips: ['Friendly', 'Professional', 'Direct', 'Playful'] },
     { id: 'company', question: "What's your company name?" },
     { id: 'audience', question: 'Who are you emailing? (target audience)', chips: ['Founders', 'Marketing leaders', 'Sales leaders', 'Engineers'] },
@@ -62,12 +63,15 @@ export default function AgentPanel({
   onEmailDraftReady,
   playbook = LEAD_PLAYBOOK,
   projectName,
+  refineOptions = {},   // { regions, segments, seniority } — drives post-search refinement chips
+  onRefine,             // (patch) => parent re-queries /leads/generate with the added filter
 }) {
   const [messages, setMessages] = useState([]); // { role, text }
   const [stepIndex, setStepIndex] = useState(-1);
   const [typing, setTyping] = useState(false);
   const [input, setInput] = useState('');
   const [phase, setPhase] = useState('qa'); // qa | leads-done | drafting | email-done | draft-error
+  const [refineUsed, setRefineUsed] = useState({}); // which dimensions are already applied
 
   const scrollRef = useRef(null);
   const startedRef = useRef(false);
@@ -93,6 +97,52 @@ export default function AgentPanel({
   const pushAgent = (msg) => setMessages((prev) => [...prev, { role: 'agent', ...msg }]);
   const pushUser = (text) => setMessages((prev) => [...prev, { role: 'user', text }]);
 
+  // ── Post-search refinement (lead mode only) ────────────────────────────────
+  const refineActive = phase === 'leads-done' && !isEmail;
+
+  // Suggestion chips, built from the DB lookups, minus dimensions already applied.
+  const refineSuggestions = useMemo(() => {
+    if (isEmail) return [];
+    const out = [];
+    if (!refineUsed.seniority) (refineOptions?.seniority || []).slice(0, 3).forEach((o) =>
+      out.push({ field: 'seniority', value: o.level_name,   label: o.display_name, chip: `Only ${o.display_name}` }));
+    if (!refineUsed.location)  (refineOptions?.regions  || []).slice(0, 4).forEach((o) =>
+      out.push({ field: 'location',  value: o.region_name,  label: o.display_name, chip: `In ${o.display_name}` }));
+    if (!refineUsed.segment)   (refineOptions?.segments || []).slice(0, 3).forEach((o) =>
+      out.push({ field: 'segment',   value: o.segment_name, label: o.display_name, chip: `Only ${o.display_name}` }));
+    return out;
+  }, [isEmail, refineUsed, refineOptions]);
+
+  // All known options (incl. applied) — used to map free text like "only decision makers".
+  const allRefineOptions = () => ([
+    ...(refineOptions?.seniority || []).map((o) => ({ field: 'seniority', value: o.level_name,   label: o.display_name })),
+    ...(refineOptions?.regions  || []).map((o) => ({ field: 'location',  value: o.region_name,  label: o.display_name })),
+    ...(refineOptions?.segments || []).map((o) => ({ field: 'segment',   value: o.segment_name, label: o.display_name })),
+  ]);
+
+  // Apply one refinement: mark its dimension used, ask the parent to re-query, confirm.
+  // IMPORTANT: send the lowercase value (level_name/region_name/segment_name), never the label.
+  const commitRefine = (opt) => {
+    setRefineUsed((prev) => ({ ...prev, [opt.field]: true }));
+    onRefine?.({ [opt.field]: opt.value });
+    pushAgent({ text: `Done — narrowed to ${opt.label}. Updated leads are in the results →` });
+  };
+
+  const handleRefineChip = (opt) => {
+    pushUser(opt.chip || opt.label);
+    commitRefine(opt);
+  };
+
+  const submitRefineText = (text) => {
+    pushUser(text);
+    const t = text.toLowerCase();
+    const opt = allRefineOptions().find(
+      (o) => t.includes(String(o.value).toLowerCase()) || t.includes(String(o.label).toLowerCase())
+    );
+    if (opt) commitRefine(opt);
+    else pushAgent({ text: 'I can narrow by seniority, segment, or region — tap a suggestion below, or try e.g. "only decision makers" or "in apac".' });
+  };
+
   const askStep = (index) => {
     setTyping(true);
     setTimeout(() => {
@@ -112,7 +162,7 @@ export default function AgentPanel({
       pushAgent({ text: 'Great — drafting your email now…' });
       generateDraft();
     } else {
-      pushAgent({ text: "Perfect — I've pulled your matching contacts into the Leads page. Opening it now →" });
+      pushAgent({ text: "Perfect — I've pulled your matching contacts into the Leads page. Want to narrow them down? Tap a suggestion below, or tell me — e.g. \"only decision makers\" or \"in apac\"." });
       setPhase('leads-done');
       onComplete?.(answersRef.current);
     }
@@ -148,13 +198,15 @@ export default function AgentPanel({
   const handleSend = (e) => {
     e?.preventDefault?.();
     const text = input.trim();
-    if (!text || phase !== 'qa' || !currentStep) return;
-    submitAnswer(text);
+    if (!text) return;
+    if (phase === 'qa' && currentStep) { submitAnswer(text); return; }
+    if (refineActive) { setInput(''); submitRefineText(text); return; }
   };
 
-  const inputActive = phase === 'qa' && currentStep;
+  const inputActive = (phase === 'qa' && currentStep) || refineActive;
   const inputPlaceholder =
     phase === 'qa' && currentStep ? 'Type your answer…'
+    : refineActive ? 'Refine, e.g. “only decision makers”'
     : phase === 'email-done' ? 'Draft ready — see the middle'
     : phase === 'leads-done' ? 'Conversation complete'
     : 'Working…';
@@ -223,6 +275,24 @@ export default function AgentPanel({
               {chip}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Refinement suggestions — after leads are pulled (lead mode) */}
+      {refineActive && refineSuggestions.length > 0 && !typing && (
+        <div className="border-t border-gray-100 px-4 pt-3">
+          <p className="text-[11px] font-medium text-gray-500 mb-2">Narrow these down</p>
+          <div className="flex flex-wrap gap-2">
+            {refineSuggestions.map((s) => (
+              <button
+                key={s.field + s.value}
+                onClick={() => handleRefineChip(s)}
+                className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+              >
+                {s.chip}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

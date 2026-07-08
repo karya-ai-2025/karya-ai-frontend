@@ -22,6 +22,14 @@ export async function getAzureAnalytics() {
   return json.data;
 }
 
+// Product analytics (MongoDB) — one helper per dashboard section.
+export async function getProductAnalytics(section, query = '') {
+  const res  = await fetch(`${API_URL}/admin/analytics/${section}${query}`, { headers: authHeaders() });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || `Failed to fetch analytics: ${section}`);
+  return json.data;
+}
+
 export async function createCatalogProject(payload) {
   const res  = await fetch(`${API_URL}/admin/catalog`, {
     method:  'POST',

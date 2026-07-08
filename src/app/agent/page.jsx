@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
+import NextLink from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import TopNavbar from '@/components/TopNavbar';
 import ReactMarkdown from 'react-markdown';
@@ -22,10 +23,20 @@ import {
   BarChart3,
   Link,
   ChevronRight,
+  Users,
+  Mail,
+  Send,
+  FileSpreadsheet,
+  UserCheck,
+  Lock,
+  ArrowUpRight,
 } from 'lucide-react';
 import * as conversationApi from '@/services/conversationApi';
 import * as agentApi from '@/services/agentApi';
 import Sidebar from '@/components/Sidebar';
+import LeadsWorkspace from '@/components/LeadsWorkspace';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 function KaryaLogo({ size = 28, className = '' }) {
   return (
@@ -563,6 +574,286 @@ function ProjectMatchPrompt({ uiRequest }) {
   );
 }
 
+function LeadsPreviewPrompt({ uiRequest, onChoose, disabled }) {
+  if (uiRequest?.type !== 'leads_preview') return null;
+
+  const nextActions = Array.isArray(uiRequest.nextActions) ? uiRequest.nextActions : [];
+  const total = uiRequest.totalMatched ?? (uiRequest.leads?.length || 0);
+
+  // Map the compact button values to natural-language messages the agent understands
+  const messageFor = (action) => {
+    switch (action.value) {
+      case 'get_more_leads': return 'Give me the full lead list';
+      case 'save_leads':     return 'Save these leads to my library';
+      case 'refine_leads':   return 'Refine these leads further';
+      case 'email_campaign': return 'Build an email outreach sequence for these leads';
+      case 'generate_plan':  return 'Create a 90-day outreach plan for these leads';
+      default:               return action.label;
+    }
+  };
+
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex items-center gap-2.5">
+        <div className="rounded-lg bg-blue-50 p-1.5 text-blue-700">
+          <Users className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Leads ready
+          </p>
+          <p className="text-sm font-medium text-gray-900">
+            {Number(total).toLocaleString()} contacts — shown in the table
+          </p>
+        </div>
+      </div>
+
+      {nextActions.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {nextActions.map((action) => (
+            <button
+              key={action.value}
+              type="button"
+              onClick={() => onChoose(messageFor(action))}
+              disabled={disabled}
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BuyProjectPrompt({ uiRequest }) {
+  if (uiRequest?.type !== 'buy_project') return null;
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-[#E5E2D8] bg-[#FCEDE4] p-3">
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 rounded-lg bg-white p-1.5 text-[#D44A1C]">
+          <Lock className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#6B6962]">Locked feature</p>
+          <p className="mt-1 text-sm text-[#15140F]">
+            To {uiRequest.feature}, you need the <span className="font-semibold">{uiRequest.projectName}</span> project.
+          </p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <NextLink
+          href={uiRequest.marketplaceUrl || '/project-marketplace'}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[#D44A1C] px-3 py-2 text-xs font-semibold text-white hover:bg-[#C04018]"
+        >
+          <ArrowUpRight className="h-3.5 w-3.5" />
+          Buy this project
+        </NextLink>
+      </div>
+    </div>
+  );
+}
+
+function LeadsSavedPrompt({ uiRequest }) {
+  if (uiRequest?.type !== 'leads_saved') return null;
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex items-center gap-2.5">
+        <div className="rounded-lg bg-emerald-50 p-1.5 text-emerald-700">
+          <CheckCircle2 className="h-4 w-4" />
+        </div>
+        <p className="text-sm text-gray-800">
+          Saved <span className="font-semibold">{Number(uiRequest.count || 0).toLocaleString()}</span> leads to your library
+          {uiRequest.listName ? ` as “${uiRequest.listName}”` : ''}.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function EmailDraftReviewPrompt({ uiRequest, onChoose, disabled }) {
+  if (uiRequest?.type !== 'email_draft_review') return null;
+
+  const draft = uiRequest.draft || {};
+
+  return (
+    <div className="mt-3 max-w-xl rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-2.5">
+        <div className="rounded-lg bg-blue-50 p-1.5 text-blue-700">
+          <Mail className="h-4 w-4" />
+        </div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Draft email — review</p>
+      </div>
+
+      <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 p-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Subject</p>
+        <p className="mt-0.5 text-sm font-medium text-gray-900">{draft.subject}</p>
+        <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Body</p>
+        <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{draft.body}</p>
+      </div>
+
+      {draft.followUpBody ? (
+        <div className="mt-2 rounded-lg border border-gray-100 bg-gray-50 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+            Follow-up · {draft.followUpSubject}
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{draft.followUpBody}</p>
+        </div>
+      ) : null}
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => onChoose('Looks good, approve and pick recipients')}
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:bg-gray-300"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Looks good — pick recipients
+        </button>
+        <button
+          type="button"
+          onClick={() => onChoose('Get an expert to refine it')}
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+        >
+          <PencilLine className="h-3.5 w-3.5" />
+          Get an expert to refine
+        </button>
+      </div>
+      <p className="mt-2 text-[11px] text-gray-400">Or type a change (e.g. “make it shorter”) to redraft. Nothing is sent yet.</p>
+    </div>
+  );
+}
+
+function CsvUploadButton({ onUploadCsv, disabled, label }) {
+  return (
+    <label className={`inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 ${disabled ? 'opacity-60 pointer-events-none' : 'cursor-pointer'}`}>
+      <input
+        type="file"
+        accept=".csv,.xlsx,.xls"
+        className="hidden"
+        disabled={disabled}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = '';
+          if (file) onUploadCsv?.(file);
+        }}
+      />
+      <FileSpreadsheet className="h-3.5 w-3.5" />
+      {label}
+    </label>
+  );
+}
+
+function EmailRecipientsChoicePrompt({ uiRequest, onChoose, onUploadCsv, disabled }) {
+  if (uiRequest?.type !== 'email_recipients_choice') return null;
+
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Choose recipients</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {uiRequest.hasSearchedLeads && (
+          <button
+            type="button"
+            onClick={() => onChoose('Use my current searched leads')}
+            disabled={disabled}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:bg-gray-300"
+          >
+            <Users className="h-3.5 w-3.5" />
+            Use current searched leads
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => onChoose('Search Karya leads for recipients')}
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+        >
+          <Users className="h-3.5 w-3.5" />
+          Search Karya leads
+        </button>
+        <CsvUploadButton onUploadCsv={onUploadCsv} disabled={disabled} label="Upload CSV / Excel" />
+      </div>
+    </div>
+  );
+}
+
+function EmailCsvUploadPrompt({ uiRequest, onUploadCsv, disabled }) {
+  if (uiRequest?.type !== 'email_csv_upload') return null;
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Upload recipients</p>
+      <p className="mt-1 text-xs text-gray-600">CSV or Excel with an email column (first name, company, title optional).</p>
+      <div className="mt-3">
+        <CsvUploadButton onUploadCsv={onUploadCsv} disabled={disabled} label="Choose file" />
+      </div>
+    </div>
+  );
+}
+
+function EmailExpertSentPrompt({ uiRequest }) {
+  if (uiRequest?.type !== 'email_expert_sent') return null;
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 rounded-lg bg-amber-50 p-1.5 text-amber-700">
+          <UserCheck className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Sent to expert</p>
+          <p className="mt-1 text-xs text-gray-600">
+            Our expert is refining your email. Approve their version to launch the campaign.
+          </p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <NextLink
+          href="/business-dashboard/hitl-approval"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Open HITL approvals
+        </NextLink>
+      </div>
+    </div>
+  );
+}
+
+function EmailCampaignCreatedPrompt({ uiRequest }) {
+  if (uiRequest?.type !== 'email_campaign_created') return null;
+
+  const campaign = uiRequest.campaign || {};
+
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 rounded-lg bg-emerald-50 p-1.5 text-emerald-700">
+          <Send className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Draft campaign created</p>
+          <p className="mt-1 text-sm font-medium text-gray-900">{campaign.campaignName}</p>
+          <p className="mt-1 text-xs text-gray-600">
+            {Number(campaign.recipientCount || 0).toLocaleString()} recipients
+            {campaign.followUpTemplateId ? ' · includes follow-up' : ''}
+          </p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <NextLink
+          href="/business-dashboard/my-projects"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+        >
+          <Send className="h-3.5 w-3.5" />
+          Review & send
+        </NextLink>
+      </div>
+    </div>
+  );
+}
+
 function EvidenceReviewPrompt({ uiRequest, agentState, onChoose, disabled }) {
   if (uiRequest?.type !== 'evidence_review') return null;
 
@@ -619,7 +910,7 @@ function EvidenceReviewPrompt({ uiRequest, agentState, onChoose, disabled }) {
   );
 }
 
-function AgentChat({ sidebarOpen, onToggleSidebar, conversationId, onTitleUpdate, onConversationCreated }) {
+function AgentChat({ sidebarOpen, onToggleSidebar, conversationId, onTitleUpdate, onConversationCreated, onLeadsUpdate, compact = false }) {
   const { user, register } = useAuth();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -735,6 +1026,11 @@ function AgentChat({ sidebarOpen, onToggleSidebar, conversationId, onTitleUpdate
       setClientState(state);
     }
 
+    // When the agent returns a leads preview, surface it to the workspace (table view)
+    if (state?.uiRequest?.type === 'leads_preview') {
+      onLeadsUpdate?.(state.uiRequest);
+    }
+
     if (returnedConversationId && !activeId) {
       conversationIdRef.current = returnedConversationId;
       onConversationCreated?.({
@@ -807,6 +1103,51 @@ function AgentChat({ sidebarOpen, onToggleSidebar, conversationId, onTitleUpdate
     event.preventDefault();
     const text = (inputRef.current?.value || inputText).trim();
     await sendTextToAgent(text);
+  };
+
+  // Upload a CSV/Excel of recipients → backend builds the draft campaign from
+  // the approved email draft stored on this conversation.
+  const handleCsvUpload = async (file) => {
+    if (!file || isTyping) return;
+    const activeId = conversationIdRef.current;
+    setMessages((prev) => [...prev, { role: 'system', message: `Uploading ${file.name}...` }]);
+    setIsTyping(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('conversationId', activeId || '');
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/agent/email/recipients-csv`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include',
+        body: form,
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        if (json.buyCard) {
+          setMessages((prev) => [
+            ...prev,
+            { role: 'agent', message: json.message || 'This needs a project.', uiRequest: json.buyCard },
+          ]);
+          return;
+        }
+        throw new Error(json.message || 'Upload failed');
+      }
+      const campaign = json.data.campaign;
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'agent',
+          message: `Done — draft campaign "${campaign.campaignName}" created for ${Number(campaign.recipientCount).toLocaleString()} recipients from your file. Nothing has been sent yet.`,
+          uiRequest: { type: 'email_campaign_created', campaign },
+        },
+      ]);
+    } catch (err) {
+      setMessages((prev) => [...prev, { role: 'system', message: err.message || 'Upload failed. Please try again.' }]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleSignup = async (userData) => {
@@ -902,7 +1243,7 @@ function AgentChat({ sidebarOpen, onToggleSidebar, conversationId, onTitleUpdate
             </p>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+          <div className={`${compact ? 'w-full' : 'max-w-3xl mx-auto'} px-4 py-6 space-y-6`}>
             {messages.map((msg, index) => {
               if (msg.role === 'system') {
                 return (
@@ -1001,6 +1342,47 @@ function AgentChat({ sidebarOpen, onToggleSidebar, conversationId, onTitleUpdate
                         {isLatest && msg.uiRequest?.type === 'project_match' && (
                           <ProjectMatchPrompt uiRequest={msg.uiRequest} />
                         )}
+                        {isLatest && msg.uiRequest?.type === 'leads_preview' && (
+                          <LeadsPreviewPrompt
+                            uiRequest={msg.uiRequest}
+                            onChoose={sendTextToAgent}
+                            disabled={isTyping}
+                          />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'leads_saved' && (
+                          <LeadsSavedPrompt uiRequest={msg.uiRequest} />
+                        )}
+                        {(msg.uiRequest?.type === 'buy_project') && (
+                          <BuyProjectPrompt uiRequest={msg.uiRequest} />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'email_draft_review' && (
+                          <EmailDraftReviewPrompt
+                            uiRequest={msg.uiRequest}
+                            onChoose={sendTextToAgent}
+                            disabled={isTyping}
+                          />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'email_recipients_choice' && (
+                          <EmailRecipientsChoicePrompt
+                            uiRequest={msg.uiRequest}
+                            onChoose={sendTextToAgent}
+                            onUploadCsv={handleCsvUpload}
+                            disabled={isTyping}
+                          />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'email_csv_upload' && (
+                          <EmailCsvUploadPrompt
+                            uiRequest={msg.uiRequest}
+                            onUploadCsv={handleCsvUpload}
+                            disabled={isTyping}
+                          />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'email_expert_sent' && (
+                          <EmailExpertSentPrompt uiRequest={msg.uiRequest} />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'email_campaign_created' && (
+                          <EmailCampaignCreatedPrompt uiRequest={msg.uiRequest} />
+                        )}
                         {isLatest && msg.uiRequest?.type === 'secure_signup' && (
                           <SignupPrompt
                             agentState={clientState}
@@ -1036,7 +1418,7 @@ function AgentChat({ sidebarOpen, onToggleSidebar, conversationId, onTitleUpdate
       </div>
 
       <div className="bg-white">
-        <div className="max-w-3xl mx-auto px-4 py-4">
+        <div className={`${compact ? 'w-full' : 'max-w-3xl mx-auto'} px-4 py-4`}>
           <form onSubmit={handleSendText} className="flex items-end gap-2 bg-gray-100 border border-gray-200 rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
             <textarea
               ref={inputRef}
@@ -1144,6 +1526,7 @@ export default function AgentPage() {
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [chatAnim, setChatAnim] = useState(null);   // 'open' | null
+  const [leadsView, setLeadsView] = useState(null); // set when agent returns a leads_preview
 
   // Open a chat: chats before it park on the left, this one opens in the middle.
   const switchConversation = (id) => {
@@ -1219,6 +1602,36 @@ export default function AgentPage() {
     );
   }
 
+  // ── Leads workspace mode: table in main area, chat docked to the right rail ──
+  if (leadsView) {
+    return (
+      <div className="flex h-screen bg-white overflow-hidden">
+        <Sidebar
+          sidebarCollapsed={sidebarCollapsed}
+          setSidebarCollapsed={setSidebarCollapsed}
+          activeItem="karya-ai"
+          setActiveItem={() => {}}
+        />
+
+        {/* Main: leads table */}
+        <LeadsWorkspace leadsView={leadsView} onBackToChat={() => setLeadsView(null)} />
+
+        {/* Right: live agent chat */}
+        <div className="flex-shrink-0 flex flex-col border-l border-gray-200 bg-white" style={{ width: '440px' }}>
+          <AgentChat
+            sidebarOpen={true}
+            onToggleSidebar={() => {}}
+            conversationId={activeConversationId}
+            onTitleUpdate={handleTitleUpdate}
+            onConversationCreated={handleConversationCreated}
+            onLeadsUpdate={setLeadsView}
+            compact
+          />
+        </div>
+      </div>
+    );
+  }
+
   // Split strips: those BEFORE the open chat park on the left, the rest stay right
   const activeIndex = conversations.findIndex(c => c._id === activeConversationId);
   const leftItems  = (activeIndex > 0 ? conversations.slice(0, activeIndex) : [])
@@ -1262,6 +1675,7 @@ export default function AgentPage() {
               conversationId={activeConversationId}
               onTitleUpdate={handleTitleUpdate}
               onConversationCreated={handleConversationCreated}
+              onLeadsUpdate={setLeadsView}
             />
           </div>
         </div>

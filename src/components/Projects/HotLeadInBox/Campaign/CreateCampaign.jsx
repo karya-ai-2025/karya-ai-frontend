@@ -48,11 +48,17 @@ const scrollbarStyles = `
   }
 `;
 
-export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapseSidebar, initialTemplate }) {
+export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapseSidebar, initialTemplate, initialName }) {
   const { getAuthHeader } = useAuth();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-  const [currentStep, setCurrentStep] = useState(1);
+  // AI flow: the email was already drafted & the name collected in the assistant,
+  // so we land on "Select Leads" (step 2) and skip the "Email Template" step (step 3).
+  const aiFlow = !!initialTemplate;
+
+  const MAX_LEADS = 100; // a single uploaded/created email list can hold at most 100 leads
+
+  const [currentStep, setCurrentStep] = useState(aiFlow ? 2 : 1);
   const steps = [
     { number: 1, title: 'Basic Info', icon: Edit3 },
     { number: 2, title: 'Select Leads', icon: Users },
@@ -61,7 +67,7 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
   ];
 
   const [campaignData, setCampaignData] = useState({
-    name: '',
+    name: initialName || '',
     description: '',
     selectedLeads: [],
     emailTemplateId: null,
@@ -119,6 +125,7 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
     if (initialTemplate?._id) {
       setCampaignData((prev) => ({
         ...prev,
+        name: prev.name || initialName || '',
         emailTemplateId: initialTemplate._id,
         emailTemplate: initialTemplate
       }));
@@ -170,13 +177,19 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
         setAvailableLeads((prev) => prev.filter((lead) => lead.emailValidation?.isValid));
       }
 
-      setCurrentStep((prev) => Math.min(4, prev + 1));
+      setCurrentStep((prev) => {
+        if (aiFlow && prev === 2) return 4; // email template already chosen — skip step 3
+        return Math.min(4, prev + 1);
+      });
       setErrors({});
     }
   };
 
   const prevStep = () => {
-    setCurrentStep((prev) => Math.max(1, prev - 1));
+    setCurrentStep((prev) => {
+      if (aiFlow && prev === 4) return 2; // skip back over the already-done template step
+      return Math.max(1, prev - 1);
+    });
     setErrors({});
   };
 
@@ -289,6 +302,10 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
   };
 
   const handleAddLead = () => {
+    if (manualLeads.length >= MAX_LEADS) {
+      setLeadErrors({ email: `You can add up to ${MAX_LEADS} leads per list.` });
+      return;
+    }
     const errs = {};
     if (!newLead.firstName.trim()) errs.firstName = 'First name is required';
     if (!newLead.email.trim()) errs.email = 'Email is required';
@@ -447,8 +464,17 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
         return;
       }
 
-      setManualLeads((prev) => [...prev, ...parsed]);
-      setUploadFileInfo({ name: file.name, added: parsed.length, skipped });
+      // Enforce the 100-lead cap per list.
+      const room = Math.max(0, MAX_LEADS - manualLeads.length);
+      if (room === 0) {
+        setUploadFileInfo({ name: file.name, error: `This list already has the maximum of ${MAX_LEADS} leads.` });
+        return;
+      }
+      const capped = parsed.slice(0, room);
+      const overflow = parsed.length - capped.length;
+
+      setManualLeads((prev) => [...prev, ...capped]);
+      setUploadFileInfo({ name: file.name, added: capped.length, skipped, capped: overflow });
       setUploadStep('entry');
     } catch (err) {
       console.error('Lead file parse error:', err);
@@ -844,7 +870,8 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
                         <p className="mt-0.5 text-xs text-gray-500">
                           Your file needs an{' '}
                           <span className="font-medium text-gray-700">Email</span> column. Optional columns:{' '}
-                          First Name, Last Name, Company, Job Title, Industry. Accepted: .xlsx, .xls, .csv.
+                          First Name, Last Name, Company, Job Title, Industry. Accepted: .xlsx, .xls, .csv.{' '}
+                          <span className="font-medium text-gray-700">Max {MAX_LEADS} leads per list.</span>
                         </p>
                         {uploadFileInfo?.error && (
                           <p className="mt-2 text-xs font-medium text-red-600">{uploadFileInfo.error}</p>
@@ -855,6 +882,9 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
                             {uploadFileInfo.name}
                             {uploadFileInfo.skipped > 0
                               ? ` · skipped ${uploadFileInfo.skipped} (missing or duplicate email)`
+                              : ''}
+                            {uploadFileInfo.capped > 0
+                              ? ` · ${uploadFileInfo.capped} not added (${MAX_LEADS}-lead limit)`
                               : ''}
                           </p>
                         )}
@@ -1427,7 +1457,8 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
           {steps.map((step, index) => {
             const Icon = step.icon;
             const isActive = currentStep === step.number;
-            const isCompleted = currentStep > step.number;
+            // In the AI flow the email template (step 3) is already done — show it as completed.
+            const isCompleted = currentStep > step.number || (aiFlow && step.number === 3);
 
             return (
               <div key={step.number} className="flex items-center">

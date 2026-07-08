@@ -2,6 +2,7 @@ import './globals.css';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import Providers from '@/components/Providers';
 import ChatLauncher from '@/components/ChatLauncher';
+import AnalyticsTracker from '@/components/AnalyticsTracker';
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -26,6 +27,7 @@ export default function RootLayout({ children }) {
       <body className={`${jakarta.className} bg-white text-gray-900`}>
         <Providers>{children}</Providers>
         <ChatLauncher />
+        <AnalyticsTracker />
       </body>
     </html>
   );

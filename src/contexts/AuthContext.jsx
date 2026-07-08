@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import { trackEvent } from '@/services/analyticsApi';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -106,9 +107,11 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(data.user));
       setUser(data.user);
 
+      trackEvent('LOGIN_SUCCESS', { role });
       return { success: true, user: data.user };
     } catch (err) {
       setError(err.message);
+      trackEvent('LOGIN_FAILED', { email }, 'failure');
       return { success: false, error: err.message };
     }
   };
@@ -134,6 +137,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(data.user));
       setUser(data.user);
 
+      trackEvent('SIGNUP', { role: data.user?.activeRole });
       return { success: true, user: data.user };
     } catch (err) {
       setError(err.message);
@@ -143,6 +147,7 @@ export const AuthProvider = ({ children }) => {
 
   // Logout function - callers handle navigation via their own useRouter
   const logout = async () => {
+    trackEvent('LOGOUT');
     try {
       const token = localStorage.getItem('token');
       await fetch(`${API_URL}/auth/logout`, {

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import AdminGuard from '@/components/AdminGuard';
 import { getAdminUserAnalytics, getAzureAnalytics } from '@/lib/adminApi';
+import ProductAnalytics from '@/components/analytics/ProductAnalytics';
 
 // ── shared helpers ─────────────────────────────────────────────────────────────
 
@@ -122,6 +123,7 @@ export default function AdminAnalyticsPage() {
       .finally(() => setAzLoading(false));
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot data fetch on mount
   useEffect(() => { loadDb(); loadAz(); }, []);
 
   const visibleUsers = dbData?.users?.filter(u => {
@@ -149,6 +151,20 @@ export default function AdminAnalyticsPage() {
               <RefreshCw className="w-4 h-4" /> Refresh all
             </button>
           </div>
+
+          {/* ══════════════════════════════════════════════════════════════════
+              SECTION 0 — PRODUCT ANALYTICS (MongoDB user behaviour)
+          ══════════════════════════════════════════════════════════════════ */}
+          <section>
+            <SectionHeader
+              icon={BarChart2}
+              iconBg="bg-indigo-50 text-indigo-600"
+              title="Product Analytics"
+              desc="User behaviour, events, funnels & sessions — production traffic only"
+              badge="Live"
+            />
+            <ProductAnalytics />
+          </section>
 
           {/* ══════════════════════════════════════════════════════════════════
               SECTION 1 — DATABASE / USER ANALYTICS

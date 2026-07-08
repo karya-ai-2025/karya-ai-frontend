@@ -48,6 +48,8 @@ export default function Campaign({
   draftNotice,
   onClearDraft,
   initialTemplate,
+  initialName,
+  onResetPrefill,
 }) {
   const { user } = useAuth();
 
@@ -109,6 +111,7 @@ export default function Campaign({
   // Handle campaign creation success
   const handleCampaignCreated = (newCampaign) => {
     fetchDashboardData();
+    onResetPrefill?.(); // clear the AI prefill so the next campaign starts clean
     setActiveComponent('dashboard');
     console.log('Campaign created successfully:', newCampaign);
   };
@@ -157,9 +160,10 @@ export default function Campaign({
         return (
           <CreateCampaign
             onCampaignCreated={handleCampaignCreated}
-            onCancel={() => setActiveComponent('dashboard')}
+            onCancel={() => { onResetPrefill?.(); setActiveComponent('dashboard'); }}
             onCollapseSidebar={onCollapseSidebar}
             initialTemplate={initialTemplate}
+            initialName={initialName}
           />
         );
 

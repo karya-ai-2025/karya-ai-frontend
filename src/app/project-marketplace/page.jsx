@@ -272,6 +272,21 @@ const LAUNCHER_CARD_COLORS = [
   'from-orange-500 to-amber-500', 'from-rose-500 to-pink-500', 'from-indigo-500 to-blue-500',
 ];
 
+// Image per project slug — gives the goal-selected cards the same photo look as the
+// featured "Popular projects" cards (keyed by the slug at the end of each project.path).
+const LAUNCHER_PROJECT_IMAGES = {
+  'outbound-list-builder':            'https://images.unsplash.com/photo-1552664730-d307ca884978?w=640&h=360&fit=crop&auto=format',
+  'sales-outreach-automation':        'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=640&h=360&fit=crop&auto=format',
+  'ai-email-sales-agency':            'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=640&h=360&fit=crop&auto=format',
+  'call-intelligence-crm':            'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=640&h=360&fit=crop&auto=format',
+  'hotlead-in-a-box':                 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=640&h=360&fit=crop&auto=format',
+  'traffic-abm-agency':               'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=640&h=360&fit=crop&auto=format',
+  'brand-voice-thought-leadership':   'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=640&h=360&fit=crop&auto=format',
+  'connection-relationship-manager':  'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=640&h=360&fit=crop&auto=format',
+  'demo-prep-crm-research':           'https://images.unsplash.com/photo-1573164713988-8665fc963095?w=640&h=360&fit=crop&auto=format',
+  'inbound-aggregation':              'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=640&h=360&fit=crop&auto=format',
+};
+
 const CITY_COORDS = {
   Mumbai: { lat: 19.07, lon: 72.87 }, Delhi: { lat: 28.61, lon: 77.20 },
   Bangalore: { lat: 12.97, lon: 77.59 }, Hyderabad: { lat: 17.38, lon: 78.48 },
@@ -786,6 +801,104 @@ function ProjectCard({ project, userRole, discoveryMode, userCity, userIndustry,
 }
 
 // ============================================
+// LAUNCHER PROJECT CARD (shared rich card — used for both the default
+// "Popular projects" list and the selected-goal list, so they look identical)
+// ============================================
+function LauncherProjectCard({ project, index, onClick }) {
+  const slug = (project.path || '').split('/').pop();
+  const img  = project.img || LAUNCHER_PROJECT_IMAGES[slug];
+  const grad = project.thumb || LAUNCHER_CARD_COLORS[index % LAUNCHER_CARD_COLORS.length];
+  const hasStats = project.rating != null || project.experts != null || project.completed != null;
+
+  return (
+    <button onClick={onClick}
+      className="group text-left flex flex-col sm:flex-row rounded-2xl overflow-hidden border border-gray-200 bg-white hover:border-blue-300 hover:shadow-[0_14px_40px_-14px_rgba(0,0,0,0.2)] transition-all duration-200">
+
+      {/* Media — left */}
+      <div className="relative sm:w-60 lg:w-64 flex-shrink-0 overflow-hidden" style={{ minHeight: '190px' }}>
+        <div className={`absolute inset-0 bg-gradient-to-br ${grad}`} />
+        {img ? (
+          <img src={img} alt={project.title} loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500" />
+        ) : project.emoji ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-5xl relative z-10">{project.emoji}</span>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_65%_30%,rgba(255,255,255,0.18),transparent_60%)]" />
+          </div>
+        ) : null}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-black/10" />
+
+        {/* top-left: tag + stat chips */}
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
+          {project.tag && (
+            <span className="text-[10px] font-bold text-white bg-black/45 backdrop-blur-sm px-2.5 py-1 rounded-full">{project.tag}</span>
+          )}
+          {hasStats && (
+            <span className="flex items-center gap-1.5 text-[10px] font-semibold text-white bg-black/45 backdrop-blur-sm px-2.5 py-1 rounded-full">
+              {project.rating != null && <span className="flex items-center gap-0.5"><Star className="w-3 h-3 text-amber-300 fill-amber-300" />{project.rating}</span>}
+              {project.completed != null && <><span className="text-white/50">·</span><span>{project.completed} done</span></>}
+              {project.experts != null && <><span className="text-white/50">·</span><span>{project.experts} experts</span></>}
+            </span>
+          )}
+          {/* When there's no tag, surface ROI as the badge instead */}
+          {project.roi && !project.tag && !hasStats && (
+            <span className="text-[10px] font-bold text-white bg-black/45 backdrop-blur-sm px-2.5 py-1 rounded-full">{project.roi}</span>
+          )}
+        </div>
+
+        {project.outcome && (
+          <p className="absolute bottom-3 left-3 right-3 text-white font-bold text-[13px] leading-snug drop-shadow">{project.outcome}</p>
+        )}
+      </div>
+
+      {/* Info — right */}
+      <div className="flex-1 flex flex-col p-5 min-w-0">
+        <div className="min-w-0">
+          <h3 className="text-gray-900 font-bold text-[17px] leading-tight group-hover:text-blue-700 transition-colors">{project.title}</h3>
+          <p className="text-gray-500 text-[12.5px] mt-0.5 leading-relaxed">{project.desc}</p>
+        </div>
+
+        {/* What you get */}
+        {project.deliverables?.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-1.5 mt-3.5">
+            {project.deliverables.map(d => (
+              <div key={d} className="flex items-start gap-1.5">
+                <Check className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
+                <span className="text-[12px] text-gray-600 leading-snug">{d}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Success highlight + ROI */}
+        {project.sh && (
+          <div className="flex items-center gap-2 mt-3.5 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+            <Trophy className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+            <p className="text-[11px] text-amber-800 font-medium italic flex-1 min-w-0 truncate">{project.sh}</p>
+            {project.roi && <span className="text-[11px] font-black text-amber-700 flex-shrink-0">{project.roi}</span>}
+          </div>
+        )}
+
+        {/* Footer: price (if known) + CTA */}
+        <div className="flex items-end justify-between gap-3 mt-auto pt-4 border-t border-gray-100">
+          {project.price ? (
+            <div>
+              <p className="text-[10px] text-gray-400 font-medium">From</p>
+              <p className="text-[19px] font-black text-gray-900 leading-none">{project.price}
+                {project.duration && <span className="text-[11px] font-medium text-gray-400 ml-1.5">· {project.duration}</span>}
+              </p>
+            </div>
+          ) : <span />}
+          <span className="flex items-center gap-1 text-[12px] font-bold text-blue-600 group-hover:text-blue-700 flex-shrink-0">
+            View project <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ============================================
 // MAIN PAGE COMPONENT
 // ============================================
 export default function ProjectMarketplace() {
@@ -1191,110 +1304,16 @@ export default function ProjectMarketplace() {
                   {!goalProjects && (
                     <div className="flex flex-col gap-4">
                       {FEATURED_LAUNCHER_PROJECTS.map((project, i) => (
-                        <button key={i} onClick={() => router.push(project.path)}
-                          className="group text-left flex flex-col sm:flex-row rounded-2xl overflow-hidden border border-gray-200 bg-white hover:border-blue-300 hover:shadow-[0_14px_40px_-14px_rgba(0,0,0,0.2)] transition-all duration-200">
-
-                          {/* Image — left (tag + stats overlaid) */}
-                          <div className="relative sm:w-60 lg:w-64 flex-shrink-0 overflow-hidden" style={{ minHeight: '190px' }}>
-                            <div className={`absolute inset-0 bg-gradient-to-br ${project.thumb}`} />
-                            {project.img && (
-                              <img src={project.img} alt={project.title} loading="lazy"
-                                className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500" />
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-black/10" />
-                            {/* top-left: tag + stat chips adjacent */}
-                            <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
-                              {project.tag && (
-                                <span className="text-[10px] font-bold text-white bg-black/45 backdrop-blur-sm px-2.5 py-1 rounded-full">{project.tag}</span>
-                              )}
-                              <span className="flex items-center gap-1.5 text-[10px] font-semibold text-white bg-black/45 backdrop-blur-sm px-2.5 py-1 rounded-full">
-                                <span className="flex items-center gap-0.5"><Star className="w-3 h-3 text-amber-300 fill-amber-300" />{project.rating}</span>
-                                <span className="text-white/50">·</span>
-                                <span>{project.completed} done</span>
-                                <span className="text-white/50">·</span>
-                                <span>{project.experts} experts</span>
-                              </span>
-                            </div>
-                            {/* outcome banner over image */}
-                            <p className="absolute bottom-3 left-3 right-3 text-white font-bold text-[13px] leading-snug drop-shadow">{project.outcome}</p>
-                          </div>
-
-                          {/* Info — right */}
-                          <div className="flex-1 flex flex-col p-5 min-w-0">
-                            <div className="min-w-0">
-                              <h3 className="text-gray-900 font-bold text-[17px] leading-tight group-hover:text-blue-700 transition-colors">{project.title}</h3>
-                              <p className="text-gray-500 text-[12.5px] mt-0.5 leading-relaxed">{project.desc}</p>
-                            </div>
-
-                            {/* What you get */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-1.5 mt-3.5">
-                              {project.deliverables?.map(d => (
-                                <div key={d} className="flex items-start gap-1.5">
-                                  <Check className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
-                                  <span className="text-[12px] text-gray-600 leading-snug">{d}</span>
-                                </div>
-                              ))}
-                            </div>
-
-                            {/* Success highlight + ROI */}
-                            {project.sh && (
-                              <div className="flex items-center gap-2 mt-3.5 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                                <Trophy className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-                                <p className="text-[11px] text-amber-800 font-medium italic flex-1 min-w-0 truncate">{project.sh}</p>
-                                {project.roi && <span className="text-[11px] font-black text-amber-700 flex-shrink-0">{project.roi}</span>}
-                              </div>
-                            )}
-
-                            {/* Footer: price (left) + CTA (right) */}
-                            <div className="flex items-end justify-between gap-3 mt-auto pt-4 border-t border-gray-100">
-                              <div>
-                                <p className="text-[10px] text-gray-400 font-medium">From</p>
-                                <p className="text-[19px] font-black text-gray-900 leading-none">{project.price}
-                                  <span className="text-[11px] font-medium text-gray-400 ml-1.5">· {project.duration}</span>
-                                </p>
-                              </div>
-                              <span className="flex items-center gap-1 text-[12px] font-bold text-blue-600 group-hover:text-blue-700 flex-shrink-0">
-                                View project <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                              </span>
-                            </div>
-                          </div>
-                        </button>
+                        <LauncherProjectCard key={i} project={project} index={i} onClick={() => router.push(project.path)} />
                       ))}
                     </div>
                   )}
 
-                  {/* SELECTED GOAL — filtered launcher projects (with success proof) */}
+                  {/* SELECTED GOAL — same rich card style as the default popular projects */}
                   {goalProjects && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-4">
                       {goalProjects.map((project, i) => (
-                        <button key={i} onClick={() => router.push(project.path)}
-                          className="group text-left flex flex-col rounded-2xl overflow-hidden border border-gray-200 bg-white hover:border-blue-300 hover:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.2)] transition-all">
-                          {/* emoji thumbnail */}
-                          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/9' }}>
-                            <div className={`absolute inset-0 bg-gradient-to-br ${LAUNCHER_CARD_COLORS[i % LAUNCHER_CARD_COLORS.length]} flex items-center justify-center`}>
-                              <span className="text-4xl relative z-10">{project.emoji}</span>
-                              <div className="absolute inset-0 bg-[radial-gradient(circle_at_65%_30%,rgba(255,255,255,0.18),transparent_60%)]" />
-                            </div>
-                            {project.roi && (
-                              <span className="absolute top-2.5 right-2.5 text-[10px] font-bold text-white bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full">{project.roi}</span>
-                            )}
-                          </div>
-                          {/* body */}
-                          <div className="flex-1 flex flex-col p-4">
-                            <p className="text-gray-900 font-bold text-[14px] leading-tight group-hover:text-blue-700 transition-colors">{project.title}</p>
-                            <p className="text-gray-500 text-[12px] mt-0.5 line-clamp-2 leading-relaxed">{project.desc}</p>
-                            {/* success highlight */}
-                            {project.sh && (
-                              <div className="flex items-start gap-1.5 mt-2.5 pt-2.5 border-t border-gray-100">
-                                <Trophy className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
-                                <p className="text-[11px] text-gray-600 italic leading-snug line-clamp-2">{project.sh}</p>
-                              </div>
-                            )}
-                            <span className="flex items-center gap-1 text-[12px] font-bold text-blue-600 group-hover:text-blue-700 mt-3">
-                              View project <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                            </span>
-                          </div>
-                        </button>
+                        <LauncherProjectCard key={i} project={project} index={i} onClick={() => router.push(project.path)} />
                       ))}
                     </div>
                   )}
