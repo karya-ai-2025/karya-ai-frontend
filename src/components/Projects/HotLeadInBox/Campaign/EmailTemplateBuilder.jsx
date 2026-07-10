@@ -77,6 +77,19 @@ const escapeHtml = (value) => String(value)
 const detectContentType = (body = '') => /<\/?[a-z][\s\S]*>/i.test(body) ? 'html' : 'text';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+// Lead attributes a fillable-PDF field can be mapped to.
+const LEAD_FIELD_OPTIONS = [
+  { value: '', label: '— none —' },
+  { value: 'firstName', label: 'First name' },
+  { value: 'lastName', label: 'Last name' },
+  { value: 'fullName', label: 'Full name' },
+  { value: 'company', label: 'Company' },
+  { value: 'jobTitle', label: 'Job title' },
+  { value: 'industry', label: 'Industry' },
+  { value: 'email', label: 'Email' },
+  { value: 'phone', label: 'Phone' },
+];
 const MAX_ATTACHMENTS_PER_TEMPLATE = 5;
 const MAX_ATTACHMENT_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_ATTACHMENT_TOTAL_SIZE = 20 * 1024 * 1024;
@@ -132,12 +145,15 @@ export default function EmailTemplateBuilder({ onBack, onCollapseSidebar }) {
     templateType: 'campaign',
     tags: [],
     attachments: [],
+    documentTemplate: null,
     settings: defaultTemplateSettings
   });
 
   const [formErrors, setFormErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [attachmentUploading, setAttachmentUploading] = useState(false);
+  const [docUploading, setDocUploading] = useState(false);
+  const docInputRef = useRef(null);
 
   // Preview state
   const [showPreview, setShowPreview] = useState(false);
@@ -296,6 +312,7 @@ export default function EmailTemplateBuilder({ onBack, onCollapseSidebar }) {
       templateType: template.templateType,
       tags: template.tags || [],
       attachments: template.attachments || [],
+      documentTemplate: template.documentTemplate || null,
       settings: getTemplateSettings(template)
     });
     setActiveView('create');
@@ -598,6 +615,57 @@ export default function EmailTemplateBuilder({ onBack, onCollapseSidebar }) {
       attachments: (prev.attachments || []).filter((attachment) => attachment.blobName !== blobName)
     }));
     setFormErrors((prev) => ({ ...prev, attachments: undefined }));
+  };
+
+  // ── Personalized PDF (fillable document) ─────────────────────────────────────
+  const handleDocumentButtonClick = () => docInputRef.current?.click();
+
+  const handleDocumentUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (e.target) e.target.value = '';
+    if (!file) return;
+
+    if (!/\.pdf$/i.test(file.name)) {
+      setFormErrors((prev) => ({ ...prev, documentTemplate: 'Please upload a PDF file.' }));
+      return;
+    }
+
+    try {
+      setDocUploading(true);
+      setFormErrors((prev) => ({ ...prev, documentTemplate: undefined }));
+
+      const uploadData = new window.FormData();
+      uploadData.append('document', file);
+
+      const response = await fetch(`${API_BASE_URL}/email-templates/document/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: uploadData,
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to upload document');
+      }
+      setFormData((prev) => ({ ...prev, documentTemplate: data.data }));
+    } catch (error) {
+      setFormErrors((prev) => ({ ...prev, documentTemplate: error.message || 'Failed to upload document' }));
+    } finally {
+      setDocUploading(false);
+    }
+  };
+
+  const updateDocField = (index, key, value) => {
+    setFormData((prev) => {
+      const fields = [...(prev.documentTemplate?.fields || [])];
+      fields[index] = { ...fields[index], [key]: value };
+      return { ...prev, documentTemplate: { ...prev.documentTemplate, fields } };
+    });
+  };
+
+  const removeDocument = () => {
+    setFormData((prev) => ({ ...prev, documentTemplate: null }));
+    setFormErrors((prev) => ({ ...prev, documentTemplate: undefined }));
   };
 
   const renderEmailPreviewBody = (body, contentType = 'html') => {
@@ -1075,6 +1143,85 @@ export default function EmailTemplateBuilder({ onBack, onCollapseSidebar }) {
               {formErrors.attachments && (
                 <p className="mt-1 text-sm text-red-600">{formErrors.attachments}</p>
               )}
+
+              {/* Personalized PDF (per recipient) — feature DISABLED for live.
+                  Wrapped in a false guard so it never renders and can't call the
+                  disabled /document/upload route. Remove the false guard to restore. */}
+              {false && (<>
+              <div className="mt-4 border border-gray-200 rounded-lg bg-gray-50">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200">
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <FileText className="w-4 h-4 text-indigo-500" />
+                    <span>Personalized PDF <span className="text-xs text-gray-400">(per recipient)</span></span>
+                  </div>
+                  {!formData.documentTemplate ? (
+                    <button type="button" onClick={handleDocumentButtonClick} disabled={docUploading}
+                      className="text-sm text-indigo-600 hover:text-indigo-700 disabled:text-gray-400">
+                      {docUploading ? 'Uploading...' : 'Upload PDF'}
+                    </button>
+                  ) : (
+                    <button type="button" onClick={removeDocument} className="text-sm text-gray-500 hover:text-red-600">
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <input ref={docInputRef} type="file" accept=".pdf" className="hidden" onChange={handleDocumentUpload} />
+
+                {!formData.documentTemplate ? (
+                  <div className="px-3 py-4 text-sm text-gray-500">
+                    Upload a <b>fillable</b> PDF (one with named form fields). Each recipient gets their own copy with the
+                    fields filled from their lead data — like the email variables, but inside a PDF.
+                  </div>
+                ) : (
+                  <div className="p-3 space-y-3">
+                    <div className="flex items-center gap-2 text-sm text-gray-800">
+                      <FileText className="w-4 h-4 text-gray-500" />
+                      <span className="truncate">{formData.documentTemplate.originalName}</span>
+                      <span className="text-xs text-gray-400">
+                        {(formData.documentTemplate.fields || []).length} field{(formData.documentTemplate.fields || []).length === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                    <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+                      <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-gray-100 text-[11px] font-semibold text-gray-500 uppercase">
+                        <div className="col-span-4">PDF field</div>
+                        <div className="col-span-5">Fills from lead</div>
+                        <div className="col-span-3">Default</div>
+                      </div>
+                      {(formData.documentTemplate.fields || []).map((f, i) => (
+                        <div key={`${f.name}-${i}`} className="grid grid-cols-12 gap-2 px-3 py-2 items-center border-t border-gray-100">
+                          <div className="col-span-4 text-sm text-gray-700 truncate" title={f.name}>{f.name}</div>
+                          <div className="col-span-5">
+                            <select
+                              value={f.mapsTo || ''}
+                              onChange={(e) => updateDocField(i, 'mapsTo', e.target.value)}
+                              className="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                              {LEAD_FIELD_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                            </select>
+                          </div>
+                          <div className="col-span-3">
+                            <input
+                              value={f.defaultValue || ''}
+                              onChange={(e) => updateDocField(i, 'defaultValue', e.target.value)}
+                              placeholder="optional"
+                              className="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-gray-400">
+                      Map each PDF field to a lead value. Unmapped fields use their default (or stay blank). The PDF is
+                      filled and flattened per recipient when the campaign sends.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {formErrors.documentTemplate && (
+                <p className="mt-1 text-sm text-red-600">{formErrors.documentTemplate}</p>
+              )}
+              </>)}
             </div>
           </div>
 

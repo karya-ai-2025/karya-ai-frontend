@@ -246,8 +246,23 @@ export default function HotLeadInBox({ projectMetadata, projectSlug }) {
     const match = industries.find((i) => (i.label || '').toLowerCase() === (a.industry || '').toLowerCase());
     const industry = match?.value || a.industry || '';
 
+    // Map the assistant's location/segment answers into the filter (lowercase
+    // values; "Global"/"Skip" mean no filter). These were previously dropped —
+    // that's why every search returned the same industry-only leads.
+    const clean = (v) => {
+      const s = String(v || '').trim().toLowerCase();
+      return (!s || s === 'global' || s === 'any' || s.startsWith('skip')) ? '' : s;
+    };
+
     setActiveTab('leads');
-    const criteria = { industry, company: '', companySegment: '', location: '', segment: '', seniority: '' };
+    const criteria = {
+      industry,
+      company: '',
+      companySegment: '',
+      location: clean(a.location),
+      segment: clean(a.segment),
+      seniority: '',
+    };
     setLeadCriteria(criteria);
 
     try {

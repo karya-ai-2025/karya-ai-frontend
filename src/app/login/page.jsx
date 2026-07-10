@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertCircle, CheckCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Constants
@@ -247,9 +247,9 @@ function Login() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-red-600">{error}</p>
+            <div className="mb-6 p-4 bg-[#fef2f2] border border-[#fca5a5] rounded-lg flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-[#dc2626] shrink-0 mt-0.5" />
+              <p className="text-sm font-medium text-[#b91c1c]">{error}</p>
             </div>
           )}
 
@@ -261,7 +261,7 @@ function Login() {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className={`w-5 h-5 ${touched.email && errors.email ? 'text-red-500' : 'text-gray-500'}`} />
+                  <Mail className={`w-5 h-5 ${touched.email && errors.email ? 'text-[#ef4444]' : 'text-gray-500'}`} />
                 </div>
                 <input
                   id="email"
@@ -273,7 +273,7 @@ function Login() {
                   disabled={isLoading}
                   className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                     touched.email && errors.email
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
+                      ? 'border-[#fca5a5] focus:border-[#ef4444] focus:ring-[#ef4444]/50'
                       : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="you@example.com"
@@ -281,7 +281,7 @@ function Login() {
                 />
               </div>
               {touched.email && errors.email && (
-                <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+                <p className="mt-1 text-xs text-[#ef4444]">{errors.email}</p>
               )}
             </div>
 
@@ -292,7 +292,7 @@ function Login() {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className={`w-5 h-5 ${touched.password && errors.password ? 'text-red-500' : 'text-gray-500'}`} />
+                  <Lock className={`w-5 h-5 ${touched.password && errors.password ? 'text-[#ef4444]' : 'text-gray-500'}`} />
                 </div>
                 <input
                   id="password"
@@ -304,7 +304,7 @@ function Login() {
                   disabled={isLoading}
                   className={`w-full pl-12 pr-12 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                     touched.password && errors.password
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
+                      ? 'border-[#fca5a5] focus:border-[#ef4444] focus:ring-[#ef4444]/50'
                       : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="••••••••"
@@ -325,7 +325,7 @@ function Login() {
                 </button>
               </div>
               {touched.password && errors.password && (
-                <p className="mt-1 text-xs text-red-500">{errors.password}</p>
+                <p className="mt-1 text-xs text-[#ef4444]">{errors.password}</p>
               )}
             </div>
 

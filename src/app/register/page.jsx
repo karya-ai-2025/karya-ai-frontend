@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertCircle, CheckCircle, Check, X } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertTriangle, CheckCircle, Check, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Constants
@@ -19,14 +19,38 @@ const ROLE_CONFIG = {
     subtitle: 'Start transforming your marketing today',
     icon: Briefcase,
     gradient: 'bg-gradient-to-r from-blue-600 to-orange-500',
-    onboardingRoute: '/onboarding-owner/welcome'
+    onboardingRoute: '/onboarding-owner/welcome',
+    lhs: {
+      badge: 'Join 743+ growing teams today',
+      headingTop: 'Start growing',
+      headingAccent: 'faster today.',
+      sub: 'From your first prompt to your first 100 customers — AI handles the planning, experts handle execution.',
+      steps: [
+        { n: '1', t: 'Sign up free', d: 'No credit card required. Setup in 5 minutes.' },
+        { n: '2', t: 'AI builds your roadmap', d: '90-day GTM plan generated instantly.' },
+        { n: '3', t: 'Match with experts', d: 'Pre-vetted talent, ready to execute.' },
+      ],
+      testimonial: { quote: 'We scaled from ₹30L to ₹1.2Cr/month in under 3 months. Worth every rupee.', name: 'Amit Patel', role: 'Founder, E-Grow' },
+    },
   },
   [ROLES.EXPERT]: {
     title: 'Join as Expert',
     subtitle: 'Connect with businesses and grow your career',
     icon: Users,
     gradient: 'bg-gradient-to-r from-blue-600 to-orange-500',
-    onboardingRoute: '/onboarding-expert/welcome'
+    onboardingRoute: '/onboarding-expert/welcome',
+    lhs: {
+      badge: 'Join 200+ vetted experts',
+      headingTop: 'Grow your',
+      headingAccent: 'expert practice.',
+      sub: 'Get matched with businesses that need your skills — you focus on delivering, we bring the clients.',
+      steps: [
+        { n: '1', t: 'Create your profile', d: 'Showcase your skills, services, and portfolio.' },
+        { n: '2', t: 'Get matched to projects', d: 'AI connects you with the right businesses.' },
+        { n: '3', t: 'Execute & earn', d: 'Deliver great work and grow your practice.' },
+      ],
+      testimonial: { quote: 'I landed 5 retainer clients through Karya in my first 2 months.', name: 'Priya Sharma', role: 'Growth Consultant' },
+    },
   }
 };
 
@@ -273,21 +297,17 @@ function RegisterContent() {
           <div className="my-auto">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 border border-blue-500/30 rounded-full mb-6">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-blue-300 text-xs font-semibold">Join 743+ growing teams today</span>
+              <span className="text-blue-300 text-xs font-semibold">{currentRole.lhs.badge}</span>
             </div>
             <h2 className="text-4xl font-black text-white leading-[1.1] mb-4">
-              Start growing<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-orange-400">faster today.</span>
+              {currentRole.lhs.headingTop}<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-orange-400">{currentRole.lhs.headingAccent}</span>
             </h2>
-            <p className="text-gray-400 text-lg leading-relaxed mb-10">From your first prompt to your first 100 customers — AI handles the planning, experts handle execution.</p>
+            <p className="text-gray-400 text-lg leading-relaxed mb-10">{currentRole.lhs.sub}</p>
 
             {/* Steps */}
             <div className="space-y-4 mb-10">
-              {[
-                { n:'1', t:'Sign up free', d:'No credit card required. Setup in 5 minutes.' },
-                { n:'2', t:'AI builds your roadmap', d:'90-day GTM plan generated instantly.' },
-                { n:'3', t:'Match with experts', d:'Pre-vetted talent, ready to execute.' },
-              ].map(s=>(
+              {currentRole.lhs.steps.map(s=>(
                 <div key={s.n} className="flex items-start gap-4">
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-black flex-shrink-0 mt-0.5">{s.n}</div>
                   <div>
@@ -300,12 +320,12 @@ function RegisterContent() {
 
             <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
               <div className="flex gap-1 mb-3">{[1,2,3,4,5].map(i=><span key={i} className="text-yellow-400 text-sm">★</span>)}</div>
-              <p className="text-gray-300 text-sm leading-relaxed mb-4">"We scaled from ₹30L to ₹1.2Cr/month in under 3 months. Worth every rupee."</p>
+              <p className="text-gray-300 text-sm leading-relaxed mb-4">{`"${currentRole.lhs.testimonial.quote}"`}</p>
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full" />
                 <div>
-                  <p className="text-white text-sm font-bold">Amit Patel</p>
-                  <p className="text-gray-500 text-xs">Founder, E-Grow</p>
+                  <p className="text-white text-sm font-bold">{currentRole.lhs.testimonial.name}</p>
+                  <p className="text-gray-500 text-xs">{currentRole.lhs.testimonial.role}</p>
                 </div>
               </div>
             </div>
@@ -364,9 +384,9 @@ function RegisterContent() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-red-600">{error}</p>
+            <div className="mb-6 p-4 bg-[#fef2f2] border border-[#fca5a5] rounded-lg flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-[#dc2626] shrink-0 mt-0.5" />
+              <p className="text-sm font-medium text-[#b91c1c]">{error}</p>
             </div>
           )}
 
@@ -374,11 +394,11 @@ function RegisterContent() {
             {/* Full Name Input */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-2">
-                Full Name <span className="text-red-500">*</span>
+                Full Name <span className="text-[#ef4444]">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <User className={`w-5 h-5 ${touched.fullName && errors.fullName ? 'text-red-500' : 'text-gray-500'}`} />
+                  <User className={`w-5 h-5 ${touched.fullName && errors.fullName ? 'text-[#ef4444]' : 'text-gray-500'}`} />
                 </div>
                 <input
                   type="text"
@@ -389,25 +409,25 @@ function RegisterContent() {
                   disabled={isLoading}
                   className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.fullName && errors.fullName
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
+                      ? 'border-[#fca5a5] focus:border-[#ef4444] focus:ring-[#ef4444]/50'
                       : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="John Doe"
                 />
               </div>
               {touched.fullName && errors.fullName && (
-                <p className="mt-1 text-xs text-red-500">{errors.fullName}</p>
+                <p className="mt-1 text-xs text-[#ef4444]">{errors.fullName}</p>
               )}
             </div>
 
             {/* Email Input */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-2">
-                Work Email <span className="text-red-500">*</span>
+                Work Email <span className="text-[#ef4444]">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className={`w-5 h-5 ${touched.email && errors.email ? 'text-red-500' : 'text-gray-500'}`} />
+                  <Mail className={`w-5 h-5 ${touched.email && errors.email ? 'text-[#ef4444]' : 'text-gray-500'}`} />
                 </div>
                 <input
                   type="email"
@@ -418,7 +438,7 @@ function RegisterContent() {
                   disabled={isLoading}
                   className={`w-full pl-12 pr-10 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.email && errors.email
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
+                      ? 'border-[#fca5a5] focus:border-[#ef4444] focus:ring-[#ef4444]/50'
                       : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="you@company.com"
@@ -430,19 +450,19 @@ function RegisterContent() {
                 )}
               </div>
               {touched.email && errors.email && (
-                <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+                <p className="mt-1 text-xs text-[#ef4444]">{errors.email}</p>
               )}
             </div>
 
             {/* Company Input */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-2">
-                Company Name {role === ROLES.OWNER && <span className="text-red-500">*</span>}
+                Company Name {role === ROLES.OWNER && <span className="text-[#ef4444]">*</span>}
                 {role === ROLES.EXPERT && <span className="text-gray-400 text-xs ml-1">(Optional)</span>}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Briefcase className={`w-5 h-5 ${touched.company && errors.company ? 'text-red-500' : 'text-gray-500'}`} />
+                  <Briefcase className={`w-5 h-5 ${touched.company && errors.company ? 'text-[#ef4444]' : 'text-gray-500'}`} />
                 </div>
                 <input
                   type="text"
@@ -453,25 +473,25 @@ function RegisterContent() {
                   disabled={isLoading}
                   className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.company && errors.company
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
+                      ? 'border-[#fca5a5] focus:border-[#ef4444] focus:ring-[#ef4444]/50'
                       : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="Your Company"
                 />
               </div>
               {touched.company && errors.company && (
-                <p className="mt-1 text-xs text-red-500">{errors.company}</p>
+                <p className="mt-1 text-xs text-[#ef4444]">{errors.company}</p>
               )}
             </div>
 
             {/* Password Input */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-2">
-                Password <span className="text-red-500">*</span>
+                Password <span className="text-[#ef4444]">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className={`w-5 h-5 ${touched.password && errors.password ? 'text-red-500' : 'text-gray-500'}`} />
+                  <Lock className={`w-5 h-5 ${touched.password && errors.password ? 'text-[#ef4444]' : 'text-gray-500'}`} />
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -482,7 +502,7 @@ function RegisterContent() {
                   disabled={isLoading}
                   className={`w-full pl-12 pr-12 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.password && errors.password
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
+                      ? 'border-[#fca5a5] focus:border-[#ef4444] focus:ring-[#ef4444]/50'
                       : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="••••••••"
@@ -504,14 +524,14 @@ function RegisterContent() {
                     <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className={`h-full transition-all duration-300 ${
-                          passwordStrength.color === 'red' ? 'bg-red-500 w-1/5' :
+                          passwordStrength.color === 'red' ? 'bg-[#ef4444] w-1/5' :
                           passwordStrength.color === 'yellow' ? 'bg-yellow-500 w-3/5' :
                           'bg-green-500 w-full'
                         }`}
                       />
                     </div>
                     <span className={`text-xs font-medium ${
-                      passwordStrength.color === 'red' ? 'text-red-400' :
+                      passwordStrength.color === 'red' ? 'text-[#f87171]' :
                       passwordStrength.color === 'yellow' ? 'text-yellow-400' :
                       'text-green-400'
                     }`}>
@@ -532,11 +552,11 @@ function RegisterContent() {
             {/* Confirm Password Input */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-2">
-                Confirm Password <span className="text-red-500">*</span>
+                Confirm Password <span className="text-[#ef4444]">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className={`w-5 h-5 ${touched.confirmPassword && errors.confirmPassword ? 'text-red-500' : 'text-gray-500'}`} />
+                  <Lock className={`w-5 h-5 ${touched.confirmPassword && errors.confirmPassword ? 'text-[#ef4444]' : 'text-gray-500'}`} />
                 </div>
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
@@ -547,7 +567,7 @@ function RegisterContent() {
                   disabled={isLoading}
                   className={`w-full pl-12 pr-12 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.confirmPassword && errors.confirmPassword
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
+                      ? 'border-[#fca5a5] focus:border-[#ef4444] focus:ring-[#ef4444]/50'
                       : formData.confirmPassword && formData.confirmPassword === formData.password
                       ? 'border-green-300 focus:border-green-500 focus:ring-green-500/50'
                       : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
@@ -564,7 +584,7 @@ function RegisterContent() {
                 </button>
               </div>
               {touched.confirmPassword && errors.confirmPassword && (
-                <p className="mt-1 text-xs text-red-500">{errors.confirmPassword}</p>
+                <p className="mt-1 text-xs text-[#ef4444]">{errors.confirmPassword}</p>
               )}
               {formData.confirmPassword && formData.confirmPassword === formData.password && !errors.password && (
                 <p className="mt-1 text-xs text-green-500 flex items-center gap-1">
@@ -585,7 +605,7 @@ function RegisterContent() {
                   onBlur={() => handleBlur('acceptTerms')}
                   disabled={isLoading}
                   className={`w-4 h-4 mt-0.5 rounded border-gray-300 bg-white text-blue-600 focus:ring-2 focus:ring-blue-500/50 ${
-                    touched.acceptTerms && errors.acceptTerms ? 'border-red-500' : ''
+                    touched.acceptTerms && errors.acceptTerms ? 'border-[#ef4444]' : ''
                   }`}
                 />
                 <label htmlFor="acceptTerms" className="ml-2 text-sm text-gray-600">
@@ -600,7 +620,7 @@ function RegisterContent() {
                 </label>
               </div>
               {touched.acceptTerms && errors.acceptTerms && (
-                <p className="mt-1 text-xs text-red-500 ml-6">{errors.acceptTerms}</p>
+                <p className="mt-1 text-xs text-[#ef4444] ml-6">{errors.acceptTerms}</p>
               )}
             </div>
 
