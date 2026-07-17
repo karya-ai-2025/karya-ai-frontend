@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   ArrowLeft, Share2, Heart, Star, MapPin, Clock, Briefcase, Calendar,
   MessageSquare, Video, Play, Download, ExternalLink, ChevronRight,
@@ -128,13 +129,65 @@ function getToolLevelColor(level) {
   }
 }
 
+// Portfolio item card
+function PortfolioItemCard({ item, onClick }) {
+  return (
+    <div
+      onClick={onClick}
+      className="group cursor-pointer bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-blue-300 hover:shadow-md transition-all"
+    >
+      <div className="h-28 bg-gray-100 flex items-center justify-center overflow-hidden">
+        {item.image ? (
+          <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+        ) : (
+          <Briefcase className="w-8 h-8 text-gray-300" />
+        )}
+      </div>
+      <div className="p-3">
+        <h4 className="text-sm font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">{item.title}</h4>
+        {item.category && <p className="text-xs text-gray-500 truncate mt-0.5">{item.category}</p>}
+      </div>
+    </div>
+  );
+}
+
+// Case study card
+function CaseStudyCard({ caseStudy, onClick }) {
+  return (
+    <div
+      onClick={onClick}
+      className="group cursor-pointer bg-white border border-gray-200 rounded-2xl p-5 hover:border-blue-300 hover:shadow-md transition-all"
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+          <Briefcase className="w-4 h-4 text-blue-600" />
+        </div>
+        {caseStudy.client && <span className="text-xs text-gray-500 truncate">{caseStudy.client}</span>}
+      </div>
+      <h4 className="text-base font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">{caseStudy.title}</h4>
+      {caseStudy.description && <p className="text-sm text-gray-500 line-clamp-2 mb-3">{caseStudy.description}</p>}
+      {caseStudy.results && (
+        <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
+          <TrendingUp className="w-3 h-3" /> {caseStudy.results}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Main Expert Profile Component
 function ExpertProfile() {
   const router = useRouter();
   const { expertId } = useParams();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [isSaved, setIsSaved] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+
+  // Contact is only shown on the logged-in expert's OWN profile.
+  const rawSelf = user?.profiles?.expert;
+  const selfProfileId = rawSelf && typeof rawSelf === 'object' ? (rawSelf._id || rawSelf.id) : rawSelf;
+  const isOwnProfile = !!selfProfileId && String(selfProfileId) === String(expertId);
 
   // Real API data
   const [expert, setExpert] = useState(null);
@@ -150,15 +203,30 @@ function ExpertProfile() {
     fetchExpertById(expertId)
       .then(data => {
         setExpert(normalizeExpert(data));
-        setCaseStudies(data.portfolio?.caseStudies || data.caseStudies || []);
-        setPortfolioItems(data.portfolio?.items || data.portfolioItems || []);
+        // The API returns portfolio as a flat array of items; support the old shapes too.
+        const rawPortfolio = Array.isArray(data.portfolio)
+          ? data.portfolio
+          : (data.portfolio?.items || data.portfolioItems || []);
+        const mapped = rawPortfolio.map((p, i) => ({
+          id:          p._id || p.id || `pf-${i}`,
+          title:       p.title || 'Untitled project',
+          category:    p.category || p.client || '',
+          client:      p.client || '',
+          description: p.description || '',
+          results:     p.results || '',
+          image:       (p.images && p.images[0]) || null,
+          link:        p.link || '',
+        }));
+        setPortfolioItems(mapped);
+        setCaseStudies(data.portfolio?.caseStudies || data.caseStudies || mapped);
       })
       .catch(err => setError(err.message || 'Failed to load expert profile'))
       .finally(() => setIsLoading(false));
   }, [expertId]);
 
+  // Clicking a card opens the expert's portfolio editor pre-filled with that item.
   const handleCaseStudyClick = (caseStudyId) => {
-    router.push(`/expert-profile/${expertId}/case-study/${caseStudyId}`);
+    router.push(`/expert/portfolio?edit=${caseStudyId}`);
   };
 
   const handleShare = () => {
@@ -217,24 +285,19 @@ function ExpertProfile() {
 
             <div className="flex items-center gap-2">
               <button
-                onClick={handleShare}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-900"
-                title="Share Profile"
-              >
-                <Share2 className="w-5 h-5" />
-              </button>
-              <button
                 onClick={() => setIsSaved(!isSaved)}
                 className={`p-2 rounded-lg transition-colors ${isSaved ? 'bg-pink-500/20 text-pink-400' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'}`}
               >
                 <Heart className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
               </button>
-              <button
-                onClick={() => setShowContactModal(true)}
-                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-purple-600 hover:to-pink-600 rounded-lg text-white font-medium transition-all text-sm"
-              >
-                Contact Expert
-              </button>
+              {isOwnProfile && (
+                <button
+                  onClick={() => setShowContactModal(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-purple-600 hover:to-pink-600 rounded-lg text-white font-medium transition-all text-sm"
+                >
+                  Contact Expert
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -322,12 +385,14 @@ function ExpertProfile() {
               </div>
             </div>
 
-            <button
-              onClick={() => setShowContactModal(true)}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-purple-600 hover:to-pink-600 rounded-xl text-white font-medium transition-all"
-            >
-              Contact Expert
-            </button>
+            {isOwnProfile && (
+              <button
+                onClick={() => setShowContactModal(true)}
+                className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-purple-600 hover:to-pink-600 rounded-xl text-white font-medium transition-all"
+              >
+                Contact Expert
+              </button>
+            )}
 
             <p className="text-center text-xs text-gray-500 mt-2">
               Usually responds within 2 hours
@@ -709,7 +774,7 @@ function ExpertProfile() {
                   <PortfolioItemCard
                     key={item.id}
                     item={item}
-                    onClick={() => {}}
+                    onClick={() => router.push(`/expert/portfolio?edit=${item.id}`)}
                   />
                 ))}
               </div>
@@ -841,12 +906,14 @@ function ExpertProfile() {
             <div className="text-2xl font-bold text-gray-900">${expert.hourlyRate}/hr</div>
             <div className="text-sm text-gray-500">Usually responds in {expert.responseTime}</div>
           </div>
-          <button
-            onClick={() => setShowContactModal(true)}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-purple-600 hover:to-pink-600 rounded-xl text-white font-medium transition-all"
-          >
-            Contact
-          </button>
+          {isOwnProfile && (
+            <button
+              onClick={() => setShowContactModal(true)}
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-purple-600 hover:to-pink-600 rounded-xl text-white font-medium transition-all"
+            >
+              Contact
+            </button>
+          )}
         </div>
       </div>
 
@@ -855,7 +922,7 @@ function ExpertProfile() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-gray-100 border border-gray-200 rounded-2xl p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900">Contact {expert.name}</h3>
+              <h3 className="text-xl font-bold text-gray-900">Contact Karya</h3>
               <button
                 onClick={() => setShowContactModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -894,20 +961,8 @@ function ExpertProfile() {
               <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-purple-600 hover:to-pink-600 rounded-xl text-white font-medium transition-all">
                 Send Message
               </button>
-              <div className="relative flex items-center gap-3">
-                <div className="flex-1 h-px bg-gray-200"></div>
-                <span className="text-xs text-gray-400 whitespace-nowrap">or</span>
-                <div className="flex-1 h-px bg-gray-200"></div>
-              </div>
-              <button
-                onClick={() => { setShowContactModal(false); router.push(`/expert-profile/${expertId}/hire`); }}
-                className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl text-white font-bold transition-all flex items-center justify-center gap-2 text-sm"
-              >
-                Proceed to Hire
-                <ChevronRight className="w-4 h-4" />
-              </button>
               <p className="text-center text-xs text-gray-500">
-                {expert.name} typically responds within {expert.responseTime}
+                Our team will get back to you shortly.
               </p>
             </div>
           </div>

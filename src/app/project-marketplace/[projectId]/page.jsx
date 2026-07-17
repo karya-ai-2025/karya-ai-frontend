@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
   ArrowLeft, Star, Clock, Users, CheckCircle, MapPin, Zap, Sparkles,
-  Target, Send, Mail, Megaphone, TrendingUp, Globe, BarChart3,
+  Target, Send, Mail, Megaphone, TrendingUp, Globe, BarChart3, Phone,
   Radio, FileText, Headphones, Handshake, Bot, Rocket,
   Building2, Award, Shield, DollarSign, Trophy, UserCheck,
   ChevronRight, Check, X, Briefcase, Timer, Crown, BadgeCheck,
@@ -334,9 +335,13 @@ export default function ProjectDetailPage() {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-2xl font-bold text-gray-900 mb-2">Project not found</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50">
+            <span className="text-3xl">🚀</span>
+          </div>
+          <p className="text-2xl font-bold text-gray-900 mb-2">Coming soon</p>
+          <p className="text-gray-500 mb-5">This project is being prepared and will be available shortly. Check back soon.</p>
           <Link href="/project-marketplace" className="text-blue-600 hover:underline text-sm">← Back to marketplace</Link>
         </div>
       </div>
@@ -573,14 +578,15 @@ export default function ProjectDetailPage() {
                   </div>
                 </section>
 
-                {/* Pricing Tier Selector */}
+                {/* Pricing Tier Selector — hidden for now (pricing not finalised).
+                    Uncomment to restore the "Select Your Package" table.
                 <PricingTierSelector
                   selectedHireMode={selectedHireMode}
                   selectedPriceTier={selectedPriceTier}
                   setSelectedPriceTier={setSelectedPriceTier}
                   project={project}
                   dbPriceTiers={dbPriceTiers}
-                />
+                /> */}
 
                 {/* Tools */}
                 <section>
@@ -1357,9 +1363,16 @@ function PricingTierSelector({ selectedHireMode, selectedPriceTier, setSelectedP
 
 // ── HIRE CARD ─────────────────────────────────────────────────────────
 function HireCard({ project, pricingTiers, dbPriceTiers, selectedHireMode, setSelectedHireMode, selectedPriceTier, setSelectedPriceTier, userRole, selectedTier, onApply, projectId }) {
+  const [showContactCard, setShowContactCard] = useState(false);
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
-      {/* Header */}
+      {/* Header — pricing hidden for now (not finalised); duration/difficulty only */}
+      <div className={`${project.bgLight} border-b ${project.borderColor} px-5 py-4`}>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{project.title}</p>
+        <p className="text-sm text-gray-600">{project.duration} · {project.difficulty}</p>
+      </div>
+
+      {/* Hire-mode selector + plan pricing — commented out until pricing is decided.
       {(() => {
         const activeTier = dbPriceTiers.find(t => t.tierId === selectedPriceTier);
         const displayPrice = selectedHireMode === 'platform' ? (project.budgetRange || 'Custom Quote') : (activeTier?.priceLabel || project.budgetRange);
@@ -1368,16 +1381,13 @@ function HireCard({ project, pricingTiers, dbPriceTiers, selectedHireMode, setSe
           <div className={`${project.bgLight} border-b ${project.borderColor} px-5 py-4`}>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{displayLabel}</p>
             <p className="text-2xl font-bold text-gray-900">{displayPrice}</p>
-            <p className="text-xs text-gray-500 mt-1">{project.duration} · {project.difficulty}</p>
           </div>
         );
       })()}
-
       <div className="px-5 py-4">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Choose How to Hire</p>
         <div className="space-y-2">
           {pricingTiers.map((tier) => {
-            const TI = tier.icon;
             const isSelected = selectedHireMode === tier.id;
             return (
               <label key={tier.id} className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
@@ -1395,27 +1405,54 @@ function HireCard({ project, pricingTiers, dbPriceTiers, selectedHireMode, setSe
           })}
         </div>
       </div>
+      */}
 
-      <div className="px-5 pb-5 space-y-3">
-        {userRole === 'expert' ? (
-          <button onClick={onApply}
-            className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-semibold rounded-xl transition-all shadow-md text-sm flex items-center justify-center gap-2">
-            <Send className="w-4 h-4" /> Apply to This Project
-          </button>
-        ) : (project?.category === 'outbound' || project?.category === 'email' || projectId === 'brand-voice-social') ? (
-          <Link href={`/project-marketplace/${projectId}/overview?tier=${selectedPriceTier}&mode=${selectedHireMode}`}
-            className="w-full block py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-semibold rounded-xl transition-all shadow-md text-sm text-center flex items-center justify-center gap-2">
-            <CheckCircle className="w-4 h-4" /> Accept & Proceed
-          </Link>
-        ) : (
-          <button disabled className="w-full py-3 bg-gray-100 text-gray-400 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 cursor-not-allowed">
-            <Clock className="w-4 h-4" /> Coming Soon
-          </button>
-        )}
-        <button className="w-full py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center justify-center gap-2">
-          <MessageSquare className="w-4 h-4" /> Talk to a Consultant
+      {/* Single CTA — pricing isn't public yet, so everything routes to contact */}
+      <div className="px-5 py-5">
+        <button onClick={() => setShowContactCard(true)}
+          className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-semibold rounded-xl transition-all shadow-md text-sm text-center">
+          Contact us for pricing
         </button>
       </div>
+
+      {/* Contact card modal — portaled to <body> so it always sits above the sticky nav bars */}
+      {showContactCard && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={(e) => e.target === e.currentTarget && setShowContactCard(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-600 to-orange-500 px-6 py-5 text-white flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-bold">Contact us for pricing</h3>
+                <p className="text-xs text-white/80 mt-1">Reach out and we'll share a plan tailored to you.</p>
+              </div>
+              <button onClick={() => setShowContactCard(false)} className="p-1 rounded-lg hover:bg-white/15 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <a href="tel:+919876543210" className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all">
+                <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                  <Phone className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Call us</p>
+                  <p className="text-sm font-bold text-gray-900">+91 98765 43210</p>
+                </div>
+              </a>
+              <a href="mailto:ashish@karya-ai.com" className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                  <Mail className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Email us</p>
+                  <p className="text-sm font-bold text-gray-900">ashish@karya-ai.com</p>
+                </div>
+              </a>
+              <p className="text-center text-xs text-gray-400">We typically respond within a few hours.</p>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Stats */}
       <div className="border-t border-gray-100 grid grid-cols-3 divide-x divide-gray-100">

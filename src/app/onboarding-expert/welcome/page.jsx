@@ -86,7 +86,10 @@ function WelcomeExpert() {
   const isDateDisabled = (day) => {
     if (!day) return true;
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    return new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day) < today;
+    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    // Guardrail: bookings only within the current and next month
+    const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, 0); // last day of next month
+    return date < today || date > maxDate;
   };
 
   const formatSelectedDate = (day) => {
@@ -98,6 +101,11 @@ function WelcomeExpert() {
   const changeMonth = (dir) => {
     const d = new Date(currentMonth);
     d.setMonth(currentMonth.getMonth() + dir);
+    // Guardrail: only the current and next month are navigable
+    const now = new Date();
+    const min = new Date(now.getFullYear(), now.getMonth(), 1);
+    const max = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    if (d < min || d > max) return;
     setCurrentMonth(d);
   };
 
@@ -123,17 +131,17 @@ function WelcomeExpert() {
     return () => clearInterval(id);
   }, [bookedCall]);
 
-  // Generate time slots 9:00 AM → 11:30 PM → 12:00 AM
+  // Generate time slots 9:00 AM → 7:00 PM (business hours guardrail)
   const timeSlots = (() => {
     const slots = [];
-    for (let h = 9; h < 24; h++) {
+    for (let h = 9; h < 19; h++) {
       for (let m = 0; m < 60; m += 30) {
         const hour12 = h > 12 ? h - 12 : h;
         const period = h < 12 ? 'AM' : 'PM';
         slots.push(`${hour12}:${String(m).padStart(2, '0')} ${period}`);
       }
     }
-    slots.push('12:00 AM');
+    slots.push('7:00 PM');
     return slots;
   })();
 
@@ -178,8 +186,8 @@ function WelcomeExpert() {
           <p className="text-xl text-gray-600">Let's build your expert profile in minutes</p>
         </div>
 
-        {/* ── Initial view ── */}
-        {!showOptions && !showScheduler && (
+        {/* ── Merged: what onboarding covers + how to set up ── */}
+        {!showScheduler && (
           <div className="max-w-4xl mx-auto">
             <div className="bg-white border border-gray-200 shadow-lg rounded-2xl p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">This onboarding covers:</h2>
@@ -192,92 +200,65 @@ function WelcomeExpert() {
                 ))}
               </div>
 
-              <div className="relative rounded-xl overflow-hidden group cursor-pointer mb-6">
-                <img
-                  src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&h=450&fit=crop"
-                  alt="Onboarding Video"
-                  className="w-full h-80 object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-all flex items-center justify-center">
-                  <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Play className="w-10 h-10 text-white ml-1" fill="white" />
+              <div className="border-t border-gray-100 pt-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">
+                  How would you like to set up your profile?
+                </h3>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Manual */}
+                  <div
+                    onClick={handleManualOnboarding}
+                    className="group bg-gray-50 border border-gray-200 rounded-xl p-8 hover:bg-gray-100 transition-all cursor-pointer hover:scale-105"
+                  >
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-orange-500 rounded-xl flex items-center justify-center mb-6">
+                      <FileEdit className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Fill Details Manually</h3>
+                    <p className="text-gray-600 mb-4">
+                      Complete your expert profile step-by-step. Add your skills, portfolio, and services.
+                    </p>
+                    <ul className="space-y-2 mb-6">
+                      {['Quick and easy', 'Immediate access', 'Full control over your profile'].map(t => (
+                        <li key={t} className="flex items-center gap-2 text-gray-600">
+                          <CheckCircle className="w-4 h-4 text-green-400" />
+                          <span className="text-sm">{t}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg text-white font-semibold flex items-center justify-center gap-2 group-hover:from-blue-700 group-hover:to-orange-600 transition-all">
+                      Start Now <ArrowRight className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Schedule */}
+                  <div
+                    onClick={handleScheduleCall}
+                    className="group bg-gray-50 border border-gray-200 rounded-xl p-8 hover:bg-gray-100 transition-all cursor-pointer hover:scale-105"
+                  >
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mb-6">
+                      <Video className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Schedule a Call</h3>
+                    <p className="text-gray-600 mb-4">
+                      Talk to our team. We'll understand your expertise and set up your profile for you.
+                    </p>
+                    <ul className="space-y-2 mb-6">
+                      {['30-minute session', 'We build your profile', 'Flexible timing'].map(t => (
+                        <li key={t} className="flex items-center gap-2 text-gray-600">
+                          <CheckCircle className="w-4 h-4 text-green-400" />
+                          <span className="text-sm">{t}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg text-white font-semibold flex items-center justify-center gap-2 group-hover:from-blue-700 group-hover:to-orange-600 transition-all">
+                      {checkingExisting
+                        ? <><Loader2 className="w-5 h-5 animate-spin" /> Checking...</>
+                        : <>Schedule Now <Calendar className="w-5 h-5" /></>}
+                    </button>
                   </div>
                 </div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <p className="text-white font-medium text-lg">
-                    For You: A quick guide to getting the most out of Karya-AI as an expert
-                  </p>
-                </div>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── Choose path ── */}
-        {showOptions && !showScheduler && (
-          <div className="bg-white border border-gray-200 shadow-lg rounded-2xl p-8 max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
-              How would you like to set up your profile?
-            </h2>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Manual */}
-              <div
-                onClick={handleManualOnboarding}
-                className="group bg-gray-50 border border-gray-200 rounded-xl p-8 hover:bg-gray-100 transition-all cursor-pointer hover:scale-105"
-              >
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-orange-500 rounded-xl flex items-center justify-center mb-6">
-                  <FileEdit className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">Fill Details Manually</h3>
-                <p className="text-gray-600 mb-4">
-                  Complete your expert profile step-by-step. Add your skills, portfolio, and services.
-                </p>
-                <ul className="space-y-2 mb-6">
-                  {['Quick and easy', 'Immediate access', 'Full control over your profile'].map(t => (
-                    <li key={t} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="text-sm">{t}</span>
-                    </li>
-                  ))}
-                </ul>
-                <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg text-white font-semibold flex items-center justify-center gap-2 group-hover:from-blue-700 group-hover:to-orange-600 transition-all">
-                  Start Now <ArrowRight className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Schedule */}
-              <div
-                onClick={handleScheduleCall}
-                className="group bg-gray-50 border border-gray-200 rounded-xl p-8 hover:bg-gray-100 transition-all cursor-pointer hover:scale-105"
-              >
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mb-6">
-                  <Video className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">Schedule a Call</h3>
-                <p className="text-gray-600 mb-4">
-                  Talk to our team. We'll understand your expertise and set up your profile for you.
-                </p>
-                <ul className="space-y-2 mb-6">
-                  {['30-minute session', 'We build your profile', 'Flexible timing'].map(t => (
-                    <li key={t} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="text-sm">{t}</span>
-                    </li>
-                  ))}
-                </ul>
-                <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg text-white font-semibold flex items-center justify-center gap-2 group-hover:from-blue-700 group-hover:to-orange-600 transition-all">
-                  {checkingExisting
-                    ? <><Loader2 className="w-5 h-5 animate-spin" /> Checking...</>
-                    : <>Schedule Now <Calendar className="w-5 h-5" /></>}
-                </button>
-              </div>
-            </div>
-
-            <div className="text-center mt-8">
-              <button onClick={() => setShowOptions(false)} className="text-gray-500 hover:text-gray-900 transition-colors">
-                ← Go Back
-              </button>
             </div>
           </div>
         )}
@@ -322,32 +303,9 @@ function WelcomeExpert() {
                   })}{' '}at {selectedTime}
                 </p>
 
-                {bookedCall.meetLink ? (
-                  canJoin ? (
-                    <a
-                      href={bookedCall.meetLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-orange-500 text-white font-semibold rounded-xl hover:opacity-90 transition mb-6"
-                    >
-                      <Video className="w-5 h-5" /> Join Google Meet
-                    </a>
-                  ) : (
-                    <div className="inline-flex items-center gap-2 px-5 py-3 bg-gray-100 border border-gray-200 text-gray-500 rounded-xl mb-6 text-sm font-medium cursor-not-allowed select-none">
-                      <Clock className="w-4 h-4" />
-                      Join link opens {joinCountdown ? `in ${joinCountdown}` : 'soon'} (5 min before meeting)
-                    </div>
-                  )
-                ) : (
-                  <div className="inline-flex items-center gap-2 px-5 py-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl mb-6 text-sm font-medium">
-                    <Clock className="w-4 h-4" />
-                    Meet link will be shared once our team confirms the slot
-                  </div>
-                )}
-
-                <div className="flex items-center justify-center gap-2 text-sm text-gray-400 mb-8">
+                <div className="inline-flex items-center gap-2 px-5 py-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl mb-8 text-sm font-medium">
                   <Mail className="w-4 h-4" />
-                  A confirmation email has been sent to your registered email address
+                  We've emailed you the meeting details and joining link.
                 </div>
 
                 <button
@@ -487,20 +445,14 @@ function WelcomeExpert() {
           </div>
         )}
 
-        {/* Bottom Actions */}
-        {!showOptions && !showScheduler && (
-          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+        {/* Bottom skip */}
+        {!showScheduler && (
+          <div className="mt-8 text-center">
             <button
               onClick={handleSkip}
-              className="px-8 py-4 bg-white border border-gray-300 hover:bg-gray-50 rounded-xl text-gray-900 font-semibold transition-all"
+              className="text-gray-500 hover:text-gray-900 font-medium transition-colors"
             >
-              I'll Understand Later & Go
-            </button>
-            <button
-              onClick={handleStartOnboarding}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-xl flex items-center justify-center gap-2"
-            >
-              Let's Go <ArrowRight className="w-5 h-5" />
+              I'll set this up later →
             </button>
           </div>
         )}

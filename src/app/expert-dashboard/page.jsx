@@ -5,6 +5,7 @@ import NextImage from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { getExpertOnboardingStatus } from '@/services/expertonboardingApi';
 import {
   Search, Bell, ChevronDown, Home, Briefcase, Target, Users, DollarSign,
   FolderOpen, Phone, Wrench, Settings, Plus, PlusCircle, Calendar, Clock, CheckCircle,
@@ -44,7 +45,7 @@ const sidebarNavItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/expert-dashboard' },
   { id: 'projects', label: 'Active Projects', icon: Briefcase, path: '/expert/projects' },
   { id: 'project-marketplace', label: 'Project Catalog', icon: Layers, path: '/project-marketplace' },
-  { id: 'opportunities', label: 'Opportunities', icon: Target, path: '/expert/opportunities', badge: 2 },
+  { id: 'opportunities', label: 'Opportunities', icon: Target, path: '/expert/opportunities' },
   { id: 'clients', label: 'Clients', icon: Users, path: '/expert/clients' },
   { id: 'earnings', label: 'Earnings', icon: DollarSign, path: '/expert/earnings' },
   { id: 'portfolio', label: 'Portfolio', icon: FolderOpen, path: '/expert/portfolio' },
@@ -262,7 +263,7 @@ function EarningsChart({ data }) {
 // Main Expert Dashboard Component
 function ExpertDashboard() {
   const router = useRouter();
-  const { user, logout, isAuthenticated, loading } = useAuth();
+  const { user, logout, isAuthenticated, loading, getAuthHeader } = useAuth();
 
   // Auth guard — redirect to login if not authenticated
   useEffect(() => {
@@ -284,12 +285,60 @@ function ExpertDashboard() {
 
   const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'EX';
   const displayName = user?.fullName || user?.name || 'Expert';
+  // First name only, first letter capitalised — "john smith" → "John"
+  const rawFirst = displayName.trim().split(/\s+/)[0] || 'Expert';
+  const firstName = rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeNav, setActiveNav] = useState('dashboard');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isAvailable, setIsAvailable] = useState(mockExpert.isAvailable);
   const [earningsView, setEarningsView] = useState('monthly');
+
+  // Profile completion (drives whether we still nudge the user to finish their profile)
+  const [profileCompletion, setProfileCompletion] = useState(null);
+  const [publicProfileId, setPublicProfileId] = useState(null);
+  const [portfolioItems, setPortfolioItems] = useState([]);
+
+  // Load the expert's portfolio so the highlight reflects real items.
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/profiles/expert`, {
+      headers: { ...getAuthHeader() },
+    })
+      .then((r) => r.json())
+      .then((d) => { if (Array.isArray(d?.profile?.portfolio)) setPortfolioItems(d.profile.portfolio); })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    getExpertOnboardingStatus()
+      .then((res) => {
+        const ob = res?.onboarding || {};
+        const TOTAL_STEPS = 4; // profile-setup, skills, services, portfolio
+        const pct = ob.completed ? 100 : Math.round(((ob.currentStep || 0) / TOTAL_STEPS) * 100);
+        setProfileCompletion(pct);
+        setPublicProfileId(res?.profileId || null);
+      })
+      .catch(() => setProfileCompletion(0));
+  }, []);
+
+  const profileDone = (profileCompletion ?? 0) >= 60;
+
+  // Open the logged-in expert's public profile (same page as marketplace "View Profile").
+  const goToPublicProfile = async () => {
+    setShowUserMenu(false);
+    const raw = publicProfileId || user?.profiles?.expert;
+    const id = raw && typeof raw === 'object' ? (raw._id || raw.id) : raw;
+    if (id) { router.push(`/expert-profile/${id}`); return; }
+    try {
+      const res = await getExpertOnboardingStatus();
+      if (res?.profileId) router.push(`/expert-profile/${res.profileId}`);
+      else router.push('/onboarding-expert/profile-setup');
+    } catch {
+      router.push('/onboarding-expert/profile-setup');
+    }
+  };
 
   const percentChange   = mockExpert.earnings.lastMonth > 0
     ? ((mockExpert.earnings.thisMonth - mockExpert.earnings.lastMonth) / mockExpert.earnings.lastMonth * 100).toFixed(0)
@@ -415,19 +464,20 @@ function ExpertDashboard() {
                   </div>
                   <div className="p-1">
                     <button
-                      onClick={() => { setShowUserMenu(false); router.push('/expert/settings'); }}
+                      onClick={goToPublicProfile}
                       className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-100 rounded-lg text-left"
                     >
                       <User className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">Profile Settings</span>
+                      <span className="text-sm text-gray-600">Profile</span>
                     </button>
+                    {/* Payment Settings — hidden until payments go live.
                     <button
                       onClick={() => { setShowUserMenu(false); router.push('/expert/settings'); }}
                       className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-100 rounded-lg text-left"
                     >
                       <CreditCard className="w-4 h-4 text-gray-500" />
                       <span className="text-sm text-gray-600">Payment Settings</span>
-                    </button>
+                    </button> */}
                     <button
                       onClick={() => { setShowUserMenu(false); router.push('/support-help'); }}
                       className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-100 rounded-lg text-left"
@@ -456,18 +506,6 @@ function ExpertDashboard() {
         {/* Sidebar */}
         <aside className={`${sidebarOpen ? 'w-64' : 'w-0 lg:w-16'} flex-shrink-0 transition-all duration-300 overflow-hidden`}>
           <div className={`bg-white border-r border-gray-200 h-full overflow-y-auto ${sidebarOpen ? 'p-4' : 'p-2'}`}>
-            {/* New Project CTA */}
-            <div className="mb-3">
-              <button
-                onClick={() => { setActiveNav('create-project'); router.push('/create-project'); }}
-                title={!sidebarOpen ? 'New Project' : ''}
-                className={`w-full flex items-center gap-2.5 px-3 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm ${!sidebarOpen ? 'justify-center' : ''}`}
-              >
-                <PlusCircle className="w-5 h-5 flex-shrink-0" />
-                {sidebarOpen && <span>New Project</span>}
-              </button>
-            </div>
-
             {/* Navigation */}
             <nav className="space-y-1">
               {sidebarNavItems.map(item => {
@@ -508,26 +546,39 @@ function ExpertDashboard() {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
                 <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-                  Welcome back, {(user?.name || 'there').split(' ')[0]}! 👋
+                  Welcome back, {firstName}! 👋
                 </h1>
                 <p className="text-gray-500">
-                  {mockProjects.length === 0 && mockOpportunities.length === 0
-                    ? 'Complete your profile to start getting matched with projects'
-                    : <>You have <span className="text-blue-500 font-semibold">{mockProjects.length} active projects</span> and{' '}
+                  {mockProjects.length > 0 || mockOpportunities.length > 0 ? (
+                    <>You have <span className="text-blue-500 font-semibold">{mockProjects.length} active projects</span> and{' '}
                        <span className="text-emerald-400 font-semibold">{mockOpportunities.length} new opportunities</span></>
-                  }
+                  ) : profileDone ? (
+                    "You're all set — we'll match you with the right projects as they come in."
+                  ) : (
+                    'Complete your profile to start getting matched with projects'
+                  )}
                 </p>
               </div>
 
-              {/* Availability Toggle */}
-              <div className="flex items-center gap-3 p-3 bg-white border border-gray-200 shadow-sm rounded-xl">
-                <span className="text-sm text-gray-600">Available for new work</span>
+              <div className="flex items-center gap-3">
+                {/* Expert Marketplace CTA */}
                 <button
-                  onClick={() => setIsAvailable(!isAvailable)}
-                  className={`relative w-12 h-6 rounded-full transition-all ${isAvailable ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                  onClick={() => router.push('/expert-marketplace')}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-orange-500 hover:opacity-90 text-white text-sm font-semibold rounded-xl transition-all"
                 >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isAvailable ? 'left-7' : 'left-1'}`} />
+                  <Users className="w-4 h-4" /> Expert Marketplace
                 </button>
+
+                {/* Availability Toggle */}
+                <div className="flex items-center gap-3 p-3 bg-white border border-gray-200 shadow-sm rounded-xl">
+                  <span className="text-sm text-gray-600">Available for new work</span>
+                  <button
+                    onClick={() => setIsAvailable(!isAvailable)}
+                    className={`relative w-12 h-6 rounded-full transition-all ${isAvailable ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isAvailable ? 'left-7' : 'left-1'}`} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -604,7 +655,7 @@ function ExpertDashboard() {
                       onClick={() => router.push('/project-marketplace')}
                       className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-orange-500 hover:opacity-90 text-white font-semibold rounded-xl text-sm transition"
                     >
-                      <Layers className="w-4 h-4" /> Explore Marketplace
+                      <Layers className="w-4 h-4" /> Explore Projects
                     </button>
                   </div>
                 ) : (
@@ -629,13 +680,21 @@ function ExpertDashboard() {
                   <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center">
                     <Target className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                     <p className="font-semibold text-gray-400 mb-1">No opportunities yet</p>
-                    <p className="text-sm text-gray-400 mb-5">Complete your profile so we can match you with the right clients</p>
-                    <button
-                      onClick={() => router.push('/onboarding-expert/profile-setup')}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-orange-500 hover:opacity-90 text-white font-semibold rounded-xl text-sm transition"
-                    >
-                      <User className="w-4 h-4" /> Complete Profile
-                    </button>
+                    {profileDone ? (
+                      <p className="text-sm text-gray-400 max-w-md mx-auto">
+                        Thank you for completing your profile — we'll contact you as soon as an opportunity arises that matches your skills.
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-sm text-gray-400 mb-5">Complete your profile so we can match you with the right clients</p>
+                        <button
+                          onClick={() => router.push('/onboarding-expert/profile-setup')}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-orange-500 hover:opacity-90 text-white font-semibold rounded-xl text-sm transition"
+                        >
+                          <User className="w-4 h-4" /> Complete Profile
+                        </button>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -704,36 +763,6 @@ function ExpertDashboard() {
                 </div>
               </section>
 
-              {/* CRM Quick Stats */}
-              <section className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <Database className="w-5 h-5 text-blue-500" />
-                    CRM Quick Stats
-                  </h2>
-                  <button className="text-sm text-blue-500 hover:text-blue-600 font-medium">
-                    Open CRM →
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-gray-50 rounded-xl p-3 text-center">
-                    <p className="text-2xl font-bold text-gray-900">{mockCRMStats.contacts.toLocaleString()}</p>
-                    <p className="text-xs text-gray-500">Contacts</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-3 text-center">
-                    <p className="text-2xl font-bold text-gray-900">{mockCRMStats.activeSequences}</p>
-                    <p className="text-xs text-gray-500">Active Sequences</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-3 text-center">
-                    <p className="text-2xl font-bold text-gray-900">{mockCRMStats.emailsSent}</p>
-                    <p className="text-xs text-gray-500">Emails This Week</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-3 text-center">
-                    <p className="text-2xl font-bold text-gray-900">{mockCRMStats.responseRate}%</p>
-                    <p className="text-xs text-gray-500">Response Rate</p>
-                  </div>
-                </div>
-              </section>
             </div>
 
             {/* Right Column */}
@@ -821,56 +850,46 @@ function ExpertDashboard() {
                   <Image className="w-5 h-5 text-blue-500" />
                   Portfolio Highlight
                 </h2>
-                <div className="border border-dashed border-gray-300 rounded-xl p-6 text-center">
-                  <FolderOpen className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                  <p className="text-sm text-gray-400 mb-3">No portfolio items yet</p>
-                  <button
-                    onClick={() => router.push('/onboarding-expert/profile-setup')}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Add Portfolio Item
-                  </button>
-                </div>
-              </section>
-
-              {/* Platform Updates */}
-              <section className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
-                <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Megaphone className="w-5 h-5 text-blue-500" />
-                  Platform Updates
-                </h2>
-                <div className="space-y-2">
-                  {mockPlatformUpdates.map(update => (
-                    <div key={update.id} className="flex items-start gap-2 p-2 hover:bg-gray-50 rounded-lg transition-all cursor-pointer">
-                      <div className={`w-2 h-2 rounded-full mt-1.5 ${
-                        update.type === 'feature' ? 'bg-emerald-500' :
-                        update.type === 'event' ? 'bg-blue-500' : 'bg-purple-500'
-                      }`} />
-                      <p className="text-sm text-gray-600">{update.title}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* Quick Links */}
-              <section className="bg-white border border-gray-200 shadow-sm rounded-2xl p-5">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Quick Links</h2>
-                <div className="space-y-2">
-                  {[
-                    { icon: Target, label: "Browse Opportunities", color: "text-emerald-400" },
-                    { icon: Clock, label: "Update Availability", color: "text-blue-400" },
-                    { icon: FileText, label: "Submit Invoice", color: "text-amber-400" },
-                    { icon: MessageSquare, label: "Message Support", color: "text-pink-400" },
-                    { icon: BookOpen, label: "Training Resources", color: "text-blue-500" }
-                  ].map((item, idx) => (
-                    <button key={idx} className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all text-left">
-                      <item.icon className={`w-4 h-4 ${item.color}`} />
-                      <span className="text-sm text-gray-600">{item.label}</span>
-                      <ChevronRight className="w-4 h-4 text-gray-500 ml-auto" />
+                {portfolioItems.length === 0 ? (
+                  <div className="border border-dashed border-gray-300 rounded-xl p-6 text-center">
+                    <FolderOpen className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                    <p className="text-sm text-gray-400 mb-3">No portfolio items yet</p>
+                    <button
+                      onClick={() => router.push('/expert/portfolio')}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Portfolio Item
                     </button>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {portfolioItems.slice(0, 3).map((p, i) => (
+                      <button
+                        key={p._id || i}
+                        onClick={() => router.push(`/expert/portfolio?edit=${p._id || p.id}`)}
+                        className="w-full text-left flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {p.images && p.images[0]
+                            ? <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover" />
+                            : <FolderOpen className="w-5 h-5 text-blue-400" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-gray-900 truncate">{p.title || 'Untitled project'}</p>
+                          {(p.category || p.client) && <p className="text-xs text-gray-500 truncate">{p.category || p.client}</p>}
+                        </div>
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => router.push('/expert/portfolio')}
+                      className="w-full py-2 text-sm text-blue-500 hover:text-blue-600 text-center font-medium"
+                    >
+                      View all portfolio
+                    </button>
+                  </div>
+                )}
               </section>
+
             </div>
           </div>
         </main>

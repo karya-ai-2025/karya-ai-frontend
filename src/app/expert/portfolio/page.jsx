@@ -1,6 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { FolderOpen, Plus, Trash2, Loader2, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { FolderOpen, Plus, Trash2, Loader2, CheckCircle, AlertCircle, X, Pencil } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import ExpertPageWrapper from '@/components/expert/ExpertPageWrapper';
 
@@ -23,8 +24,8 @@ function Toast({ type, message, onClose }) {
   );
 }
 
-function AddItemModal({ onClose, onSave, saving }) {
-  const [form, setForm] = useState(EMPTY_FORM);
+function AddItemModal({ onClose, onSave, saving, initial, isEdit }) {
+  const [form, setForm] = useState(initial || EMPTY_FORM);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -35,7 +36,7 @@ function AddItemModal({ onClose, onSave, saving }) {
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h2 className="font-bold text-gray-900">Add Portfolio Item</h2>
+          <h2 className="font-bold text-gray-900">{isEdit ? 'Edit Portfolio Item' : 'Add Portfolio Item'}</h2>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -105,8 +106,8 @@ function AddItemModal({ onClose, onSave, saving }) {
               disabled={saving}
               className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2"
             >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              {saving ? 'Saving…' : 'Add Item'}
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : (isEdit ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />)}
+              {saving ? 'Saving…' : (isEdit ? 'Save Changes' : 'Add Item')}
             </button>
           </div>
         </form>
@@ -115,11 +116,14 @@ function AddItemModal({ onClose, onSave, saving }) {
   );
 }
 
-export default function ExpertPortfolioPage() {
+function ExpertPortfolioInner() {
   const { getAuthHeader } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [items, setItems]         = useState([]);
   const [loading, setLoading]     = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editItem, setEditItem]   = useState(null); // portfolio item being edited (null = add)
   const [saving, setSaving]       = useState(false);
   const [deleting, setDeleting]   = useState({});
   const [toast, setToast]         = useState(null);
@@ -141,20 +145,58 @@ export default function ExpertPortfolioPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleAdd = async (form) => {
+  // If arriving with ?edit=<id> (from a card click), open that item's editor.
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId && items.length) {
+      const it = items.find((i) => (i._id || i.id) === editId);
+      if (it) { setEditItem(it); setShowModal(true); }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, searchParams]);
+
+  // Map a stored portfolio item → the modal's form shape.
+  const itemToForm = (it) => ({
+    title:       it.title || '',
+    description: it.description || '',
+    results:     it.results || '',
+    clientName:  it.client || it.clientName || '',
+    projectUrl:  it.link || it.projectUrl || '',
+  });
+  // Map the modal's form → the API body (schema uses client/link).
+  const formToBody = (form) => ({
+    title:       form.title,
+    description: form.description,
+    results:     form.results,
+    client:      form.clientName,
+    link:        form.projectUrl,
+  });
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditItem(null);
+    if (searchParams.get('edit')) router.replace('/expert/portfolio');
+  };
+
+  const handleSaveItem = async (form) => {
     setSaving(true);
     try {
-      const res = await fetch(`${API_URL}/profiles/expert/portfolio`, {
-        method: 'POST',
-        headers: { ...getAuthHeader(), 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
+      const editing = !!editItem;
+      const id = editItem && (editItem._id || editItem.id);
+      const res = await fetch(
+        editing ? `${API_URL}/profiles/expert/portfolio/${id}` : `${API_URL}/profiles/expert/portfolio`,
+        {
+          method: editing ? 'PUT' : 'POST',
+          headers: { ...getAuthHeader(), 'Content-Type': 'application/json' },
+          body: JSON.stringify(formToBody(form)),
+        }
+      );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Failed to add item');
+        throw new Error(err.message || 'Failed to save item');
       }
-      setToast({ type: 'success', message: 'Portfolio item added' });
-      setShowModal(false);
+      setToast({ type: 'success', message: editing ? 'Portfolio item updated' : 'Portfolio item added' });
+      closeModal();
       await load();
     } catch (err) {
       setToast({ type: 'error', message: err.message });
@@ -184,13 +226,22 @@ export default function ExpertPortfolioPage() {
   return (
     <ExpertPageWrapper activeNav="portfolio">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
-      {showModal && <AddItemModal onClose={() => setShowModal(false)} onSave={handleAdd} saving={saving} />}
+      {showModal && (
+        <AddItemModal
+          key={editItem ? (editItem._id || editItem.id) : 'new'}
+          onClose={closeModal}
+          onSave={handleSaveItem}
+          saving={saving}
+          initial={editItem ? itemToForm(editItem) : EMPTY_FORM}
+          isEdit={!!editItem}
+        />
+      )}
 
       <div className="p-6">
         <div className="flex items-center justify-between mb-1">
           <h1 className="text-2xl font-bold text-gray-900">Portfolio</h1>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => { setEditItem(null); setShowModal(true); }}
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition"
           >
             <Plus className="w-4 h-4" /> Add Item
@@ -208,7 +259,7 @@ export default function ExpertPortfolioPage() {
             <p className="font-semibold text-gray-400 mb-2">No portfolio items yet</p>
             <p className="text-sm text-gray-400 mb-6">Add your past projects to help clients understand your expertise</p>
             <button
-              onClick={() => setShowModal(true)}
+              onClick={() => { setEditItem(null); setShowModal(true); }}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-orange-500 hover:opacity-90 text-white font-semibold rounded-xl text-sm transition"
             >
               <Plus className="w-4 h-4" /> Add Your First Portfolio Item
@@ -225,8 +276,8 @@ export default function ExpertPortfolioPage() {
                   </div>
                   <div className="p-4 flex-1 flex flex-col gap-2">
                     <p className="font-semibold text-gray-900 text-sm">{item.title}</p>
-                    {item.clientName && (
-                      <p className="text-xs text-gray-400">{item.clientName}</p>
+                    {(item.client || item.clientName) && (
+                      <p className="text-xs text-gray-400">{item.client || item.clientName}</p>
                     )}
                     {item.description && (
                       <p className="text-xs text-gray-500 line-clamp-2">{item.description}</p>
@@ -235,9 +286,15 @@ export default function ExpertPortfolioPage() {
                       <p className="text-xs text-emerald-600 font-medium">{item.results}</p>
                     )}
                     <div className="flex items-center gap-2 mt-auto pt-2">
-                      {item.projectUrl && (
+                      <button
+                        onClick={() => { setEditItem(item); setShowModal(true); }}
+                        className="flex-1 py-1.5 text-xs text-center border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors inline-flex items-center justify-center gap-1"
+                      >
+                        <Pencil className="w-3 h-3" /> Edit
+                      </button>
+                      {(item.link || item.projectUrl) && (
                         <a
-                          href={item.projectUrl}
+                          href={item.link || item.projectUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex-1 py-1.5 text-xs text-center border border-gray-200 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
@@ -261,5 +318,13 @@ export default function ExpertPortfolioPage() {
         )}
       </div>
     </ExpertPageWrapper>
+  );
+}
+
+export default function ExpertPortfolioPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <ExpertPortfolioInner />
+    </Suspense>
   );
 }

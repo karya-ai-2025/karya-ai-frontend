@@ -12,11 +12,26 @@ import Link from 'next/link';
 import { getPlansWithPackages } from '@/services/planService';
 import { useAuth } from '@/contexts/AuthContext';
 
+// Only these 4 projects are LIVE — every other card routes to "Coming soon".
+const LIVE_PROJECT_SLUGS = new Set([
+  'outbound-list-builder',   // Lead in a Box
+  'hotlead-in-a-box',        // HotLead in a Box
+  'ai-email-sales-agency',   // Cold Email Machine
+  'brand-voice-social',      // Brand Identity Kit
+]);
+
 function HomePage() {
   const router = useRouter();
   const { isAuthenticated, user, logout, loading: authLoading } = useAuth();
+
+  // Gate project cards: only live slugs open details; the rest show Coming soon.
+  const openProject = (path) => {
+    const slug = (path || '').split('/').pop();
+    router.push(LIVE_PROJECT_SLUGS.has(slug) ? path : '/project-marketplace/coming-soon');
+  };
   const [openFAQ, setOpenFAQ] = useState(null);
   const [heroInput, setHeroInput] = useState('');
+  const [agentComingSoon, setAgentComingSoon] = useState(false); // temporary gate — agent not public yet
   const [showSignInDropdown, setShowSignInDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -148,14 +163,15 @@ function HomePage() {
     { label: 'Privacy Policy', path: '/privacy' },
   ];
 
-  // Showcase carousel auto-rotation (2 slides, 5s each)
-  useEffect(() => {
-    if (showcasePaused) return;
-    const timer = setInterval(() => {
-      setShowcaseSlide(prev => (prev + 1) % 2);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [showcasePaused]);
+  // Showcase carousel auto-rotation — DISABLED for now: only the Project
+  // Selector slide is shown (GTM Analyzer temporarily hidden). Uncomment to restore.
+  // useEffect(() => {
+  //   if (showcasePaused) return;
+  //   const timer = setInterval(() => {
+  //     setShowcaseSlide(prev => (prev + 1) % 2);
+  //   }, 5000);
+  //   return () => clearInterval(timer);
+  // }, [showcasePaused]);
 
   const toggleFAQ = (index) => setOpenFAQ(openFAQ === index ? null : index);
 
@@ -214,7 +230,7 @@ function HomePage() {
       { title: 'Ad Creatives Pack',   desc: 'High-converting copy, visuals & videos',        emoji: '🎨', path: `${MP}/brand-voice-thought-leadership` },
     ],
     'brand-presence': [
-      { title: 'Brand Identity Kit',  desc: 'Logo, colors, voice & brand guidelines',        emoji: '🏆', path: `${MP}/brand-voice-thought-leadership` },
+      { title: 'Brand Identity Kit',  desc: 'Logo, colors, voice & brand guidelines',        emoji: '🏆', path: `${MP}/brand-voice-social` },
       { title: 'LinkedIn Authority',  desc: 'Thought leadership & profile program',          emoji: '💼', path: `${MP}/connection-relationship-manager` },
       { title: 'PR & Media',          desc: 'Press coverage & journalist outreach',          emoji: '📰', path: `${MP}/brand-voice-thought-leadership` },
     ],
@@ -224,18 +240,17 @@ function HomePage() {
       { title: 'Community Build',     desc: 'Discord, Slack & community growth system',      emoji: '👥', path: `${MP}/connection-relationship-manager` },
     ],
     'launch-product': [
-      { title: 'GTM in a Box',        desc: 'Complete go-to-market execution package',       emoji: '🚀', path: `${MP}/outbound-list-builder` },
       { title: 'Product Hunt Launch', desc: 'Hunt day strategy, assets & execution',         emoji: '🏅', path: `${MP}/brand-voice-thought-leadership` },
       { title: 'Launch Waitlist',     desc: 'Pre-launch audience & waitlist building',       emoji: '📋', path: `${MP}/inbound-aggregation` },
     ],
     'email-outreach': [
-      { title: 'Cold Email Sequences',desc: 'Multi-step personalized outreach flows',        emoji: '📧', path: `${MP}/ai-email-sales-agency` },
-      { title: 'Email Warm-up',       desc: 'Domain reputation & deliverability building',  emoji: '🔥', path: `${MP}/ai-email-sales-agency` },
+      { title: 'Cold Email Machine',  desc: 'Multi-step personalized outreach flows',        emoji: '📧', path: `${MP}/ai-email-sales-agency` },
+      { title: 'Email Warm-up',       desc: 'Domain reputation & deliverability building',  emoji: '🔥', path: `${MP}/email-warmup` },
       { title: 'Newsletter Build',    desc: 'Audience-building newsletter system',           emoji: '📰', path: `${MP}/inbound-aggregation` },
     ],
     'linkedin': [
       { title: 'LinkedIn Lead Gen',   desc: 'Profile optimisation + outreach sequences',    emoji: '💼', path: `${MP}/connection-relationship-manager` },
-      { title: 'Sales Navigator Pro', desc: 'Advanced targeting & lead list building',       emoji: '🎯', path: `${MP}/outbound-list-builder` },
+      { title: 'Sales Navigator Pro', desc: 'Advanced targeting & lead list building',       emoji: '🎯', path: `${MP}/sales-navigator-pro` },
       { title: 'DM Outreach System',  desc: 'Personalised connection + DM campaigns',       emoji: '✉️', path: `${MP}/sales-outreach-automation` },
     ],
     'cold-calls': [
@@ -243,7 +258,7 @@ function HomePage() {
       { title: 'Sales Dialer Setup',  desc: 'Power dialer + script + training',             emoji: '🎙️', path: `${MP}/call-intelligence-crm` },
     ],
     'sms-campaigns': [
-      { title: 'SMS Drip Sequences',  desc: 'Text message nurture & conversion flows',      emoji: '💬', path: `${MP}/ai-email-sales-agency` },
+      { title: 'SMS Drip Sequences',  desc: 'Text message nurture & conversion flows',      emoji: '💬', path: `${MP}/sms-drip-sequences` },
       { title: 'WhatsApp Outreach',   desc: 'WhatsApp broadcast & automation setup',        emoji: '📲', path: `${MP}/sales-outreach-automation` },
     ],
     'blog-seo': [
@@ -260,8 +275,8 @@ function HomePage() {
       { title: 'YouTube Strategy',    desc: 'Channel plan, SEO & content calendar',          emoji: '▶️', path: `${MP}/inbound-aggregation` },
     ],
     'email-copy': [
-      { title: 'Email Copy System',   desc: 'Welcome, nurture & sales email sequences',     emoji: '📝', path: `${MP}/ai-email-sales-agency` },
-      { title: 'Newsletter Design',   desc: 'Template, copy & weekly send system',          emoji: '💌', path: `${MP}/ai-email-sales-agency` },
+      { title: 'Email Copy System',   desc: 'Welcome, nurture & sales email sequences',     emoji: '📝', path: `${MP}/email-copy-system` },
+      { title: 'Newsletter Design',   desc: 'Template, copy & weekly send system',          emoji: '💌', path: `${MP}/newsletter-design` },
     ],
     'lead-gen': [
       { title: 'Lead in a Box',       desc: '1,000 ICP-matched verified leads delivered',    emoji: '🎯', path: `${MP}/outbound-list-builder` },
@@ -282,11 +297,9 @@ function HomePage() {
   };
   const featuredLauncherProjects = [
     { title: 'Lead in a Box',        punchLine: 'Get 1,000 qualified leads for your startup — in 3 days.',       desc: '1,000 ICP-matched verified leads ready for outreach', emoji: '🎯', thumb: 'from-blue-600 via-blue-500 to-cyan-400',      img: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace/outbound-list-builder',          tag: 'Most Popular' },
-    { title: 'GTM in a Box',         punchLine: 'Your first 50 customers, expertly delivered in 90 days.',       desc: '2 dedicated experts to win your first 50 customers',  emoji: '🚀', thumb: 'from-violet-600 via-purple-500 to-pink-400',  img: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace/outbound-list-builder',          tag: 'Featured' },
+    { title: 'HotLead in a Box',     punchLine: 'A full outbound engine — email, voice & LinkedIn, run for you.', desc: 'Full AI-orchestrated outbound — email + voice + LinkedIn', emoji: '🔥', thumb: 'from-violet-600 via-purple-500 to-pink-400',  img: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace/hotlead-in-a-box',               tag: 'Featured' },
     { title: 'Cold Email Machine',   punchLine: 'Book 30+ meetings a month — fully on autopilot.',               desc: 'Multi-step automated outreach with personalisation',  emoji: '📧', thumb: 'from-emerald-600 via-teal-500 to-cyan-400',   img: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=640&h=360&fit=crop&auto=format', path: '/project-marketplace/ai-email-sales-agency',         tag: 'Outreach' },
-    { title: 'SEO Blog Engine',      punchLine: 'Rank on Google and drive inbound leads, every month.',          desc: '4 fully optimised blog posts delivered every month',  emoji: '✍️', thumb: 'from-orange-500 via-amber-400 to-yellow-400', img: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace/inbound-aggregation',            tag: 'Content' },
-    { title: 'Brand Identity Kit',   punchLine: 'A brand so sharp, customers trust you on sight.',               desc: 'Logo, typography, color palette & brand voice guide', emoji: '🏆', thumb: 'from-rose-600 via-pink-500 to-fuchsia-400',   img: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace/brand-voice-thought-leadership', tag: 'Branding' },
-    { title: 'Viral Content Engine', punchLine: 'Turn your story into content that spreads itself.',             desc: 'Hooks, short-form formats & multi-platform reach',    emoji: '🔥', thumb: 'from-red-600 via-orange-500 to-amber-400',    img: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace/brand-voice-thought-leadership', tag: 'Social' },
+    { title: 'Brand Identity Kit',   punchLine: 'A brand so sharp, customers trust you on sight.',               desc: 'Logo, typography, color palette & brand voice guide', emoji: '🏆', thumb: 'from-rose-600 via-pink-500 to-fuchsia-400',   img: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=640&h=360&fit=crop&auto=format',  path: '/project-marketplace/brand-voice-social',             tag: 'Branding' },
   ];
 
   const projectCardColors = [
@@ -431,8 +444,8 @@ function HomePage() {
                   onKeyDown={e => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      if (heroInput.trim()) sessionStorage.setItem('pendingAgentMessage', heroInput.trim());
-                      handleProtectedRoute('/agent');
+                      // Agent is temporarily gated — show coming soon (agent code untouched)
+                      setAgentComingSoon(true);
                     }
                   }}
                   placeholder="Describe your GTM goal… e.g. I need 1,000 leads for my B2B SaaS targeting HR teams in India"
@@ -443,16 +456,20 @@ function HomePage() {
                   <button className="p-1 text-gray-300 hover:text-gray-500 transition-colors" type="button">
                     <Paperclip className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={() => {
-                    if (heroInput.trim()) sessionStorage.setItem('pendingAgentMessage', heroInput.trim());
-                    handleProtectedRoute('/agent');
-                  }}
+                  <button onClick={() => setAgentComingSoon(true)}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-[12px] font-semibold transition-colors" type="button">
                     Start for free <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
               </div>
-              <p className="text-[11px] text-gray-400 mt-2 text-center">Press Enter to submit · Shift+Enter for new line</p>
+              {agentComingSoon ? (
+                <div className="mt-2 flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+                  <p className="text-[12px] font-semibold text-blue-700">The AI agent is coming soon — stay tuned!</p>
+                </div>
+              ) : (
+                <p className="text-[11px] text-gray-400 mt-2 text-center">Press Enter to submit · Shift+Enter for new line</p>
+              )}
             </div>
 
           </div>
@@ -657,7 +674,7 @@ function HomePage() {
                   {!selectedLauncherOption && activeLauncherTab !== 'custom' && (
                     <div className="grid grid-cols-2 gap-4 h-full" style={{ gridTemplateRows: '1fr 1fr' }}>
                       {featuredLauncherProjects.slice(0, 4).map((project, i) => (
-                        <button key={i} onClick={() => router.push(project.path)}
+                        <button key={i} onClick={() => openProject(project.path)}
                           className="group text-left flex flex-col rounded-xl overflow-hidden transition-colors animate-fadeInUp min-h-0"
                           style={{ animationDelay: `${i * 55}ms`, animationFillMode: 'both' }}>
                           <div className="relative flex-1 min-h-0 rounded-xl overflow-hidden">
@@ -686,7 +703,7 @@ function HomePage() {
                   {selectedLauncherOption && activeLauncherTab !== 'custom' && launcherProjects[selectedLauncherOption] && (
                     <div className="grid grid-cols-2 gap-5">
                       {launcherProjects[selectedLauncherOption].map((project, i) => (
-                        <button key={i} onClick={() => router.push(project.path)}
+                        <button key={i} onClick={() => openProject(project.path)}
                           className="group text-left rounded-xl overflow-hidden transition-colors animate-fadeInUp"
                           style={{ animationDelay: `${i * 65}ms`, animationFillMode: 'both' }}>
                           <div className="relative w-full overflow-hidden rounded-xl mb-2.5" style={{ aspectRatio: '16/9' }}>
@@ -756,7 +773,7 @@ function HomePage() {
                 </div>
                 <div className="p-4 grid grid-cols-2 gap-3">
                   {featuredLauncherProjects.slice(0, 4).map((project, i) => (
-                    <button key={i} onClick={() => router.push(project.path)} className="group text-left rounded-xl overflow-hidden">
+                    <button key={i} onClick={() => openProject(project.path)} className="group text-left rounded-xl overflow-hidden">
                       <div className="relative w-full rounded-xl overflow-hidden mb-2" style={{ aspectRatio: '16/9' }}>
                         <div className={`absolute inset-0 bg-gradient-to-br ${project.thumb}`} />
                         {project.img && <img src={project.img} alt={project.title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
@@ -773,7 +790,8 @@ function HomePage() {
                   </div>{/* end Slide 1 inner flex */}
                 </div>{/* end Slide 1 */}
 
-                {/* ── SLIDE 2: GTM URL Analyzer ── */}
+                {/* ── SLIDE 2: GTM URL Analyzer — temporarily hidden (change false→true to restore) ── */}
+                {false && (
                 <div className={`absolute inset-0 flex transition-all duration-700 ease-in-out ${showcaseSlide === 1 ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}>
 
                   {/* Left: description + URL input */}
@@ -926,11 +944,13 @@ function HomePage() {
 
                   </div>
 
-                </div>{/* end Slide 2 */}
+                </div>
+                )}{/* end Slide 2 (hidden) */}
 
               </div>{/* end slides area */}
 
-              {/* ── Bottom navigation strip ── */}
+              {/* ── Bottom navigation strip — hidden while only one slide is live ── */}
+              {false && (
               <div className="h-11 bg-white border-t border-gray-100 flex items-center px-5 gap-4 flex-shrink-0">
                 {/* Auto progress bar */}
                 <div className="w-32 h-1 bg-gray-100 rounded-full overflow-hidden flex-shrink-0">
@@ -963,6 +983,7 @@ function HomePage() {
                   </button>
                 </div>
               </div>
+              )}{/* end bottom navigation strip (hidden) */}
 
                 </div>{/* end showcase frame */}
           </div>{/* end max-w container */}
@@ -1013,7 +1034,7 @@ function HomePage() {
               <div ref={topProjectsScrollRef} className="flex gap-5 overflow-x-auto px-6 lg:px-8 py-7 h-full items-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {featuredLauncherProjects.map((project, i) => (
                   <button key={i}
-                    onClick={() => router.push(project.path)}
+                    onClick={() => openProject(project.path)}
                     className="flex-shrink-0 w-[260px] sm:w-[285px] group text-left">
                     <div className="relative w-full rounded-2xl overflow-hidden mb-3" style={{ aspectRatio: '3/4' }}>
                       <div className={`absolute inset-0 bg-gradient-to-br ${project.thumb}`} />
@@ -1247,12 +1268,13 @@ function HomePage() {
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
-            <button onClick={() => router.push('/onboarding-owner/welcome')} className="group px-10 py-5 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-500 hover:to-orange-400 rounded-2xl text-white font-black text-lg transition-all hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/20 flex items-center justify-center gap-2">
+            <button onClick={() => router.push('/register')} className="group px-10 py-5 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-500 hover:to-orange-400 rounded-2xl text-white font-black text-lg transition-all hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/20 flex items-center justify-center gap-2">
               Get Started Free <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
+            {/* Book a Demo — removed for now.
             <button className="px-10 py-5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl text-white font-black text-lg transition-all hover:scale-105 backdrop-blur-sm">
               Book a Demo
-            </button>
+            </button> */}
           </div>
 
           {/* Trust signals */}

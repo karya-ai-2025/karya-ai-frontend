@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { User, Lock, Bell, CreditCard, Save, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { User, Lock, Bell, CreditCard, Save, Loader2, CheckCircle, AlertCircle, Pencil } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import ExpertPageWrapper from '@/components/expert/ExpertPageWrapper';
 
@@ -8,7 +9,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 const TABS = [
   { id: 'profile',       label: 'Profile',        icon: User },
   { id: 'password',      label: 'Password',        icon: Lock },
-  { id: 'payment',       label: 'Payment',         icon: CreditCard },
+  // Payment tab hidden until payments go live.
+  // { id: 'payment',       label: 'Payment',         icon: CreditCard },
   { id: 'notifications', label: 'Notifications',   icon: Bell },
 ];
 
@@ -28,6 +30,7 @@ function Toast({ type, message, onClose }) {
 }
 
 function ProfileTab({ user, getAuthHeader }) {
+  const router = useRouter();
   const { updateProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -57,7 +60,9 @@ function ProfileTab({ user, getAuthHeader }) {
           phone:             user?.phone || '',
           headline:          p.headline || '',
           bio:               p.bio || '',
-          location:          p.location || '',
+          location:          typeof p.location === 'string'
+            ? p.location
+            : [p.location?.city, p.location?.state].filter(Boolean).join(', '),
           yearsOfExperience: p.yearsOfExperience?.toString() || '',
         });
       } catch {
@@ -85,7 +90,10 @@ function ProfileTab({ user, getAuthHeader }) {
         body: JSON.stringify({
           headline:          form.headline,
           bio:               form.bio,
-          location:          form.location,
+          // location is an object { city, state } in the schema — split the "City, State" input.
+          location:          form.location.trim()
+            ? { city: (form.location.split(',')[0] || '').trim(), state: (form.location.split(',')[1] || '').trim() }
+            : undefined,
           yearsOfExperience: form.yearsOfExperience ? Number(form.yearsOfExperience) : undefined,
         }),
       });
@@ -107,86 +115,47 @@ function ProfileTab({ user, getAuthHeader }) {
   return (
     <>
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
-      <form onSubmit={handleSave} className="space-y-5 max-w-xl">
+
+      {/* Edit full profile (skills, services, portfolio) */}
+      <div className="mb-5 max-w-xl flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
-          <input
-            value={form.fullName}
-            onChange={e => setForm({ ...form, fullName: e.target.value })}
-            required
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 text-sm focus:outline-none focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-          <input
-            value={user?.email || ''}
-            disabled
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-400 text-sm bg-gray-50 cursor-not-allowed"
-          />
-          <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
-          <input
-            value={form.phone}
-            onChange={e => setForm({ ...form, phone: e.target.value })}
-            placeholder="+91 98765 43210"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 text-sm focus:outline-none focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Professional Headline</label>
-          <input
-            value={form.headline}
-            onChange={e => setForm({ ...form, headline: e.target.value })}
-            placeholder="e.g. B2B Lead Generation Specialist"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 text-sm focus:outline-none focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Bio</label>
-          <textarea
-            value={form.bio}
-            onChange={e => setForm({ ...form, bio: e.target.value })}
-            placeholder="Tell clients about your expertise and what you can do for them…"
-            rows={4}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 text-sm focus:outline-none focus:border-blue-500 resize-none"
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Location</label>
-            <input
-              value={form.location}
-              onChange={e => setForm({ ...form, location: e.target.value })}
-              placeholder="Mumbai, India"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 text-sm focus:outline-none focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Years of Experience</label>
-            <input
-              type="number"
-              min="0"
-              max="50"
-              value={form.yearsOfExperience}
-              onChange={e => setForm({ ...form, yearsOfExperience: e.target.value })}
-              placeholder="e.g. 5"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 text-sm focus:outline-none focus:border-blue-500"
-            />
-          </div>
+          <p className="text-sm font-semibold text-gray-900">Edit your full profile</p>
+          <p className="text-xs text-gray-500">Update your skills, services, portfolio and rates.</p>
         </div>
         <button
-          type="submit"
-          disabled={saving}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition"
+          type="button"
+          onClick={() => router.push('/onboarding-expert/profile-setup')}
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition whitespace-nowrap"
         >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          {saving ? 'Saving…' : 'Save Changes'}
+          <Pencil className="w-4 h-4" /> Edit Profile
         </button>
-      </form>
+      </div>
+
+      {/* Read-only display — use "Edit Profile" above to make changes */}
+      <div className="space-y-4 max-w-xl">
+        <ReadRow label="Full Name" value={form.fullName} />
+        <ReadRow label="Email" value={user?.email} />
+        <ReadRow label="Phone" value={form.phone} />
+        <ReadRow label="Professional Title" value={form.headline} />
+        <ReadRow label="Bio" value={form.bio} />
+        <div className="grid grid-cols-2 gap-4">
+          <ReadRow label="Location" value={form.location} />
+          <ReadRow label="Years of Experience" value={form.yearsOfExperience} />
+        </div>
+      </div>
     </>
+  );
+}
+
+// Read-only labelled value row
+function ReadRow({ label, value }) {
+  return (
+    <div>
+      <p className="text-sm font-medium text-gray-700 mb-1">{label}</p>
+      <div className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-900 text-sm min-h-[42px] whitespace-pre-wrap">
+        {value && String(value).trim() ? value : <span className="text-gray-400">—</span>}
+      </div>
+    </div>
   );
 }
 
@@ -196,33 +165,79 @@ function PasswordTab({ user, getAuthHeader }) {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
 
+  const [banner, setBanner] = useState(null); // persistent inline result message
+
+  // Same rules as registration
+  const pwChecks = {
+    length:    form.next.length >= 8,
+    uppercase: /[A-Z]/.test(form.next),
+    lowercase: /[a-z]/.test(form.next),
+    number:    /\d/.test(form.next),
+    special:   /[@$!%*?&]/.test(form.next),
+  };
+  const pwValid = Object.values(pwChecks).every(Boolean);
+
+  const validateNewPassword = () => {
+    if (!pwChecks.length)    return 'Password must be at least 8 characters';
+    if (!pwChecks.uppercase) return 'Password must contain an uppercase letter';
+    if (!pwChecks.lowercase) return 'Password must contain a lowercase letter';
+    if (!pwChecks.number)    return 'Password must contain a number';
+    if (!pwChecks.special)   return 'Password must contain a special character (@$!%*?&)';
+    if (form.next !== form.confirm) return 'New passwords do not match';
+    if (form.next === form.current) return 'New password must be different from the current one';
+    return '';
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
-    if (form.next !== form.confirm) {
-      setToast({ type: 'error', message: 'New passwords do not match' });
-      return;
-    }
-    if (form.next.length < 8) {
-      setToast({ type: 'error', message: 'Password must be at least 8 characters' });
+    setBanner(null);
+    const validationError = validateNewPassword();
+    if (validationError) {
+      setBanner({ type: 'error', message: validationError });
+      setToast({ type: 'error', message: validationError });
       return;
     }
     setSaving(true);
     try {
       const res = await changePassword(form.current, form.next);
       if (!res.success) throw new Error(res.error || 'Failed to change password');
+      setBanner({ type: 'success', message: 'Password updated successfully ✓' });
       setToast({ type: 'success', message: 'Password updated successfully' });
       setForm({ current: '', next: '', confirm: '' });
     } catch (err) {
-      setToast({ type: 'error', message: err.message });
+      // Backend errors like "Current password is incorrect" surface here.
+      const msg = err.message || 'Failed to change password';
+      setBanner({ type: 'error', message: msg });
+      setToast({ type: 'error', message: msg });
     } finally {
       setSaving(false);
     }
   };
 
+  const CHECK_ITEMS = [
+    ['length',    'At least 8 characters'],
+    ['uppercase', 'One uppercase letter'],
+    ['lowercase', 'One lowercase letter'],
+    ['number',    'One number'],
+    ['special',   'One special character (@$!%*?&)'],
+  ];
+
   return (
     <>
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
       <form onSubmit={handleSave} className="max-w-xl space-y-5">
+        {/* Persistent result banner — stays until the next attempt */}
+        {banner && (
+          <div className={`flex items-start gap-2 px-4 py-3 rounded-xl border text-sm font-medium ${
+            banner.type === 'success'
+              ? 'bg-green-50 border-green-200 text-green-700'
+              : 'bg-[#fef2f2] border-[#fca5a5] text-[#b91c1c]'
+          }`}>
+            {banner.type === 'success' ? <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" /> : <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />}
+            {banner.message}
+          </div>
+        )}
+
         {[
           { key: 'current', label: 'Current Password' },
           { key: 'next',    label: 'New Password' },
@@ -237,6 +252,19 @@ function PasswordTab({ user, getAuthHeader }) {
               required
               className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 text-sm focus:outline-none focus:border-blue-500"
             />
+            {/* Live requirement checklist under the new password */}
+            {f.key === 'next' && form.next && (
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1">
+                {CHECK_ITEMS.map(([key, label]) => (
+                  <div key={key} className={`flex items-center gap-1.5 text-xs ${pwChecks[key] ? 'text-green-600' : 'text-gray-400'}`}>
+                    <CheckCircle className="w-3 h-3 shrink-0" /> {label}
+                  </div>
+                ))}
+              </div>
+            )}
+            {f.key === 'confirm' && form.confirm && form.next !== form.confirm && (
+              <p className="mt-1 text-xs text-[#ef4444]">Passwords do not match</p>
+            )}
           </div>
         ))}
         <button

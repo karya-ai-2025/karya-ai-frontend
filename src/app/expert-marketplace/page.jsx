@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import NavbarAuth from '@/components/NavbarAuth';
 import { getOnboardingStatus } from '@/services/onboardingApi';
+import { getExpertOnboardingStatus } from '@/services/expertonboardingApi';
+import { useAuth } from '@/contexts/AuthContext';
 
 // ============================================
 // INLINE API FUNCTIONS
@@ -119,6 +121,7 @@ const defaultTimezones = [
 // ============================================
 function ExpertMarketplace() {
   const router = useRouter();
+  const { user, getAuthHeader } = useAuth();
   const searchParams = useSearchParams();
 
   // View states
@@ -131,6 +134,7 @@ function ExpertMarketplace() {
 
   // Data states
   const [experts, setExperts] = useState([]);
+  const [selfExpert, setSelfExpert] = useState(null); // logged-in expert's own tile
   const [featuredExpert, setFeaturedExpert] = useState(null);
   const [filterOptions, setFilterOptions] = useState(null);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
@@ -169,6 +173,63 @@ function ExpertMarketplace() {
   // ============================================
   // FETCH DATA
   // ============================================
+
+  // Load the logged-in expert's OWN tile so they can see how their profile appears.
+  // Only shown once the profile is at least 60% complete — an empty card helps no one.
+  useEffect(() => {
+    const raw = user?.profiles?.expert;
+    const selfId = raw && typeof raw === 'object' ? (raw._id || raw.id) : raw;
+    if (!selfId || user?.activeRole !== 'expert') { setSelfExpert(null); return; }
+    let active = true;
+
+    (async () => {
+      try {
+        const status = await getExpertOnboardingStatus();
+        const ob = status?.onboarding || {};
+        const pct = ob.completed ? 100 : Math.round(((ob.currentStep || 0) / 4) * 100);
+        if (pct < 60) { if (active) setSelfExpert(null); return; }
+      } catch { return; } // can't verify completion — don't show an empty tile
+
+    // Try the public marketplace shape first — matches the other cards exactly.
+    apiCall(`/marketplace/experts/${selfId}`)
+      .then((res) => { if (active && res?.data) setSelfExpert({ ...res.data, id: selfId, isSelf: true }); })
+      .catch(async () => {
+        // Profile not public yet — build the tile from the private profile instead.
+        try {
+          const res = await fetch(`${API_URL}/profiles/expert`, { headers: { ...getAuthHeader() } });
+          const data = await res.json();
+          const p = data?.profile;
+          if (!active || !p) return;
+          setSelfExpert({
+            isSelf: true,
+            id: selfId,
+            name: user?.fullName || 'You',
+            title: p.headline || '',
+            avatar: (user?.fullName || 'EX').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+            avatarImage: user?.avatar || null,
+            avatarColor: 'from-blue-500 to-cyan-500',
+            location: [p.location?.city, p.location?.state].filter(Boolean).join(', '),
+            rating: p.ratings?.overall || 0,
+            reviews: p.ratings?.totalReviews || 0,
+            projectsCompleted: p.stats?.projectsCompleted || 0,
+            yearsExperience: p.yearsOfExperience || 0,
+            hourlyRate: p.pricing?.hourlyRate?.min || 0,
+            expertise: (p.skills || []).map(s => s.name).filter(Boolean),
+            tools: p.tools || [],
+            bio: p.bio || '',
+            badges: [],
+            online: true,
+            caseStudy: p.portfolio?.[0]
+              ? { thumbnail: '📈', result: p.portfolio[0].results || p.portfolio[0].title }
+              : null,
+          });
+        } catch { /* no profile yet — no tile */ }
+      });
+    })();
+
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   // Fetch experts from API
   const fetchExperts = useCallback(async (page = 1, append = false) => {
@@ -866,7 +927,18 @@ function ExpertMarketplace() {
             {/* Expert Cards Grid */}
             {!isLoading && !error && (
               <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
-                {experts.map((expert) => (
+                {/* Logged-in expert's own tile — shows how their profile appears */}
+                {selfExpert && (
+                  <ExpertCard
+                    key="self"
+                    expert={selfExpert}
+                    viewMode={viewMode}
+                    isSaved={false}
+                    onToggleSave={() => {}}
+                    onViewProfile={() => router.push(`/expert-profile/${selfExpert.id}`)}
+                  />
+                )}
+                {experts.filter((e) => e.id !== selfExpert?.id).map((expert) => (
                   <ExpertCard
                     key={expert.id}
                     expert={expert}
@@ -1172,29 +1244,36 @@ function ExpertCard({ expert, viewMode, isSaved, onToggleSave, onViewProfile }) 
     );
   }
 
-  // Grid View Card
+  // Grid View Card — every section has a FIXED height so all cards line up,
+  // whatever content each expert has (missing sections keep their space).
   return (
-    <div className="relative bg-white border border-gray-200 rounded-2xl p-6 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-1 transition-all duration-300 group">
-      {/* Top Section */}
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex gap-2">
+    <div className={`relative bg-white border rounded-2xl p-6 hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-1 transition-all duration-300 group flex flex-col h-full ${
+      expert.isSelf ? 'border-blue-400 ring-2 ring-blue-100' : 'border-gray-200 hover:border-blue-300'
+    }`}>
+      {/* Top Section — badge + match/self chip (fixed height) */}
+      <div className="flex justify-between items-start mb-4 min-h-[30px]">
+        <div className="flex gap-2 min-w-0">
           {expert.badges?.slice(0, 1).map(badge => (
-            <span key={badge} className={`flex items-center gap-1 px-2 py-1 ${getBadgeColor(badge)} border rounded-full text-xs font-medium`}>
+            <span key={badge} className={`flex items-center gap-1 px-2 py-1 ${getBadgeColor(badge)} border rounded-full text-xs font-medium truncate`}>
               {getBadgeIcon(badge)}
               {badge}
             </span>
           ))}
         </div>
-
-        {/* Match Score */}
-        <span className="px-3 py-1 bg-blue-50 border border-blue-200 rounded-full text-sm font-medium text-blue-700">
-          {expert.matchScore}% Match
-        </span>
+        {expert.isSelf ? (
+          <span className="px-3 py-1 bg-blue-600 rounded-full text-sm font-medium text-white flex-shrink-0">
+            Your profile
+          </span>
+        ) : (
+          <span className="px-3 py-1 bg-blue-50 border border-blue-200 rounded-full text-sm font-medium text-blue-700 flex-shrink-0">
+            {expert.matchScore}% Match
+          </span>
+        )}
       </div>
 
-      {/* Avatar & Info */}
-      <div className="flex items-center gap-4 mb-4">
-        <div className="relative">
+      {/* Avatar & Info (fixed height) */}
+      <div className="flex items-center gap-4 mb-4 h-[72px]">
+        <div className="relative flex-shrink-0">
           <div className={`w-16 h-16 bg-gradient-to-br ${expert.avatarColor} rounded-full flex items-center justify-center flex-shrink-0 shadow-lg overflow-hidden`}>
             {expert.avatarImage ? (
               <img src={expert.avatarImage} alt={expert.name} className="w-full h-full object-cover" />
@@ -1204,95 +1283,97 @@ function ExpertCard({ expert, viewMode, isSaved, onToggleSave, onViewProfile }) 
           </div>
           {expert.online && <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>}
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h3 className="text-lg font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors cursor-pointer" onClick={onViewProfile}>
             {expert.name}
           </h3>
-          <p className="text-blue-600 text-sm truncate">{expert.title}</p>
-          <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-            <MapPin className="w-3 h-3" />
-            {expert.location}
+          <p className="text-blue-600 text-sm truncate min-h-[20px]">{expert.title || ' '}</p>
+          <div className="flex items-center gap-1 text-xs text-gray-500 mt-1 min-h-[16px]">
+            <MapPin className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate">{expert.location || '—'}</span>
           </div>
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
-        <div className="flex items-center gap-1">
-          <Star className="w-4 h-4 text-yellow-400 fill-current" />
+      {/* Stats Row (fixed 2×2 grid) */}
+      <div className="grid grid-cols-2 gap-2 mb-4 text-sm h-[52px] content-start">
+        <div className="flex items-center gap-1 truncate">
+          <Star className="w-4 h-4 text-yellow-400 fill-current flex-shrink-0" />
           <span className="text-gray-900 font-medium">{expert.rating}</span>
-          <span className="text-gray-500">({expert.reviews})</span>
+          <span className="text-gray-500 truncate">({expert.reviews})</span>
         </div>
-        <div className="flex items-center gap-1 text-gray-500">
-          <Briefcase className="w-4 h-4" />
-          <span>{expert.projectsCompleted} projects</span>
+        <div className="flex items-center gap-1 text-gray-500 truncate">
+          <Briefcase className="w-4 h-4 flex-shrink-0" />
+          <span className="truncate">{expert.projectsCompleted} projects</span>
         </div>
-        <div className="flex items-center gap-1 text-gray-500">
-          <Clock className="w-4 h-4" />
-          <span>{expert.yearsExperience}yr exp.</span>
+        <div className="flex items-center gap-1 text-gray-500 truncate">
+          <Clock className="w-4 h-4 flex-shrink-0" />
+          <span className="truncate">{expert.yearsExperience}yr exp.</span>
         </div>
-        <div className="flex items-center gap-1 text-green-600 font-medium">
-          <DollarSign className="w-4 h-4" />
-          <span>${expert.hourlyRate}/hr</span>
+        <div className="flex items-center gap-1 text-green-600 font-medium truncate">
+          <DollarSign className="w-4 h-4 flex-shrink-0" />
+          <span className="truncate">${expert.hourlyRate}/hr</span>
         </div>
       </div>
 
-      {/* Expertise Tags */}
-      <div className="flex flex-wrap gap-1 mb-3">
+      {/* Expertise Tags (fixed height — max 2 rows, overflow hidden) */}
+      <div className="flex flex-wrap gap-1 mb-3 h-[56px] overflow-hidden content-start">
         {expert.expertise?.slice(0, 3).map(skill => (
-          <span key={skill} className="px-2 py-1 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">{skill}</span>
+          <span key={skill} className="px-2 py-1 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700 max-w-full truncate h-fit">{skill}</span>
         ))}
-        {expert.expertise?.length > 3 && <span className="px-2 py-1 text-xs text-gray-500">+{expert.expertise.length - 3}</span>}
+        {expert.expertise?.length > 3 && <span className="px-2 py-1 text-xs text-gray-500 h-fit">+{expert.expertise.length - 3}</span>}
       </div>
 
-      {/* Tools Row */}
-      <div className="flex items-center gap-1 mb-4">
+      {/* Tools Row (fixed height) */}
+      <div className="flex items-center gap-1 mb-4 h-7 overflow-hidden">
         {expert.tools?.slice(0, 6).map(tool => (
           <span key={tool} className="text-lg" title={tool}>{toolIcons[tool] || '🔧'}</span>
         ))}
         {expert.tools?.length > 6 && <span className="text-xs text-gray-500 ml-1">+{expert.tools.length - 6}</span>}
       </div>
 
-      {/* Bio */}
-      <p className="text-gray-600 text-sm mb-4 line-clamp-2">{expert.bio}</p>
+      {/* Bio (always 2 lines of space) */}
+      <p className="text-gray-600 text-sm mb-4 line-clamp-2 min-h-[40px]">{expert.bio}</p>
 
-      {/* Case Study Preview */}
-      {expert.caseStudy && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-lg">{expert.caseStudy.thumbnail}</span>
-            <span className="text-xs text-gray-500">Case Study</span>
-          </div>
-          <p className="text-sm text-green-600 font-medium">{expert.caseStudy.result}</p>
-        </div>
-      )}
+      {/* Case Study Preview (slot always rendered so cards align) */}
+      <div className={`rounded-lg p-3 mb-4 h-[78px] overflow-hidden ${expert.caseStudy ? 'bg-gray-50 border border-gray-200' : 'border border-transparent'}`}>
+        {expert.caseStudy && (
+          <>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">{expert.caseStudy.thumbnail}</span>
+              <span className="text-xs text-gray-500">Case Study</span>
+            </div>
+            <p className="text-sm text-green-600 font-medium line-clamp-2">{expert.caseStudy.result}</p>
+          </>
+        )}
+      </div>
 
-      {/* CTA Buttons */}
-      <div className="flex gap-2">
+      {/* CTA Buttons — pinned to the bottom of the card */}
+      <div className="flex gap-2 mt-auto">
         <button onClick={onViewProfile} className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition-all">
           View Profile
         </button>
-        <button
-          onClick={onToggleSave}
-          className={`p-2.5 border rounded-lg transition-all ${
-            isSaved ? 'bg-pink-50 border-pink-200 text-pink-600' : 'bg-white border-gray-200 text-gray-500 hover:border-pink-300 hover:text-pink-600'
-          }`}
-        >
-          <Heart className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
-        </button>
+        {!expert.isSelf && (
+          <button
+            onClick={onToggleSave}
+            className={`p-2.5 border rounded-lg transition-all ${
+              isSaved ? 'bg-pink-50 border-pink-200 text-pink-600' : 'bg-white border-gray-200 text-gray-500 hover:border-pink-300 hover:text-pink-600'
+            }`}
+          >
+            <Heart className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
+          </button>
+        )}
       </div>
 
-      {/* Additional Badges */}
-      {expert.badges?.length > 1 && (
-        <div className="flex gap-1 mt-3 pt-3 border-t border-gray-200">
-          {expert.badges.slice(1).map(badge => (
-            <span key={badge} className={`flex items-center gap-1 px-2 py-0.5 ${getBadgeColor(badge)} border rounded text-xs`}>
-              {getBadgeIcon(badge)}
-              {badge}
-            </span>
-          ))}
-        </div>
-      )}
+      {/* Additional Badges (slot always rendered so cards align) */}
+      <div className="flex gap-1 mt-3 pt-3 border-t border-gray-200 min-h-[34px] overflow-hidden">
+        {expert.badges?.slice(1).map(badge => (
+          <span key={badge} className={`flex items-center gap-1 px-2 py-0.5 ${getBadgeColor(badge)} border rounded text-xs truncate`}>
+            {getBadgeIcon(badge)}
+            {badge}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

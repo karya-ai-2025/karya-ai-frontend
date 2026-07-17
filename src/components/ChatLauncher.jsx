@@ -13,6 +13,17 @@ export default function ChatLauncher() {
   if (pathname?.startsWith('/agent')) return null;
   if (pathname === '/business-dashboard') return null;
   if (pathname?.startsWith('/business-dashboard/my-projects/')) return null;
+  // No AI agent in the expert flow — hide the launcher on all expert pages.
+  if (pathname?.startsWith('/expert-dashboard')) return null;
+  if (pathname?.startsWith('/expert/')) return null;
+  if (pathname?.startsWith('/expert-profile')) return null;
+  if (pathname?.startsWith('/onboarding-expert')) return null;
+  // Also hidden on pages experts can reach: marketplaces + help & support.
+  if (pathname?.startsWith('/project-marketplace')) return null;
+  if (pathname?.startsWith('/expert-marketplace')) return null;
+  if (pathname?.startsWith('/support-help')) return null;
+  // Hidden on the public homepage too.
+  if (pathname === '/') return null;
 
   return (
     <button

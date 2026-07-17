@@ -76,6 +76,16 @@ const escapeHtml = (value) => String(value)
 
 const detectContentType = (body = '') => /<\/?[a-z][\s\S]*>/i.test(body) ? 'html' : 'text';
 
+// When the user adds inline formatting (<b>, <i>, <a>…) via the toolbar, the body
+// becomes "HTML" — and raw newlines collapse into one paragraph when rendered.
+// This keeps the line breaks by converting \n → <br/> for such mixed content.
+// Full HTML (pasted templates with <p>/<div>/<br> structure) is left untouched.
+const preserveLineBreaks = (body = '') => {
+  if (!/<\/?[a-z][\s\S]*>/i.test(body)) return body;                       // plain text
+  if (/<(br|p|div|table|ul|ol|h[1-6])[\s/>]/i.test(body)) return body;     // already block-structured HTML
+  return body.replace(/\r\n/g, '\n').replace(/\n/g, '<br/>');
+};
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 // Lead attributes a fillable-PDF field can be mapped to.
@@ -681,7 +691,7 @@ export default function EmailTemplateBuilder({ onBack, onCollapseSidebar }) {
       <iframe
         title="Email body preview"
         sandbox=""
-        srcDoc={`<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#111827;margin:0;padding:12px;} img{max-width:100%;height:auto;}</style></head><body>${body || ''}</body></html>`}
+        srcDoc={`<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#111827;margin:0;padding:12px;} img{max-width:100%;height:auto;}</style></head><body>${preserveLineBreaks(body) || ''}</body></html>`}
         className="w-full h-48 bg-white rounded border"
       />
     );

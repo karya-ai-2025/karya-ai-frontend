@@ -154,9 +154,9 @@ function ExpertPortfolio() {
     try {
       setIsLoading(true);
       await skipStep(4);
-      router.push('/expert-landing');
+      router.push('/expert-dashboard');
     } catch (err) {
-      router.push('/expert-landing');
+      router.push('/expert-dashboard');
     } finally {
       setIsLoading(false);
     }
@@ -189,7 +189,7 @@ function ExpertPortfolio() {
       });
 
       // Navigate to dashboard
-      router.push('/expert-landing');
+      router.push('/expert-dashboard');
     } catch (err) {
       setError(err.message || 'Failed to save portfolio. Please try again.');
     } finally {

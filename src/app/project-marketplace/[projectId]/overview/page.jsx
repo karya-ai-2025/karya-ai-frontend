@@ -12,6 +12,7 @@ import {
 import { fetchProjectBySlug, fetchProjectPricing, purchaseCatalogProject, fetchProjectExperts } from '@/lib/catalogApi';
 import { submitNegotiation, getMyNegotiation } from '@/lib/negotiationApi';
 import { checkUserPlanAccess } from '@/services/planService';
+import { useAuth } from '@/contexts/AuthContext';
 
 // UI-only theme per tierId — no prices here
 const TIER_THEME = {
@@ -48,6 +49,8 @@ const PHASE_COLORS = [
 export default function ProjectOverviewPage() {
   const params = useParams();
   const router = useRouter();
+  const { activeRole } = useAuth();
+  const isExpert = activeRole === 'expert'; // experts can view but not buy/hire
   const searchParams = useSearchParams();
   const projectId = params?.projectId;
   const tierParam = searchParams.get('tier') || 'silver';
@@ -106,9 +109,13 @@ export default function ProjectOverviewPage() {
 
   if (!project) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-500 mb-4">Project not found</p>
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50">
+            <Sparkles className="w-8 h-8 text-blue-500" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Coming soon</h2>
+          <p className="text-gray-500 mb-5">This project is being prepared and will be available shortly. Check back soon.</p>
           <Link href="/project-marketplace" className="text-blue-600 hover:underline">← Back to Marketplace</Link>
         </div>
       </div>
@@ -998,12 +1005,18 @@ export default function ProjectOverviewPage() {
                 )}
 
                 <div className="px-5 pb-5 pt-3 space-y-3">
-                  <button
-                    onClick={() => setShowContactForm(true)}
-                    className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm"
-                  >
-                    <DollarSign className="w-4 h-4" /> Pay Now
-                  </button>
+                  {isExpert ? (
+                    <div className="w-full py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 border border-gray-200 bg-gray-50 text-gray-500 text-center">
+                      <Lock className="w-4 h-4" /> Hiring is available for business accounts
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowContactForm(true)}
+                      className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm"
+                    >
+                      <DollarSign className="w-4 h-4" /> Pay Now
+                    </button>
+                  )}
 
                   {myNegotiation ? (
                     <div className={`w-full py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 border ${

@@ -4,6 +4,7 @@ import NextImage from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { getExpertOnboardingStatus } from '@/services/expertonboardingApi';
 import {
   Search, Bell, ChevronDown, Home, Briefcase, Target, Users, DollarSign,
   FolderOpen, Phone, Wrench, Settings, Layers, Menu, LogOut, User,
@@ -31,6 +32,23 @@ export default function ExpertPageWrapper({ activeNav = 'dashboard', children })
   const router = useRouter();
   const { user, logout, isAuthenticated, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // All hooks must be declared BEFORE any early return (Rules of Hooks)
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // Open the logged-in expert's public profile (same page as marketplace "View Profile").
+  const goToPublicProfile = async () => {
+    const raw = user?.profiles?.expert;
+    const id = raw && typeof raw === 'object' ? (raw._id || raw.id) : raw;
+    if (id) { router.push(`/expert-profile/${id}`); return; }
+    try {
+      const res = await getExpertOnboardingStatus();
+      if (res?.profileId) router.push(`/expert-profile/${res.profileId}`);
+      else router.push('/onboarding-expert/profile-setup');
+    } catch {
+      router.push('/onboarding-expert/profile-setup');
+    }
+  };
 
   // Auth guard — all expert pages require login
   useEffect(() => {
@@ -56,8 +74,6 @@ export default function ExpertPageWrapper({ activeNav = 'dashboard', children })
     </div>
   );
   if (!isAuthenticated) return null;
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleLogout = async () => {
     setShowUserMenu(false);
@@ -147,19 +163,20 @@ export default function ExpertPageWrapper({ activeNav = 'dashboard', children })
                   </div>
                   <div className="p-1">
                     <button
-                      onClick={() => { setShowUserMenu(false); router.push('/expert/settings'); }}
+                      onClick={() => { setShowUserMenu(false); goToPublicProfile(); }}
                       className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-100 rounded-lg text-left"
                     >
                       <User className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">Profile Settings</span>
+                      <span className="text-sm text-gray-600">Profile</span>
                     </button>
+                    {/* Payment Settings — hidden until payments go live.
                     <button
                       onClick={() => { setShowUserMenu(false); router.push('/expert/settings'); }}
                       className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-100 rounded-lg text-left"
                     >
                       <CreditCard className="w-4 h-4 text-gray-500" />
                       <span className="text-sm text-gray-600">Payment Settings</span>
-                    </button>
+                    </button> */}
                     <button
                       onClick={() => { setShowUserMenu(false); router.push('/support-help'); }}
                       className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-100 rounded-lg text-left"

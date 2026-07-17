@@ -109,68 +109,72 @@ const LAUNCHER_OPTIONS = {
 const MP = '/project-marketplace';
 const LAUNCHER_PROJECTS = {
   'get-customers': [
-    { title: 'B2B Contact Intelligence Engine', desc: 'Build & enrich a living list of verified decision-makers', emoji: '🎯', path: `${MP}/outbound-list-builder`,  sh: 'Rippling built a 2M-contact enriched universe — 3× reply rate', roi: '80% time saved' },
-    { title: 'AI Email Outbound Engine',        desc: 'AI-personalised multi-step cold email at scale',          emoji: '📧', path: `${MP}/ai-email-sales-agency`,  sh: '47 qualified meetings booked in month 1 for an agency',       roi: '47 meetings / month 1' },
-    { title: 'Call Intelligence CRM',           desc: 'AI voice agents that dial, qualify & book calls',         emoji: '📞', path: `${MP}/call-intelligence-crm`,  sh: 'AI voice agents booked 30+ qualified calls a month',          roi: '3× connect rate' },
-    { title: 'HotLead in a Box',                desc: 'Full AI-orchestrated outbound — email + voice + LinkedIn', emoji: '🔥', path: `${MP}/hotlead-in-a-box`,      sh: "$2M pipeline in Q1 with 3 SDRs + AI agents",                  roi: '18× ROI (Silver, Q1 2025)' },
+    { title: 'B2B Contact Intelligence Engine', desc: 'Builds & enriches a living outbound list of decision-makers from 5M+ contacts', emoji: '🎯', path: `${MP}/outbound-list-builder`,  sh: 'Rippling built a 2M-contact enriched universe — 3× reply rate', roi: '80% time saved' },
+    { title: 'AI Email Outbound Engine',        desc: 'Automated multi-step cold email sequences personalised at scale',               emoji: '📧', path: `${MP}/ai-email-sales-agency`,  sh: '47 qualified meetings booked in month 1 for an agency',       roi: '47 meetings / month 1' },
+    { title: 'Call Intelligence CRM',           desc: 'AI voice agents that dial, qualify & book calls',                               emoji: '📞', path: `${MP}/call-intelligence-crm`,  sh: 'AI voice agents booked 30+ qualified calls a month',          roi: '3× connect rate' },
+    { title: 'HotLead in a Box',                desc: 'Full AI-orchestrated outbound — email + voice + LinkedIn',                      emoji: '🔥', path: `${MP}/hotlead-in-a-box`,       sh: "$2M pipeline in Q1 with 3 SDRs + AI agents",                  roi: '18× ROI (Silver, Q1 2025)' },
+    { title: 'Inbound Aggregation',             desc: 'Capture, qualify & route inbound traffic from every channel into your pipeline', emoji: '⚡', path: `${MP}/inbound-traffic`,        sh: 'Inbound engine lifted site conversion 2.1×',                   roi: '2.1× conversion' },
   ],
   'connection-mgmt': [
-    { title: 'Sales Outreach Automation',       desc: 'Automated multi-touch sequences & reply management',      emoji: '🤝', path: `${MP}/sales-outreach-automation`, sh: 'Automated 3-touch sequences lifted reply rate 2.4×',         roi: '40% more meetings' },
+    { title: 'Sales Outreach Automation',           desc: 'Automate your GTM processes across email, LinkedIn & phone',        emoji: '🤝', path: `${MP}/sales-outreach-automation`, sh: 'Automated 3-touch sequences lifted reply rate 2.4×', roi: '40% more meetings' },
+    { title: 'Connection & Relationship Manager',   desc: 'Accept, respond & warm up LinkedIn connections — on your behalf',   emoji: '💼', path: `${MP}/connector-relationship`,    sh: 'Managed inbox warmed 300+ connections a month',      roi: '300+ warm connections / mo' },
   ],
   'advertise': [
-    { title: 'Full Funnel Ads',     desc: 'Google + Meta + LinkedIn ads, fully managed', emoji: '📣', path: `${MP}/traffic-abm-agency`,            sh: 'ABM ads drove a 4.1× return on ad spend',          roi: '4.1× ROAS' },
-    { title: 'Retargeting System',  desc: 'Pixel setup + high-intent retargeting',       emoji: '🎯', path: `${MP}/traffic-abm-agency`,            sh: 'Retargeting recovered 31% of lost visitors',       roi: '+31% recovered' },
+    { title: 'Traffic × ABM Agency', desc: 'Hyper-targeted paid traffic with Account-Based Marketing to reach dream accounts', emoji: '📣', path: `${MP}/traffic-abm`, sh: 'ABM ads drove a 4.1× return on ad spend', roi: '4.1× ROAS' },
   ],
   'brand-presence': [
-    { title: 'Founder Branding Program', desc: "Founder's online branding, voice & authority", emoji: '🏆', path: `${MP}/brand-voice-thought-leadership`,   sh: 'Founder hit 50k LinkedIn followers in 6 months', roi: '5× inbound leads' },
-    { title: 'Reputation & Authority',   desc: 'Consistent thought leadership & profile growth', emoji: '💼', path: `${MP}/connection-relationship-manager`, sh: 'Thought leadership tripled profile views',       roi: '3× profile reach' },
+    { title: 'Brand Voice & Thought Leadership', desc: "Activate your brand's voice on LinkedIn, X & industry communities",     emoji: '🏆', path: `${MP}/brand-voice-social`,           sh: 'Founder hit 50k LinkedIn followers in 6 months', roi: '5× inbound leads' },
+    { title: 'Marketing Virtual Assistant',      desc: 'Pre-trained AI-powered virtual assistants for business growth',         emoji: '🧑‍💻', path: `${MP}/virtual-assistant-marketing`,  sh: 'Social, email & inbox handled end-to-end',       roi: '20+ hrs saved / week' },
   ],
   'brand-identity': [
-    { title: 'Brand Identity Kit',  desc: 'Logo, typography, colour system & brand voice', emoji: '🎨', path: `${MP}/brand-voice-thought-leadership`, sh: 'Rebrand lifted demo conversion by 28%', roi: '+28% conversion' },
+    { title: 'Brand Identity Kit',  desc: 'Logo, typography, colour system & brand voice', emoji: '🎨', path: `${MP}/brand-voice-social`, sh: 'Rebrand lifted demo conversion by 28%', roi: '+28% conversion' },
   ],
   'partnership': [
-    { title: 'Partnership & Affiliate Program', desc: 'Affiliate system design + partner recruitment', emoji: '🌐', path: `${MP}/connection-relationship-manager`, sh: 'Affiliate program drove 22% of new revenue', roi: '22% revenue from partners' },
+    { title: 'Partnership & Affiliate Program',        desc: 'Affiliate system design + partner recruitment',            emoji: '🌐', path: `${MP}/affiliate-referral-program-engine`,     sh: 'Affiliate program drove 22% of new revenue', roi: '22% revenue from partners' },
+    { title: 'Channel & Reseller Partner Recruitment', desc: 'Partner ICP, automated outreach & onboarding enablement',  emoji: '🤝', path: `${MP}/channel-reseller-partner-recruitment`,  sh: 'New reseller partners selling within 30 days', roi: '30-day partner ramp' },
   ],
   'community': [
-    { title: 'Community Build',     desc: 'Discord / Slack community growth system', emoji: '👥', path: `${MP}/connection-relationship-manager`, sh: 'Built a 5k-member community driving 30% of signups', roi: '30% of signups' },
+    { title: 'Community Build',     desc: 'Discord / Slack community growth system', emoji: '👥', path: `${MP}/online-community-launch-management`, sh: 'Built a 5k-member community driving 30% of signups', roi: '30% of signups' },
   ],
   'pr-media': [
-    { title: 'PR & Earned Media',   desc: 'Press coverage & journalist outreach', emoji: '📰', path: `${MP}/brand-voice-thought-leadership`, sh: 'Secured 12 press features in 90 days', roi: '12 features / 90 days' },
+    { title: 'PR & Earned Media',   desc: 'Press coverage & journalist outreach', emoji: '📰', path: `${MP}/pr-earned-media-outreach-engine`, sh: 'Secured 12 press features in 90 days', roi: '12 features / 90 days' },
   ],
   'research-intel': [
-    { title: 'Demo Prep & CRM Research', desc: 'Buyer & account research before every call', emoji: '🔍', path: `${MP}/demo-prep-crm-research`, sh: 'Buyer research cut the sales cycle by 18 days', roi: '−18 day cycle' },
-    { title: 'Inbound Intelligence',     desc: 'Intent signals & in-market account discovery', emoji: '📊', path: `${MP}/inbound-aggregation`,   sh: 'Intent data surfaced 3× more in-market accounts', roi: '3× intent accounts' },
+    { title: 'Intent × Social Listening',        desc: 'Detect buying intent across LinkedIn, Reddit, G2 & Gartner in real time', emoji: '📊', path: `${MP}/intent-social-listening`,              sh: 'Intent data surfaced 3× more in-market accounts', roi: '3× intent accounts' },
+    { title: 'Demo Prep & CRM Research Brief',   desc: 'For each scheduled demo, get a CRM-ready research brief',                 emoji: '🔍', path: `${MP}/demo-prep-crm`,                        sh: 'Buyer research cut the sales cycle by 18 days',   roi: '−18 day cycle' },
+    { title: 'Call Intelligence × CRM',          desc: 'Post-call intelligence: AI transcription, insights & CRM updates',        emoji: '📞', path: `${MP}/call-intelligence-crm`,                sh: 'Every call auto-logged with coaching insights',   roi: '100% CRM hygiene' },
+    { title: 'GTM Analytics & Reporting',        desc: 'All your GTM data in one live dashboard with weekly insights',            emoji: '📈', path: `${MP}/gtm-analytics-reporting-dashboard`,    sh: 'One dashboard replaced 6 weekly report decks',    roi: '6 reports → 1 dashboard' },
+    { title: 'Sales Playbook & Pipeline Coaching', desc: 'A fractional sales coach embedded in your CRM & pipeline reviews',      emoji: '🎯', path: `${MP}/sales-playbook-pipeline-coaching`,     sh: 'Deal scorecard lifted win rate 1.8×',             roi: '1.8× win rate' },
   ],
   'go-viral': [
     { title: 'Viral Content Engine',desc: 'Hooks, formats & multi-platform distribution', emoji: '🔥', path: `${MP}/brand-voice-thought-leadership`, sh: 'A short-form series hit 4M views in 30 days', roi: '4M views / 30 days' },
     { title: 'Influencer Connect',  desc: 'Micro-influencer campaign management',        emoji: '⭐', path: `${MP}/brand-voice-thought-leadership`, sh: 'Micro-influencers drove 18k signups',         roi: '18k signups' },
   ],
   'launch-product': [
-    { title: 'GTM in a Box',        desc: 'Complete go-to-market execution package',    emoji: '🚀', path: `${MP}/outbound-list-builder`,          sh: 'First 50 customers delivered in 90 days', roi: '50 customers / 90 days' },
-    { title: 'Launch Waitlist',     desc: 'Pre-launch audience & waitlist building',    emoji: '📋', path: `${MP}/inbound-aggregation`,            sh: 'Waitlist of 8,000 before launch day',     roi: '8k waitlist' },
+    { title: 'Launch Waitlist',     desc: 'Pre-launch audience & waitlist building',    emoji: '📋', path: `${MP}/inbound-traffic`,            sh: 'Waitlist of 8,000 before launch day',     roi: '8k waitlist' },
   ],
   'email-outreach': [
-    { title: 'Cold Email Sequences',desc: 'Multi-step personalized outreach flows',     emoji: '📧', path: `${MP}/ai-email-sales-agency` },
-    { title: 'Email Warm-up',       desc: 'Domain reputation & deliverability building',emoji: '🔥', path: `${MP}/ai-email-sales-agency` },
-    { title: 'Newsletter Build',    desc: 'Audience-building newsletter system',        emoji: '📰', path: `${MP}/inbound-aggregation` },
+    { title: 'Cold Email Machine',  desc: 'Multi-step personalized outreach flows',     emoji: '📧', path: `${MP}/ai-email-sales-agency`, sh: '47 qualified meetings booked in month 1', roi: '47 meetings / month 1' },
+    { title: 'Email Warm-up',       desc: 'Domain reputation & deliverability building',emoji: '🔥', path: `${MP}/email-warmup`,          sh: '98% inbox placement after 3-week warm-up', roi: '98% deliverability' },
+    { title: 'Newsletter Build',    desc: 'Audience-building newsletter system',        emoji: '📰', path: `${MP}/inbound-traffic`,   sh: 'Newsletter grew to 12k subscribers in 6 months', roi: '12k subscribers' },
   ],
   'linkedin': [
-    { title: 'LinkedIn Lead Gen',   desc: 'Profile optimisation + outreach sequences',  emoji: '💼', path: `${MP}/connection-relationship-manager` },
-    { title: 'Sales Navigator Pro', desc: 'Advanced targeting & lead list building',    emoji: '🎯', path: `${MP}/outbound-list-builder` },
-    { title: 'DM Outreach System',  desc: 'Personalised connection + DM campaigns',     emoji: '✉️', path: `${MP}/sales-outreach-automation` },
+    { title: 'LinkedIn Lead Gen',   desc: 'Profile optimisation + outreach sequences',  emoji: '💼', path: `${MP}/connector-relationship`, sh: 'LinkedIn outreach booked 25 calls a month', roi: '25 calls / month' },
+    { title: 'Sales Navigator Pro', desc: 'Advanced targeting & lead list building',    emoji: '🎯', path: `${MP}/sales-navigator-pro`,             sh: 'Precision targeting doubled reply rates', roi: '2× reply rate' },
+    { title: 'DM Outreach System',  desc: 'Personalised connection + DM campaigns',     emoji: '✉️', path: `${MP}/sales-outreach-automation`,       sh: 'Personalised DMs hit a 34% response rate', roi: '34% response rate' },
   ],
   'cold-calls': [
-    { title: 'AI Call Campaigns',   desc: 'Automated voice outreach at scale',          emoji: '📞', path: `${MP}/call-intelligence-crm` },
-    { title: 'Sales Dialer Setup',  desc: 'Power dialer + script + training',           emoji: '🎙️', path: `${MP}/call-intelligence-crm` },
+    { title: 'AI Call Campaigns',   desc: 'Automated voice outreach at scale',          emoji: '📞', path: `${MP}/call-intelligence-crm`, sh: 'AI voice agents booked 30+ qualified calls a month', roi: '3× connect rate' },
+    { title: 'Sales Dialer Setup',  desc: 'Power dialer + script + training',           emoji: '🎙️', path: `${MP}/call-intelligence-crm`, sh: 'Dialer setup tripled daily conversations', roi: '3× conversations' },
   ],
   'sms-campaigns': [
-    { title: 'SMS Drip Sequences',  desc: 'Text message nurture & conversion flows',    emoji: '💬', path: `${MP}/ai-email-sales-agency` },
-    { title: 'WhatsApp Outreach',   desc: 'WhatsApp broadcast & automation setup',      emoji: '📲', path: `${MP}/sales-outreach-automation` },
+    { title: 'SMS Drip Sequences',  desc: 'Text message nurture & conversion flows',    emoji: '💬', path: `${MP}/sms-drip-sequences`,        sh: 'SMS nurture lifted show-up rates by 40%', roi: '+40% show-ups' },
+    { title: 'WhatsApp Outreach',   desc: 'WhatsApp broadcast & automation setup',      emoji: '📲', path: `${MP}/sales-outreach-automation`, sh: 'WhatsApp broadcasts hit 80% open rates', roi: '80% open rate' },
   ],
   'blog-seo': [
-    { title: 'SEO Blog Engine',     desc: '4 posts/mo with keyword research & briefs',  emoji: '✍️', path: `${MP}/inbound-aggregation` },
-    { title: 'Long-form Authority', desc: 'Deep-dive articles that rank & convert',     emoji: '📄', path: `${MP}/inbound-aggregation` },
-    { title: 'Technical SEO Audit', desc: 'Full site audit + fix recommendations',      emoji: '🔍', path: `${MP}/inbound-aggregation` },
+    { title: 'SEO Blog Engine',     desc: '4 posts/mo with keyword research & briefs',  emoji: '✍️', path: `${MP}/inbound-traffic` },
+    { title: 'Long-form Authority', desc: 'Deep-dive articles that rank & convert',     emoji: '📄', path: `${MP}/inbound-traffic` },
+    { title: 'Technical SEO Audit', desc: 'Full site audit + fix recommendations',      emoji: '🔍', path: `${MP}/inbound-traffic` },
   ],
   'social-posts': [
     { title: 'Social Calendar',     desc: '30 posts/mo across LinkedIn, X & Instagram', emoji: '📲', path: `${MP}/brand-voice-thought-leadership` },
@@ -178,27 +182,27 @@ const LAUNCHER_PROJECTS = {
   ],
   'video-scripts': [
     { title: 'Video Script Pack',   desc: 'Hooks, scripts & CTAs for any format',       emoji: '🎬', path: `${MP}/brand-voice-thought-leadership` },
-    { title: 'YouTube Strategy',    desc: 'Channel plan, SEO & content calendar',       emoji: '▶️', path: `${MP}/inbound-aggregation` },
+    { title: 'YouTube Strategy',    desc: 'Channel plan, SEO & content calendar',       emoji: '▶️', path: `${MP}/inbound-traffic` },
   ],
   'email-copy': [
-    { title: 'Email Copy System',   desc: 'Welcome, nurture & sales email sequences',   emoji: '📝', path: `${MP}/ai-email-sales-agency` },
-    { title: 'Newsletter Design',   desc: 'Template, copy & weekly send system',        emoji: '💌', path: `${MP}/ai-email-sales-agency` },
+    { title: 'Email Copy System',   desc: 'Welcome, nurture & sales email sequences',   emoji: '📝', path: `${MP}/email-copy-system` },
+    { title: 'Newsletter Design',   desc: 'Template, copy & weekly send system',        emoji: '💌', path: `${MP}/newsletter-design` },
   ],
   'lead-gen': [
     { title: 'Lead in a Box',       desc: '1,000 ICP-matched verified leads delivered', emoji: '🎯', path: `${MP}/outbound-list-builder` },
-    { title: 'Inbound Lead Funnel', desc: 'Landing page + lead magnet + nurture',       emoji: '⚡', path: `${MP}/inbound-aggregation` },
+    { title: 'Inbound Lead Funnel', desc: 'Landing page + lead magnet + nurture',       emoji: '⚡', path: `${MP}/inbound-traffic` },
   ],
   'paid-ads': [
-    { title: 'Full Funnel Ads',     desc: 'Google + Meta + LinkedIn ads management',    emoji: '📈', path: `${MP}/traffic-abm-agency` },
-    { title: 'Retargeting System',  desc: 'Pixel setup + retargeting campaigns',        emoji: '🔄', path: `${MP}/traffic-abm-agency` },
+    { title: 'Full Funnel Ads',     desc: 'Google + Meta + LinkedIn ads management',    emoji: '📈', path: `${MP}/traffic-abm` },
+    { title: 'Retargeting System',  desc: 'Pixel setup + retargeting campaigns',        emoji: '🔄', path: `${MP}/traffic-abm` },
   ],
   'referral': [
-    { title: 'Referral Program',    desc: 'End-to-end referral system design & launch', emoji: '🤝', path: `${MP}/connection-relationship-manager` },
-    { title: 'Affiliate Setup',     desc: 'Affiliate program + partner recruitment',    emoji: '🌐', path: `${MP}/connection-relationship-manager` },
+    { title: 'Referral Program',    desc: 'End-to-end referral system design & launch', emoji: '🤝', path: `${MP}/affiliate-referral-program-engine` },
+    { title: 'Affiliate Setup',     desc: 'Affiliate program + partner recruitment',    emoji: '🌐', path: `${MP}/affiliate-referral-program-engine` },
   ],
   'retention': [
-    { title: 'Churn Reduction',     desc: 'Exit surveys, win-back & loyalty flows',     emoji: '🔄', path: `${MP}/demo-prep-crm-research` },
-    { title: 'Customer Success',    desc: 'Onboarding + NPS + upsell system',           emoji: '💎', path: `${MP}/demo-prep-crm-research` },
+    { title: 'Churn Reduction',     desc: 'Exit surveys, win-back & loyalty flows',     emoji: '🔄', path: `${MP}/customer-health-scoring-churn-prediction` },
+    { title: 'Customer Success',    desc: 'Onboarding + NPS + upsell system',           emoji: '💎', path: `${MP}/customer-onboarding-journey-automation` },
   ],
 };
 
@@ -207,6 +211,14 @@ const CUSTOM_OPTION_PATHS = {
   'schedule-call': '/business-dashboard/submit-project/schedule',
   'by-agent':      '/agent',
 };
+
+// Only these 4 projects are LIVE — everything else shows "Coming soon".
+const LIVE_PROJECT_SLUGS = new Set([
+  'outbound-list-builder',   // Lead in a Box
+  'hotlead-in-a-box',        // HotLead in a Box
+  'ai-email-sales-agency',   // Cold Email Machine
+  'brand-voice-social',      // Brand Identity Kit
+]);
 
 const FEATURED_LAUNCHER_PROJECTS = [
   {
@@ -218,12 +230,12 @@ const FEATURED_LAUNCHER_PROJECTS = [
     sh: 'Cut prospecting time 80% — 3 weeks to 3 days', roi: '80% time saved',
   },
   {
-    title: 'GTM in a Box', desc: 'Two dedicated experts to win your first 50 customers',
+    title: 'HotLead in a Box', desc: 'Full AI-orchestrated outbound — email + voice + LinkedIn',
     thumb: 'from-violet-600 via-purple-500 to-pink-400', img: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=640&h=360&fit=crop&auto=format',
-    path: `${MP}/outbound-list-builder`, tag: 'Featured', rating: '4.9', experts: 12, completed: 38, price: '₹75K+', duration: '90 days', pills: ['Full GTM', 'Done-for-you'],
-    outcome: 'Your first 50 customers — fully managed',
-    deliverables: ['2 dedicated GTM experts', 'Complete 90-day go-to-market plan', 'Outreach, content & ads executed for you', 'Weekly performance reviews'],
-    sh: 'First 50 customers delivered in 90 days', roi: '50 customers / 90d',
+    path: `${MP}/hotlead-in-a-box`, tag: 'Featured', rating: '4.9', experts: 12, completed: 38, price: '₹75K+', duration: '90 days', pills: ['Outbound', 'Done-for-you'],
+    outcome: 'A full outbound engine, running for you',
+    deliverables: ['Verified lead lists on tap', 'AI email campaigns + reply handling', 'Voice & LinkedIn touchpoints', 'Weekly pipeline reviews'],
+    sh: '$2M pipeline in Q1 with 3 SDRs + AI agents', roi: '18× ROI (Silver, Q1 2025)',
   },
   {
     title: 'Cold Email Machine', desc: 'Multi-step automated outreach, personalised at scale',
@@ -234,28 +246,12 @@ const FEATURED_LAUNCHER_PROJECTS = [
     sh: '47 qualified meetings booked in month 1', roi: '47 meetings / mo',
   },
   {
-    title: 'SEO Blog Engine', desc: 'Four fully optimised blog posts delivered every month',
-    thumb: 'from-orange-500 via-amber-400 to-yellow-400', img: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=640&h=360&fit=crop&auto=format',
-    path: `${MP}/inbound-aggregation`, tag: 'Content', rating: '4.8', experts: 11, completed: 44, price: '₹25K+', duration: 'Monthly', pills: ['SEO', 'Content'],
-    outcome: 'Rank on Google & drive inbound leads',
-    deliverables: ['4 SEO-optimised posts / month', 'Keyword research & content briefs', 'On-page optimisation', 'Monthly ranking & traffic report'],
-    sh: '20%+ month-over-month organic traffic growth', roi: '20%+ MoM traffic',
-  },
-  {
     title: 'Brand Identity Kit', desc: 'Logo, typography, colour palette & brand voice guide',
     thumb: 'from-rose-600 via-pink-500 to-fuchsia-400', img: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=640&h=360&fit=crop&auto=format',
-    path: `${MP}/brand-voice-thought-leadership`, tag: 'Branding', rating: '4.9', experts: 8, completed: 27, price: '₹40K+', duration: '3–4 wks', pills: ['Branding', 'Design'],
+    path: `${MP}/brand-voice-social`, tag: 'Branding', rating: '4.9', experts: 8, completed: 27, price: '₹40K+', duration: '3–4 wks', pills: ['Branding', 'Design'],
     outcome: 'A brand customers trust on sight',
     deliverables: ['Logo & full visual identity', 'Typography + colour system', 'Brand voice & messaging guide', 'Ready-to-use templates'],
     sh: 'Rebrand lifted demo conversion by 28%', roi: '+28% conversion',
-  },
-  {
-    title: 'Viral Content Engine', desc: 'Hooks, short-form formats & multi-platform reach',
-    thumb: 'from-red-600 via-orange-500 to-amber-400', img: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=640&h=360&fit=crop&auto=format',
-    path: `${MP}/brand-voice-thought-leadership`, tag: 'Social', rating: '4.7', experts: 10, completed: 33, price: '₹35K+', duration: 'Monthly', pills: ['Social', 'Short-form'],
-    outcome: 'Turn your story into content that spreads',
-    deliverables: ['Hook & format playbook', '30 short-form pieces / month', 'Multi-platform distribution', 'Performance tracking & iteration'],
-    sh: 'A short-form series hit 4M views in 30 days', roi: '4M views / 30d',
   },
 ];
 
@@ -280,11 +276,11 @@ const LAUNCHER_PROJECT_IMAGES = {
   'ai-email-sales-agency':            'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=640&h=360&fit=crop&auto=format',
   'call-intelligence-crm':            'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=640&h=360&fit=crop&auto=format',
   'hotlead-in-a-box':                 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=640&h=360&fit=crop&auto=format',
-  'traffic-abm-agency':               'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=640&h=360&fit=crop&auto=format',
+  'traffic-abm':               'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=640&h=360&fit=crop&auto=format',
   'brand-voice-thought-leadership':   'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=640&h=360&fit=crop&auto=format',
-  'connection-relationship-manager':  'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=640&h=360&fit=crop&auto=format',
-  'demo-prep-crm-research':           'https://images.unsplash.com/photo-1573164713988-8665fc963095?w=640&h=360&fit=crop&auto=format',
-  'inbound-aggregation':              'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=640&h=360&fit=crop&auto=format',
+  'connector-relationship':  'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=640&h=360&fit=crop&auto=format',
+  'demo-prep-crm':           'https://images.unsplash.com/photo-1573164713988-8665fc963095?w=640&h=360&fit=crop&auto=format',
+  'inbound-traffic':              'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=640&h=360&fit=crop&auto=format',
 };
 
 const CITY_COORDS = {
@@ -879,15 +875,12 @@ function LauncherProjectCard({ project, index, onClick }) {
           </div>
         )}
 
-        {/* Footer: price (if known) + CTA */}
+        {/* Footer: difficulty · duration + CTA — prices hidden until pricing is finalised */}
         <div className="flex items-end justify-between gap-3 mt-auto pt-4 border-t border-gray-100">
-          {project.price ? (
-            <div>
-              <p className="text-[10px] text-gray-400 font-medium">From</p>
-              <p className="text-[19px] font-black text-gray-900 leading-none">{project.price}
-                {project.duration && <span className="text-[11px] font-medium text-gray-400 ml-1.5">· {project.duration}</span>}
-              </p>
-            </div>
+          {(project.duration || project.difficulty) ? (
+            <p className="text-[12px] font-medium text-gray-400 truncate">
+              {[project.difficulty, project.duration].filter(Boolean).join(' · ')}
+            </p>
           ) : <span />}
           <span className="flex items-center gap-1 text-[12px] font-bold text-blue-600 group-hover:text-blue-700 flex-shrink-0">
             View project <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -921,6 +914,50 @@ export default function ProjectMarketplace() {
   const [showFilters, setShowFilters] = useState(false);
   const sentinelRef = useRef(null);
   const router = useRouter();
+
+  // Only the 4 live projects open their detail page — every other card lands on
+  // the "Coming soon" screen (a slug that has no ProjectCatalog document).
+  const openProject = (path) => {
+    const slug = (path || '').split('/').pop();
+    router.push(LIVE_PROJECT_SLUGS.has(slug) ? path : `${MP}/coming-soon`);
+  };
+
+  // Live catalog from the DB — enriches the selector cards with real project
+  // info (title, subtitle, badge, duration, difficulty, deliverables) by slug.
+  const [catalogBySlug, setCatalogBySlug] = useState({});
+  useEffect(() => {
+    (async () => {
+      try {
+        const first = await fetchAllProjects({ page: 1 });
+        let all = first.projects || [];
+        const totalPages = first.pagination?.totalPages || 1;
+        for (let p = 2; p <= Math.min(totalPages, 5); p++) {
+          const next = await fetchAllProjects({ page: p });
+          all = all.concat(next.projects || []);
+        }
+        const map = {};
+        all.forEach((pr) => { if (pr.slug) map[pr.slug] = pr; });
+        setCatalogBySlug(map);
+      } catch { /* DB unreachable — cards fall back to their hardcoded copy */ }
+    })();
+  }, []);
+
+  // Merge real DB info into a hardcoded card (DB wins where present).
+  const enrichCard = useCallback((card) => {
+    const slug = (card.path || '').split('/').pop();
+    const db = catalogBySlug[slug];
+    if (!db) return card;
+    return {
+      ...card,
+      title:        db.title    || card.title,
+      desc:         db.subtitle || db.tagline || card.desc,
+      tag:          card.tag || db.badge || null,
+      outcome:      card.outcome || db.tagline || null,
+      duration:     db.duration   || card.duration,
+      difficulty:   db.difficulty || card.difficulty,
+      deliverables: card.deliverables || (db.deliverables?.length ? db.deliverables.slice(0, 4) : undefined),
+    };
+  }, [catalogBySlug]);
 
   // App-launcher (selector) state
   const [activeLauncherTab, setActiveLauncherTab] = useState('starter-kit');
@@ -1304,17 +1341,20 @@ export default function ProjectMarketplace() {
                   {!goalProjects && (
                     <div className="flex flex-col gap-4">
                       {FEATURED_LAUNCHER_PROJECTS.map((project, i) => (
-                        <LauncherProjectCard key={i} project={project} index={i} onClick={() => router.push(project.path)} />
+                        <LauncherProjectCard key={i} project={project} index={i} onClick={() => openProject(project.path)} />
                       ))}
                     </div>
                   )}
 
-                  {/* SELECTED GOAL — same rich card style as the default popular projects */}
+                  {/* SELECTED GOAL — same rich card style, enriched with live DB info */}
                   {goalProjects && (
                     <div className="flex flex-col gap-4">
-                      {goalProjects.map((project, i) => (
-                        <LauncherProjectCard key={i} project={project} index={i} onClick={() => router.push(project.path)} />
-                      ))}
+                      {goalProjects.map((project, i) => {
+                        const enriched = enrichCard(project);
+                        return (
+                          <LauncherProjectCard key={i} project={enriched} index={i} onClick={() => openProject(enriched.path)} />
+                        );
+                      })}
                     </div>
                   )}
 
