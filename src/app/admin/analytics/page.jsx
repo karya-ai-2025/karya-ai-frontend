@@ -6,7 +6,7 @@ import {
   RefreshCw, Loader2, CheckCircle, XCircle,
   Briefcase, Wrench, ShieldCheck, Activity,
   Zap, AlertTriangle, Clock, Eye,
-  ServerCrash, BarChart2, Info,
+  ServerCrash, BarChart2, Info, ChevronDown, ChevronRight,
 } from 'lucide-react';
 import AdminGuard from '@/components/AdminGuard';
 import { getAdminUserAnalytics, getAzureAnalytics } from '@/lib/adminApi';
@@ -108,6 +108,8 @@ export default function AdminAnalyticsPage() {
   const [azError,   setAzError]   = useState(null);
   const [search,    setSearch]    = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [usersOpen,  setUsersOpen]  = useState(false); // user list collapsed by default
+  const [usersShown, setUsersShown] = useState(10);    // show 10, +10 per "Show more"
 
   function loadDb() {
     setDbLoading(true); setDbError(null);
@@ -206,69 +208,97 @@ export default function AdminAnalyticsPage() {
                   </div>
                 </div>
 
-                {/* User table */}
+                {/* User table — collapsible, closed by default */}
                 <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-                  <div className="px-5 py-4 border-b border-gray-100 flex flex-wrap items-center gap-3">
-                    <input
-                      type="text"
-                      placeholder="Search by name or email..."
-                      value={search}
-                      onChange={e => setSearch(e.target.value)}
-                      className="flex-1 min-w-48 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                    />
-                    <div className="flex gap-2">
-                      {['all', 'owner', 'expert', 'admin'].map(r => (
-                        <button key={r} onClick={() => setRoleFilter(r)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors capitalize ${
-                            roleFilter === r ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
-                          }`}>
-                          {r === 'all' ? 'All' : ROLE_BADGE[r]?.label}
-                        </button>
-                      ))}
+                  {/* Collapsible header */}
+                  <button
+                    onClick={() => setUsersOpen(o => !o)}
+                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      {usersOpen ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+                      <span className="text-sm font-semibold text-gray-800">User list</span>
                     </div>
-                    <span className="text-xs text-gray-400">{visibleUsers.length} users</span>
-                  </div>
-                  {visibleUsers.length === 0 ? (
-                    <div className="py-16 text-center text-gray-400 text-sm">No users found</div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-50 border-b border-gray-100">
-                          <tr>
-                            {['User', 'Role', 'Email Verified', 'Joined'].map(h => (
-                              <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                          {visibleUsers.map(u => {
-                            const badge = ROLE_BADGE[u.activeRole] ?? ROLE_BADGE.owner;
-                            return (
-                              <tr key={u._id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-5 py-3">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-orange-400 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                                      {(u.fullName || u.email || '?').charAt(0).toUpperCase()}
-                                    </div>
-                                    <div>
-                                      <p className="font-medium text-gray-900">{u.fullName || '—'}</p>
-                                      <p className="text-xs text-gray-400">{u.email}</p>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-5 py-3">
-                                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${badge.className}`}>{badge.label}</span>
-                                </td>
-                                <td className="px-5 py-3">
-                                  {u.isEmailVerified ? <CheckCircle className="w-4 h-4 text-green-500" /> : <XCircle className="w-4 h-4 text-gray-300" />}
-                                </td>
-                                <td className="px-5 py-3 text-gray-500">{formatDate(u.createdAt)}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
+                    <span className="text-xs text-gray-400">{dbData.users?.length || 0} users</span>
+                  </button>
+
+                  {usersOpen && (
+                    <>
+                      <div className="px-5 py-4 border-t border-gray-100 flex flex-wrap items-center gap-3">
+                        <input
+                          type="text"
+                          placeholder="Search by name or email..."
+                          value={search}
+                          onChange={e => { setSearch(e.target.value); setUsersShown(10); }}
+                          className="flex-1 min-w-48 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                        />
+                        <div className="flex gap-2">
+                          {['all', 'owner', 'expert', 'admin'].map(r => (
+                            <button key={r} onClick={() => { setRoleFilter(r); setUsersShown(10); }}
+                              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors capitalize ${
+                                roleFilter === r ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                              }`}>
+                              {r === 'all' ? 'All' : ROLE_BADGE[r]?.label}
+                            </button>
+                          ))}
+                        </div>
+                        <span className="text-xs text-gray-400">{visibleUsers.length} users</span>
+                      </div>
+                      {visibleUsers.length === 0 ? (
+                        <div className="py-16 text-center text-gray-400 text-sm">No users found</div>
+                      ) : (
+                        <>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead className="bg-gray-50 border-b border-gray-100">
+                                <tr>
+                                  {['User', 'Role', 'Email Verified', 'Joined'].map(h => (
+                                    <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-50">
+                                {visibleUsers.slice(0, usersShown).map(u => {
+                                  const badge = ROLE_BADGE[u.activeRole] ?? ROLE_BADGE.owner;
+                                  return (
+                                    <tr key={u._id} className="hover:bg-gray-50 transition-colors">
+                                      <td className="px-5 py-3">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-orange-400 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                                            {(u.fullName || u.email || '?').charAt(0).toUpperCase()}
+                                          </div>
+                                          <div>
+                                            <p className="font-medium text-gray-900">{u.fullName || '—'}</p>
+                                            <p className="text-xs text-gray-400">{u.email}</p>
+                                          </div>
+                                        </div>
+                                      </td>
+                                      <td className="px-5 py-3">
+                                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${badge.className}`}>{badge.label}</span>
+                                      </td>
+                                      <td className="px-5 py-3">
+                                        {u.isEmailVerified ? <CheckCircle className="w-4 h-4 text-green-500" /> : <XCircle className="w-4 h-4 text-gray-300" />}
+                                      </td>
+                                      <td className="px-5 py-3 text-gray-500">{formatDate(u.createdAt)}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                          {usersShown < visibleUsers.length && (
+                            <div className="px-5 py-4 border-t border-gray-100 text-center">
+                              <button
+                                onClick={() => setUsersShown(n => n + 10)}
+                                className="text-sm font-semibold text-blue-600 hover:text-blue-700 border border-blue-200 rounded-xl px-4 py-2 hover:bg-blue-50 transition-colors"
+                              >
+                                Show more ({visibleUsers.length - usersShown} left)
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </>
                   )}
                 </div>
               </>

@@ -17,6 +17,7 @@ import {
   Package
 } from 'lucide-react';
 import { getPlans, getPackagesByPlan, simpleUpgrade, checkUserPlanAccess } from '@/services/planService';
+import { PURCHASES_ENABLED, PURCHASES_DISABLED_MESSAGE } from '@/lib/purchases';
 import { useAuth } from '@/contexts/AuthContext';
 // ⚠️ TEMP TEST BYPASS: Cashfree checkout is disabled until payment credentials are set.
 // The "Choose plan" button below calls simpleUpgrade() (POST /user/simple-upgrade) to grant
@@ -88,6 +89,7 @@ const PlanSelection = () => {
   // ⚠️ TEMP TEST BYPASS: grant credits without going through Cashfree.
   // Calls the existing /user/simple-upgrade endpoint, then refreshes the navbar credits.
   const handleSimpleUpgrade = async (pkg) => {
+    if (!PURCHASES_ENABLED) { setError(PURCHASES_DISABLED_MESSAGE); return; }
     if (!user || !selectedPlan) {
       setError('Please login to upgrade your plan');
       return;
@@ -331,7 +333,7 @@ const PlanSelection = () => {
                       <button
                         type="button"
                         onClick={() => handleSimpleUpgrade(pkg)}
-                        disabled={isUpgrading || !selectedPlan}
+                        disabled={isUpgrading || !selectedPlan || !PURCHASES_ENABLED}
                         className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors cursor-pointer flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                           upgradeSuccess && selectedPackage?._id === pkg._id
                             ? 'bg-green-600 text-white'
@@ -355,7 +357,7 @@ const PlanSelection = () => {
                         ) : (
                           <>
                             <CreditCard className="h-4 w-4" />
-                            <span>Choose {pkg.name}</span>
+                            <span>{PURCHASES_ENABLED ? `Choose ${pkg.name}` : 'Coming soon'}</span>
                             <ArrowRight className="h-4 w-4" />
                           </>
                         )}

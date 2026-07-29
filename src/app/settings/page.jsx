@@ -3,6 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { PURCHASES_ENABLED, PURCHASES_DISABLED_MESSAGE } from '@/lib/purchases';
 import Sidebar from '@/components/Sidebar';
 import TopNavbar from '@/components/TopNavbar';
 import PlanSelection from '@/components/PlanSelection';
@@ -362,6 +363,7 @@ function SettingsContent() {
 
   // Handle buy credits
   const handleBuyCredits = async () => {
+    if (!PURCHASES_ENABLED) { showError(PURCHASES_DISABLED_MESSAGE); return; }
     if (!creditsToBuy || creditsToBuy < 1) {
       showError('Please enter a valid number of credits');
       return;
@@ -991,7 +993,7 @@ function SettingsContent() {
 
               <button
                 onClick={handleBuyCredits}
-                disabled={buyCreditsLoading || !creditsToBuy || creditsToBuy < 1}
+                disabled={buyCreditsLoading || !creditsToBuy || creditsToBuy < 1 || !PURCHASES_ENABLED}
                 className="w-full flex items-center justify-center space-x-2 px-4 sm:px-6 py-2.5 sm:py-2 cursor-pointer bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm sm:text-base"
               >
                 {buyCreditsLoading ? (
@@ -1002,7 +1004,7 @@ function SettingsContent() {
                 ) : (
                   <>
                     <CreditCard className="h-4 w-4" />
-                    <span>Buy Credits</span>
+                    <span>{PURCHASES_ENABLED ? 'Buy Credits' : 'Coming soon'}</span>
                   </>
                 )}
               </button>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { PURCHASES_ENABLED, PURCHASES_DISABLED_MESSAGE } from '@/lib/purchases';
 import { ChevronRight, Clock, Star, Tag, Crown } from 'lucide-react';
 import { checkUserPlanAccess } from '@/services/planService';
 
@@ -101,6 +102,9 @@ export default function ProjectSelection() {
 
   // Handle project selection
   const handleSelectProject = async (project) => {
+    // Acquiring a NEW project is a purchase (disabled for now). Continuing an
+    // already-owned project (the "my-projects" tab) is still allowed.
+    if (!PURCHASES_ENABLED && selectedFilter !== 'my-projects') { alert(PURCHASES_DISABLED_MESSAGE); return; }
     try {
       // First check if user has an active plan
       const authHeader = getAuthHeader();
@@ -323,7 +327,7 @@ export default function ProjectSelection() {
                 {/* Action Button */}
                 <button
                   onClick={() => handleSelectProject(project)}
-                  disabled={project.status !== 'active'}
+                  disabled={project.status !== 'active' || (!PURCHASES_ENABLED && selectedFilter !== 'my-projects')}
                   className={`w-full px-4 py-2 rounded-md transition-colors duration-200 flex items-center justify-center font-medium cursor-pointer ${
                     project.status === 'active'
                       ? (planStatus?.hasActivePlan
@@ -335,7 +339,7 @@ export default function ProjectSelection() {
                   {project.status === 'active'
                     ? (selectedFilter === 'my-projects'
                         ? 'Continue Project'
-                        : (planStatus?.hasActivePlan ? 'Get Started' : 'Upgrade to Access'))
+                        : (!PURCHASES_ENABLED ? 'Coming Soon' : (planStatus?.hasActivePlan ? 'Get Started' : 'Upgrade to Access')))
                     : project.status === 'coming-soon' ? 'Coming Soon' : 'Unavailable'}
                   {project.status === 'active' && (
                     planStatus?.hasActivePlan

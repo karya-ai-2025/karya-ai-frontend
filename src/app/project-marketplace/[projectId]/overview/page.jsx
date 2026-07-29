@@ -10,6 +10,7 @@ import {
   Phone, RefreshCw, Wrench, Lock, Sparkles, Pencil, X,
 } from 'lucide-react';
 import { fetchProjectBySlug, fetchProjectPricing, purchaseCatalogProject, fetchProjectExperts } from '@/lib/catalogApi';
+import { PURCHASES_ENABLED, PURCHASES_DISABLED_MESSAGE } from '@/lib/purchases';
 import { submitNegotiation, getMyNegotiation } from '@/lib/negotiationApi';
 import { checkUserPlanAccess } from '@/services/planService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -123,6 +124,7 @@ export default function ProjectOverviewPage() {
   }
 
   const handleAccept = async () => {
+    if (!PURCHASES_ENABLED) { alert(PURCHASES_DISABLED_MESSAGE); return; }
     setAccepting(true);
 
     const tierId = selectedTier?.tierId || tierParam;

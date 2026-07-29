@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { trackEvent } from '@/services/analyticsApi';
 import {
   FileText, BookOpen, Play, Mic, TrendingUp, Target, Users, Zap,
   ArrowRight, Clock, ChevronRight, Search, Star, Download, ExternalLink,
@@ -36,7 +37,7 @@ function Navbar() {
         </nav>
         <div className="hidden md:flex items-center gap-3">
           <button onClick={() => router.push('/login')} className="px-4 py-2 text-gray-900 font-medium border border-gray-300 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all text-sm">Sign In</button>
-          <button onClick={() => router.push('/register')} className="px-5 py-2 bg-blue-600 rounded-xl text-white font-medium hover:bg-blue-700 transition-all text-sm">Get Started</button>
+          <button onClick={() => { trackEvent('GET_STARTED_CLICK', { source: 'resources', placement: 'nav' }); router.push('/register'); }} className="px-5 py-2 bg-blue-600 rounded-xl text-white font-medium hover:bg-blue-700 transition-all text-sm">Get Started</button>
         </div>
         <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden p-2 text-gray-900 hover:bg-gray-100 rounded-lg"><Menu className="w-6 h-6" /></button>
       </div>
@@ -47,7 +48,7 @@ function Navbar() {
           ))}
           <div className="flex gap-2 mt-4">
             <button onClick={() => router.push('/login')} className="flex-1 py-2 border border-gray-300 rounded-lg text-sm font-medium">Sign In</button>
-            <button onClick={() => router.push('/register')} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">Get Started</button>
+            <button onClick={() => { trackEvent('GET_STARTED_CLICK', { source: 'resources', placement: 'nav-mobile' }); router.push('/register'); }} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">Get Started</button>
           </div>
         </div>
       )}

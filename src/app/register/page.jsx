@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertTriangle, CheckCircle, Check, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { trackEvent } from '@/services/analyticsApi';
 
 // Constants
 const ROLES = {
@@ -101,6 +102,17 @@ function RegisterContent() {
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       router.replace(activeRole === 'expert' ? '/expert-dashboard' : '/business-dashboard');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading]);
+
+  // Top of the onboarding funnel — "No. of sign ups". Reaching the signup form is
+  // the sign-up intent, and the role is known here (expert default / owner via team
+  // link) even pre-login, which the funnel needs to split Expert vs Business.
+  // Fires once per session (the backend dedupes by session), only for guests.
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      trackEvent('SIGNUP_CLICKED', { role });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading]);

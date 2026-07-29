@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { trackEvent } from '@/services/analyticsApi';
 import {
   Target, TrendingUp, Users, Globe, Zap, BarChart3, Network,
   Phone, Building2, Radio, ArrowRight, CheckCircle, Brain,
@@ -34,7 +35,7 @@ function Navbar() {
         </nav>
         <div className="hidden md:flex items-center gap-3">
           <button onClick={() => router.push('/login')} className="px-4 py-2 text-gray-900 font-medium border border-gray-300 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all text-sm">Sign In</button>
-          <button onClick={() => router.push('/register')} className="px-5 py-2 bg-blue-600 rounded-xl text-white font-medium hover:bg-blue-700 transition-all text-sm">Get Started</button>
+          <button onClick={() => { trackEvent('GET_STARTED_CLICK', { source: 'services', placement: 'nav' }); router.push('/register'); }} className="px-5 py-2 bg-blue-600 rounded-xl text-white font-medium hover:bg-blue-700 transition-all text-sm">Get Started</button>
         </div>
         <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden p-2 text-gray-900 hover:bg-gray-100 rounded-lg"><Menu className="w-6 h-6" /></button>
       </div>
@@ -45,7 +46,7 @@ function Navbar() {
           ))}
           <div className="flex gap-2 mt-4">
             <button onClick={() => router.push('/login')} className="flex-1 py-2 border border-gray-300 rounded-lg text-sm font-medium">Sign In</button>
-            <button onClick={() => router.push('/register')} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">Get Started</button>
+            <button onClick={() => { trackEvent('GET_STARTED_CLICK', { source: 'services', placement: 'nav-mobile' }); router.push('/register'); }} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">Get Started</button>
           </div>
         </div>
       )}
@@ -213,7 +214,7 @@ export default function ServicesPage() {
                 </div>
 
                 <button
-                  onClick={() => router.push('/register')}
+                  onClick={() => { trackEvent('GET_STARTED_CLICK', { source: 'services', placement: 'service-card' }); router.push('/register'); }}
                   className={`px-7 py-3.5 bg-gradient-to-r ${service.gradient} text-white font-bold rounded-2xl hover:shadow-lg transition-all flex items-center gap-2`}
                 >
                   Get Started with {service.title} <ArrowRight className="w-4 h-4" />

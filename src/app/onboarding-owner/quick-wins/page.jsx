@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, ArrowLeft, Search, Check, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { updateQuickWins, skipStep } from '@/services/onboardingApi';
+import { trackEvent } from '@/services/analyticsApi';
 
 function QuickWins() {
   const router = useRouter();
@@ -57,6 +58,7 @@ function QuickWins() {
   };
 
   const handleComplete = async () => {
+    trackEvent('ONBOARDING_COMPLETED', { role: 'owner' });
     setIsLoading(true);
     setError('');
 

@@ -8,12 +8,21 @@ import {
 import {
   Users, Eye, Clock, RefreshCw, Loader2, Download,
   TrendingUp, Zap, MousePointerClick, Filter, Globe, Layers,
+  ChevronDown, ChevronRight,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { getProductAnalytics } from '@/lib/adminApi';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 const nfmt = (n) => Number(n || 0).toLocaleString();
+
+// Chart date labels: "2026-07-09" → "Jul 9" (drop the year to save space).
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const shortDate = (d) => {
+  const p = String(d || '').slice(0, 10).split('-'); // [YYYY, MM, DD]
+  if (p.length === 3) return `${MONTHS[(+p[1]) - 1] || p[1]} ${+p[2]}`;
+  return String(d || '');
+};
 const secToDur = (s) => {
   s = Number(s || 0);
   if (s < 60) return `${s}s`;
@@ -78,6 +87,41 @@ const ExportBtns = ({ rows, name }) => (
   </div>
 );
 
+// Compact column headers for the onboarding daily/monthly tables
+const SHORT_STEP = { signUps: 'Signups', accountsCreated: 'Accounts', onboardingStarted: 'Started', onboardingCompleted: 'Completed' };
+
+// One role's onboarding funnel (totals view): 4 steps with step-to-step conversion
+function OnboardingFunnel({ title, steps, counts, accent }) {
+  const max = Math.max(counts?.[steps[0]?.key] || 0, 1);
+  return (
+    <div className="flex-1 min-w-0">
+      <p className="text-xs font-bold text-gray-700 mb-3">{title}</p>
+      <div className="space-y-2.5">
+        {steps.map((s, i) => {
+          const c = counts?.[s.key] || 0;
+          const prev = i === 0 ? c : (counts?.[steps[i - 1].key] || 0);
+          const conv = i === 0 ? null : (prev > 0 ? Math.round((c / prev) * 100) : 0);
+          const pct = Math.round((c / max) * 100);
+          return (
+            <div key={s.key}>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-gray-600">{s.label}</span>
+                <span className="text-gray-900 font-semibold">
+                  {nfmt(c)}{conv != null && <span className="text-gray-400 font-normal ml-2">{conv}%</span>}
+                </span>
+              </div>
+              <div className="h-5 bg-gray-100 rounded-lg overflow-hidden">
+                <div className={`h-full rounded-lg transition-all ${accent}`} style={{ width: `${c > 0 ? Math.max(pct, 4) : 0}%` }} />
+              </div>
+            </div>
+          );
+        })}
+        {steps.length === 0 && <p className="text-xs text-gray-400 text-center py-6">No data</p>}
+      </div>
+    </div>
+  );
+}
+
 // ── main ─────────────────────────────────────────────────────────────────────
 export default function ProductAnalytics() {
   const [preset, setPreset] = useState(30); // days: 7 / 30 / 90
@@ -86,6 +130,12 @@ export default function ProductAnalytics() {
   const [error, setError] = useState(null);
   const [pageSearch, setPageSearch] = useState('');
   const [pageNum, setPageNum] = useState(1);
+  // Per-user page visits
+  const [pbuSearch, setPbuSearch] = useState('');
+  const [pbuShown, setPbuShown] = useState(10);      // users shown (+10 per "Show more")
+  const [expandedUsers, setExpandedUsers] = useState(() => new Set());
+  // Onboarding funnels view
+  const [onbView, setOnbView] = useState('totals'); // 'totals' | 'daily' | 'monthly'
 
   // Fixed rolling window. Filters the trends & breakdowns below.
   const qs = useCallback(() => {
@@ -96,8 +146,8 @@ export default function ProductAnalytics() {
 
   const loadAll = useCallback(async () => {
     setLoading(true); setError(null);
-    const sections = ['overview', 'pages', 'events', 'active-users', 'funnels', 'features', 'geography'];
-    const rangeBased = ['pages', 'events', 'features', 'geography', 'active-users'];
+    const sections = ['overview', 'pages', 'pages-by-user', 'events', 'active-users', 'funnels', 'onboarding-funnels', 'features', 'geography'];
+    const rangeBased = ['pages', 'pages-by-user', 'events', 'features', 'geography', 'active-users', 'onboarding-funnels'];
     try {
       const results = await Promise.allSettled(
         sections.map((s) => getProductAnalytics(s, rangeBased.includes(s) ? qs() : ''))
@@ -126,6 +176,32 @@ export default function ProductAnalytics() {
   const activeUsers = data['active-users'] || {};
   const pagesData = data.pages || {};
 
+  // Onboarding funnels (Expert + Business, 4 steps, totals/daily/monthly)
+  const onb = data['onboarding-funnels'] || {};
+  const onbSteps = onb.steps || [];
+  // Flatten a role's daily/monthly map → rows sorted by period desc
+  const onbSeriesRows = (roleKey) => {
+    const bucket = onb.roles?.[roleKey]?.[onbView] || {};
+    return Object.entries(bucket)
+      .map(([period, counts]) => ({ period, ...counts }))
+      .sort((a, b) => (a.period < b.period ? 1 : -1));
+  };
+
+  // Per-user page visits (which user visited which pages)
+  const pbuAll = (data['pages-by-user']?.users || []).filter((u) => {
+    if (!pbuSearch) return true;
+    const q = pbuSearch.toLowerCase();
+    return (u.name || '').toLowerCase().includes(q)
+      || (u.email || '').toLowerCase().includes(q)
+      || (u.pages || []).some((p) => (p.page || '').toLowerCase().includes(q));
+  });
+  const pbuRows = pbuAll.slice(0, pbuShown);
+  const toggleUser = (id) => setExpandedUsers((prev) => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
   // paginated + searched pages table
   const allPages = (pagesData.mostVisited || []).filter((p) => !pageSearch || (p.page || '').toLowerCase().includes(pageSearch.toLowerCase()));
   const PER = 8;
@@ -139,12 +215,12 @@ export default function ProductAnalytics() {
       <div className="bg-white border border-gray-200 rounded-2xl p-3 shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
           <Filter className="w-4 h-4 text-gray-400" />
-          {[7, 30, 90].map((d) => (
+          {[1, 7, 30, 90].map((d) => (
             <button key={d} onClick={() => setPreset(d)}
               className={`text-xs font-semibold rounded-lg px-3 py-1.5 border transition-colors ${
                 preset === d ? 'bg-blue-600 text-white border-blue-600' : 'text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
               }`}>
-              Last {d}d
+              {d === 1 ? 'Last 24h' : `Last ${d}d`}
             </button>
           ))}
           <button onClick={loadAll} title="Refresh"
@@ -176,9 +252,9 @@ export default function ProductAnalytics() {
                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} /><stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
               </linearGradient></defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#9ca3af" />
+              <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 11 }} stroke="#9ca3af" />
               <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" allowDecimals={false} />
-              <Tooltip />
+              <Tooltip labelFormatter={shortDate} />
               <Area type="monotone" dataKey="count" stroke="#3b82f6" fill="url(#pv)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
@@ -187,9 +263,9 @@ export default function ProductAnalytics() {
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={activeUsers.activeTrend || []}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#9ca3af" />
+              <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 11 }} stroke="#9ca3af" />
               <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" allowDecimals={false} />
-              <Tooltip />
+              <Tooltip labelFormatter={shortDate} />
               <Line type="monotone" dataKey="users" stroke="#8b5cf6" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
@@ -235,6 +311,60 @@ export default function ProductAnalytics() {
         </Panel>
       </div>
 
+      {/* Onboarding funnels — Expert vs Business, 4 steps, totals / daily / monthly */}
+      <Panel title="Onboarding funnels" icon={TrendingUp} right={
+        <div className="flex items-center gap-1">
+          {['totals', 'daily', 'monthly'].map((v) => (
+            <button key={v} onClick={() => setOnbView(v)}
+              className={`text-[11px] font-semibold rounded-lg px-2.5 py-1 border capitalize transition-colors ${
+                onbView === v ? 'bg-blue-600 text-white border-blue-600' : 'text-gray-500 border-gray-200 hover:border-blue-300'
+              }`}>
+              {v}
+            </button>
+          ))}
+        </div>
+      }>
+        {onbView === 'totals' ? (
+          <div className="flex flex-col sm:flex-row gap-8">
+            <OnboardingFunnel title="Experts" steps={onbSteps} counts={onb.roles?.Expert?.totals}
+              accent="bg-gradient-to-r from-blue-500 to-indigo-500" />
+            <OnboardingFunnel title="Business Owners" steps={onbSteps} counts={onb.roles?.Business?.totals}
+              accent="bg-gradient-to-r from-orange-500 to-amber-500" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {['Expert', 'Business'].map((roleKey) => {
+              const rows = onbSeriesRows(roleKey);
+              return (
+                <div key={roleKey} className="min-w-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-bold text-gray-700">{roleKey === 'Expert' ? 'Experts' : 'Business Owners'}</p>
+                    <ExportBtns rows={rows} name={`onboarding-${roleKey}-${onbView}`} />
+                  </div>
+                  <div className="overflow-x-auto max-h-72 overflow-y-auto">
+                    <table className="w-full text-xs">
+                      <thead className="sticky top-0 bg-white"><tr className="text-gray-400 border-b border-gray-100">
+                        <th className="text-left pb-2 font-medium">{onbView === 'daily' ? 'Date' : 'Month'}</th>
+                        {onbSteps.map((s) => <th key={s.key} className="text-right pb-2 font-medium" title={s.label}>{SHORT_STEP[s.key] || s.key}</th>)}
+                      </tr></thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {rows.map((r) => (
+                          <tr key={r.period} className="hover:bg-gray-50">
+                            <td className="py-1.5 text-gray-700 whitespace-nowrap">{onbView === 'daily' ? shortDate(r.period) : r.period}</td>
+                            {onbSteps.map((s) => <td key={s.key} className="py-1.5 text-right text-gray-900">{nfmt(r[s.key])}</td>)}
+                          </tr>
+                        ))}
+                        {rows.length === 0 && <tr><td colSpan={onbSteps.length + 1} className="py-6 text-center text-gray-400">No data</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Panel>
+
       {/* Top pages (searchable + paginated) */}
       <Panel title="Top pages" icon={Eye} right={
         <div className="flex items-center gap-2">
@@ -267,6 +397,66 @@ export default function ProductAnalytics() {
               <button disabled={pageNum === 1} onClick={() => setPageNum((n) => n - 1)} className="px-2 py-1 border border-gray-200 rounded-lg disabled:opacity-40">Prev</button>
               <button disabled={pageNum === totalPages} onClick={() => setPageNum((n) => n + 1)} className="px-2 py-1 border border-gray-200 rounded-lg disabled:opacity-40">Next</button>
             </div>
+          </div>
+        )}
+      </Panel>
+
+      {/* Pages visited by user */}
+      <Panel title="Pages visited by user" icon={Users} right={
+        <input value={pbuSearch} onChange={(e) => { setPbuSearch(e.target.value); setPbuShown(10); }} placeholder="Search user or page..."
+          className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+      }>
+        <div className="space-y-2">
+          {pbuRows.map((u) => {
+            const open = expandedUsers.has(u.userId);
+            return (
+              <div key={u.userId} className="border border-gray-100 rounded-xl overflow-hidden">
+                <button onClick={() => toggleUser(u.userId)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors text-left">
+                  {open ? <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-orange-400 flex items-center justify-center text-white font-bold text-[11px] flex-shrink-0">
+                    {(u.name || u.email || '?').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 truncate">{u.name || '—'}</p>
+                    <p className="text-xs text-gray-400 truncate">{u.email || u.role}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-semibold text-gray-900">{nfmt(u.totalVisits)}</p>
+                    <p className="text-[11px] text-gray-400">{nfmt(u.pageCount)} page{u.pageCount === 1 ? '' : 's'}</p>
+                  </div>
+                </button>
+                {open && (
+                  <div className="border-t border-gray-100 bg-gray-50/50 px-3 py-2">
+                    <table className="w-full text-xs">
+                      <thead><tr className="text-gray-400">
+                        <th className="text-left pb-1.5 font-medium">Page</th>
+                        <th className="text-right pb-1.5 font-medium">Visits</th>
+                        <th className="text-right pb-1.5 font-medium">Last visit</th>
+                      </tr></thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {u.pages.map((p) => (
+                          <tr key={p.page}>
+                            <td className="py-1.5 text-gray-700 truncate max-w-xs">{p.page || '—'}</td>
+                            <td className="py-1.5 text-right text-gray-900 font-medium">{nfmt(p.visits)}</td>
+                            <td className="py-1.5 text-right text-gray-400">{p.lastVisit ? new Date(p.lastVisit).toLocaleDateString() : '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {pbuRows.length === 0 && <p className="py-6 text-center text-gray-400 text-xs">No user page data yet</p>}
+        </div>
+        {pbuShown < pbuAll.length && (
+          <div className="mt-3 text-center">
+            <button onClick={() => setPbuShown((n) => n + 10)}
+              className="text-xs font-semibold text-blue-600 hover:text-blue-700 border border-blue-200 rounded-lg px-3 py-1.5 hover:bg-blue-50 transition-colors">
+              Show more ({pbuAll.length - pbuShown} left)
+            </button>
           </div>
         )}
       </Panel>
@@ -319,14 +509,20 @@ export default function ProductAnalytics() {
         <Panel title="Most active users" icon={Users}>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-[11px] font-semibold text-gray-400 uppercase mb-2">Experts</p>
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase">Experts</p>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase" title="Tracked events (page views + actions) in the selected period">Events</p>
+              </div>
               {(activeUsers.mostActiveExperts || []).slice(0, 5).map((u) => (
                 <div key={u.userId} className="flex justify-between text-xs py-1"><span className="text-gray-700 truncate">{u.name}</span><span className="text-gray-400">{u.events}</span></div>
               ))}
               {(!activeUsers.mostActiveExperts || activeUsers.mostActiveExperts.length === 0) && <p className="text-xs text-gray-400">—</p>}
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-gray-400 uppercase mb-2">Businesses</p>
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase">Businesses</p>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase" title="Tracked events (page views + actions) in the selected period">Events</p>
+              </div>
               {(activeUsers.mostActiveBusinesses || []).slice(0, 5).map((u) => (
                 <div key={u.userId} className="flex justify-between text-xs py-1"><span className="text-gray-700 truncate">{u.name}</span><span className="text-gray-400">{u.events}</span></div>
               ))}

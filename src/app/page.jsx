@@ -8,6 +8,7 @@ import {
   LayoutGrid, Bot, Phone, Mail, Layers, BarChart2, Paperclip
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { trackEvent } from '@/services/analyticsApi';
 import Link from 'next/link';
 import { getPlansWithPackages } from '@/services/planService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -375,7 +376,7 @@ function HomePage() {
                       </div>
                     )}
                   </div>
-                  <button onClick={() => router.push('/register')} className="relative px-5 py-2 bg-blue-600 rounded-xl text-white font-medium transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-500/20 overflow-hidden group">
+                  <button onClick={() => { trackEvent('GET_STARTED_CLICK', { source: 'homepage', placement: 'nav' }); router.push('/register'); }} className="relative px-5 py-2 bg-blue-600 rounded-xl text-white font-medium transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-500/20 overflow-hidden group">
                     <span className="relative z-10">Get Started</span>
                     <div className="absolute inset-0 bg-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </button>
@@ -403,7 +404,7 @@ function HomePage() {
                   ) : (
                     <>
                       <button onClick={() => { router.push('/login'); setMobileMenuOpen(false); }} className="flex-1 px-4 py-2 text-gray-900 font-medium border border-gray-300 rounded-lg">Sign In</button>
-                      <button onClick={() => { router.push('/register'); setMobileMenuOpen(false); }} className="flex-1 px-4 py-2 bg-blue-600 rounded-lg text-white font-medium">Get Started</button>
+                      <button onClick={() => { trackEvent('GET_STARTED_CLICK', { source: 'homepage', placement: 'nav-mobile' }); router.push('/register'); setMobileMenuOpen(false); }} className="flex-1 px-4 py-2 bg-blue-600 rounded-lg text-white font-medium">Get Started</button>
                     </>
                   )}
                 </div>
@@ -747,7 +748,7 @@ function HomePage() {
                   <p className="mt-6 flex items-center gap-2 text-[11px] text-gray-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
                     Free to start — access all 200+ projects instantly ·{' '}
-                    <button onClick={() => router.push('/register')} className="text-blue-600 font-semibold hover:underline">Create account →</button>
+                    <button onClick={() => { trackEvent('GET_STARTED_CLICK', { source: 'homepage', placement: 'inline-create-account' }); router.push('/register'); }} className="text-blue-600 font-semibold hover:underline">Create account →</button>
                   </p>
 
                 </div>
@@ -1211,7 +1212,7 @@ function HomePage() {
                         </li>
                       ))}
                     </ul>
-                    <button onClick={() => router.push('/register')} className={`w-full py-3.5 rounded-2xl font-bold text-sm transition-all ${tier.popular ? 'bg-gradient-to-r from-blue-600 to-orange-500 text-white hover:shadow-xl hover:shadow-blue-500/20 hover:scale-105' : 'bg-gray-900 text-white hover:bg-gray-800 hover:scale-105'}`}>
+                    <button onClick={() => { trackEvent('GET_STARTED_CLICK', { source: 'homepage', placement: 'pricing' }); router.push('/register'); }} className={`w-full py-3.5 rounded-2xl font-bold text-sm transition-all ${tier.popular ? 'bg-gradient-to-r from-blue-600 to-orange-500 text-white hover:shadow-xl hover:shadow-blue-500/20 hover:scale-105' : 'bg-gray-900 text-white hover:bg-gray-800 hover:scale-105'}`}>
                       {tier.cta}
                     </button>
                   </div>
@@ -1268,7 +1269,7 @@ function HomePage() {
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
-            <button onClick={() => router.push('/register')} className="group px-10 py-5 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-500 hover:to-orange-400 rounded-2xl text-white font-black text-lg transition-all hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/20 flex items-center justify-center gap-2">
+            <button onClick={() => { trackEvent('GET_STARTED_CLICK', { source: 'homepage', placement: 'footer-cta' }); router.push('/register'); }} className="group px-10 py-5 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-500 hover:to-orange-400 rounded-2xl text-white font-black text-lg transition-all hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/20 flex items-center justify-center gap-2">
               Get Started Free <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
             {/* Book a Demo — removed for now.

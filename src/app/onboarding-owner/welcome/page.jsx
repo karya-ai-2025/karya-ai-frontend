@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { bookCall, getMyCall } from '@/lib/schedulingApi';
+import { trackEvent } from '@/services/analyticsApi';
 import {
   Play,
   ArrowRight,
@@ -98,10 +99,12 @@ function WelcomeOnboard() {
   };
 
   const handleManualOnboarding = () => {
+    trackEvent('ONBOARDING_STARTED', { role: 'owner', method: 'manual' });
     router.replace('/onboarding-owner/platform-usage');
   };
 
   const handleScheduleCall = async () => {
+    trackEvent('ONBOARDING_STARTED', { role: 'owner', method: 'schedule' });
     setCheckingExisting(true);
     setExistingCall(null);
     try {

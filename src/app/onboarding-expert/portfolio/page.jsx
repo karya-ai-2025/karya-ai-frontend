@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, ArrowLeft, Upload, Plus, Trash2, ExternalLink, Check, FileText, AlertCircle, Loader2 } from 'lucide-react';
 import { updatePortfolio, getExpertOnboardingStatus, skipStep } from '@/services/expertonboardingApi';
+import { trackEvent } from '@/services/analyticsApi';
 
 function ExpertPortfolio() {
   const router = useRouter();
@@ -163,6 +164,7 @@ function ExpertPortfolio() {
   };
 
   const handleComplete = async () => {
+    trackEvent('ONBOARDING_COMPLETED', { role: 'expert' });
     setIsLoading(true);
     setError('');
 

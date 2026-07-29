@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, LayoutDashboard, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { trackEvent } from '@/services/analyticsApi';
 
 /**
  * Shared auth section for all navbars.
@@ -124,7 +125,7 @@ export default function NavbarAuth({
         Sign In
       </button>
       <button
-        onClick={() => router.push(ctaPath)}
+        onClick={() => { trackEvent('GET_STARTED_CLICK', { source: 'navbar', label: ctaText }); router.push(ctaPath); }}
         className={`px-6 py-2 rounded-lg text-white font-medium transition-all ${
           isLight
             ? 'bg-blue-600 hover:bg-blue-700 hover:scale-105'

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { bookCall, getMyCall } from '@/lib/schedulingApi';
+import { trackEvent } from '@/services/analyticsApi';
 import {
   Play, ArrowRight, CheckCircle, Calendar,
   FileEdit, Clock, Video, X, Loader2, Mail,
@@ -28,8 +29,12 @@ function WelcomeExpert() {
 
   const handleSkip             = () => router.replace('/expert-dashboard');
   const handleStartOnboarding  = () => setShowOptions(true);
-  const handleManualOnboarding = () => router.replace('/onboarding-expert/profile-setup');
+  const handleManualOnboarding = () => {
+    trackEvent('ONBOARDING_STARTED', { role: 'expert', method: 'manual' });
+    router.replace('/onboarding-expert/profile-setup');
+  };
   const handleScheduleCall = async () => {
+    trackEvent('ONBOARDING_STARTED', { role: 'expert', method: 'schedule' });
     setCheckingExisting(true);
     setExistingCall(null);
     try {
