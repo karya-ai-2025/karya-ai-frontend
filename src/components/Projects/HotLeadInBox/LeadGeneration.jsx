@@ -1,5 +1,6 @@
 'use client';
 
+import AdditionalFilters, { emptyAdditionalFilters } from '@/components/leads/AdditionalFilters';
 import React, { useState, useEffect } from 'react';
 import {
   Search,
@@ -18,15 +19,39 @@ import {
   AlertCircle,
   Zap,
   Download,
+  Columns3,
   X,
-  Loader2
+  Loader2,
+  Lock
 } from 'lucide-react';
 import { getIndustries } from '../../../services/industriesApi';
 import { useAuth } from '@/contexts/AuthContext';
 
+// The DB stores countries as ISO-2 codes (AT, AU, CA…). Show the full name so
+// users don't have to know codes: "Austria (AT)". Uses the browser's built-in
+// region name table (no giant hardcoded map); falls back to the raw value for
+// anything that isn't a valid 2-letter code (already-full names, 3-letter, etc.).
+const REGION_NAMES = (() => {
+  try { return new Intl.DisplayNames(['en'], { type: 'region' }); } catch { return null; }
+})();
+function countryLabel(code) {
+  if (!code) return '';
+  const c = String(code).trim();
+  if (REGION_NAMES && /^[A-Za-z]{2}$/.test(c)) {
+    try {
+      const name = REGION_NAMES.of(c.toUpperCase());
+      if (name && name.toUpperCase() !== c.toUpperCase()) return `${name} (${c.toUpperCase()})`;
+    } catch { /* not a valid region code — fall through */ }
+  }
+  return c;
+}
+
 // The backend returns leads using the raw DB column names (with spaces), e.g. "First Name".
 // The table/CSV read underscore keys (First_Name). Map the spaced columns onto those keys
 // (keeping the originals too) so the UI works regardless of which naming the API uses.
+// The lead table comes back with raw Postgres column names ("First Name") from
+// the keyset search, and underscored ones (First_Name) from the Prisma paths.
+// Normalised here once so the table can read a single shape.
 function normalizeLead(l = {}) {
   return {
     ...l,
@@ -36,6 +61,17 @@ function normalizeLead(l = {}) {
     GTM_Industry:        l.GTM_Industry        ?? l['GTM Industry']        ?? '',
     Mailing_Country:     l.Mailing_Country     ?? l['Mailing Country']     ?? '',
     Account_Sub_Segment: l.Account_Sub_Segment ?? l['Account Sub Segment'] ?? '',
+    // The rest of the attributes the lead table holds. These were always in the
+    // response — the table just never showed them.
+    GTM_Sector:          l.GTM_Sector          ?? l['GTM Sector']          ?? '',
+    GTM_Sub_Industry:    l.GTM_Sub_Industry    ?? l['GTM Sub-Industry']    ?? '',
+    Account_Segment:     l.Account_Segment     ?? l['Account Segment']     ?? '',
+    T_Shirt_Size:        l.T_Shirt_Size        ?? l['T Shirt Size']        ?? '',
+    Mailing_City:        l.Mailing_City        ?? l['Mailing City']        ?? '',
+    Mailing_State:       l.Mailing_State       ?? l['Mailing State/Province'] ?? '',
+    Mailing_Zip:         l.Mailing_Zip         ?? l['Mailing Zip/Postal Code'] ?? '',
+    employees:           l.employees ?? null,
+    salutation:          l.salutation ?? '',
     title:               l.title  ?? '',
     email:               l.email  ?? '',
     phone:               l.phone  ?? '',
@@ -43,7 +79,25 @@ function normalizeLead(l = {}) {
   };
 }
 
-export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, injectedResult }) {
+// Columns beyond the seven the table started with. Toggled as a group, because
+// eighteen columns at once is unreadable on any screen — and the seven core
+// ones are what most searches are actually judged on.
+const EXTRA_COLUMNS = [
+  { key: 'title',            label: 'Job title' },
+  { key: 'Account_Segment',  label: 'Acct segment' },
+  { key: 'T_Shirt_Size',     label: 'Size band' },
+  { key: 'employees',        label: 'Employees' },
+  { key: 'GTM_Sector',       label: 'GTM sector' },
+  { key: 'GTM_Sub_Industry', label: 'Sub-industry' },
+  { key: 'Mailing_City',     label: 'City' },
+  { key: 'Mailing_State',    label: 'State' },
+  { key: 'Mailing_Zip',      label: 'Postcode' },
+];
+
+export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, injectedResult, projectSlug }) {
+  // Agent-driven view: results came from the assistant → clean, gated leads page
+  // (no filter sidebar, first 15 leads shown, rest behind a "buy this project" lock).
+  const gated = !!injectedResult;
   const { user, getAuthHeader } = useAuth();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -51,8 +105,15 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
     industry: '',
     company: '',
     companySegment: '',
-    location: ''
+    location: '',
+    // The "Additional filters" panel writes into this same object, so the
+    // existing `{ ...searchCriteria }` request bodies carry them unchanged.
+    ...emptyAdditionalFilters()
   });
+  // Every attribute the lead table holds is shown by default — the data was
+  // always in the response and hiding it was the thing that made the table look
+  // empty. "Fewer columns" collapses back to the seven core ones.
+  const [showAllColumns, setShowAllColumns] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [leads, setLeads] = useState([]);
   const [allLeads, setAllLeads] = useState([]); // Store all leads for client-side pagination
@@ -982,10 +1043,10 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex gap-6 relative">
+    <div className="space-y-4">
+      <div className="flex gap-4 relative">
       {/* Search Criteria */}
-      <div className="w-64 min-w-64 max-w-64 bg-white rounded-lg shadow-sm border border-gray-200 p-3 h-fit overflow-visible">
+      <div className={`w-64 min-w-64 max-w-64 bg-white rounded-lg shadow-sm border border-gray-200 p-3 h-fit overflow-visible ${gated ? 'hidden' : ''}`}>
         <h2 className="text-lg font-semibold text-gray-900 mb-3">Lead Search Criteria</h2>
 
         <div className="grid grid-cols-1 gap-2 mb-3">
@@ -1170,10 +1231,9 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
                 className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-left flex justify-between items-center bg-white"
               >
                 <span className={searchCriteria.location ? 'text-gray-900' : 'text-gray-500'}>
-                  {searchCriteria.location || (
-                    locationsLoading ? 'Loading countries...' :
-                    locationsLoaded ? 'Select Country' : 'Select Country'
-                  )}
+                  {searchCriteria.location
+                    ? countryLabel(searchCriteria.location)
+                    : (locationsLoading ? 'Loading countries...' : 'Select Country')}
                 </span>
                 {locationDropdownOpen ? (
                   <ChevronUp className="w-4 h-4 text-gray-400" />
@@ -1193,22 +1253,37 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
                   >
                     Select Country
                   </button>
-                  {locations.map((location, index) => (
+                  {[...locations]
+                    .sort((a, b) => countryLabel(a).localeCompare(countryLabel(b)))
+                    .map((location, index) => (
                     <button
                       key={index}
                       onClick={() => {
+                        // Store the raw code (backend matches Mailing_Country on it); show the name.
                         setSearchCriteria({...searchCriteria, location: location});
                         setLocationDropdownOpen(false);
                       }}
                       className="w-full px-2 py-1.5 text-left hover:bg-gray-100 focus:bg-gray-100 text-gray-900"
                     >
-                      {location}
+                      {countryLabel(location)}
                     </button>
                   ))}
                 </div>
               )}
             </div>
           </div>
+        </div>
+
+        {/* The rest of the lead attributes — account segment, size band, GTM
+            sector and sub-industry, city/state/postcode, job title, employee
+            count, contactability. Collapsed, with a badge when any are set. */}
+        <div className="mb-4">
+          <AdditionalFilters
+            value={searchCriteria}
+            onChange={setSearchCriteria}
+            apiBaseUrl={apiBaseUrl}
+            authHeader={getAuthHeader()}
+          />
         </div>
 
         <div className="flex justify-start">
@@ -1235,28 +1310,45 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
       {/* Results Table */}
       {showResults ? (
         <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-4 py-2.5 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Find People</h3>
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-base font-semibold text-gray-900">Find People</h3>
+                <span className="text-xs text-gray-400">{searchStats.matched ? `${searchStats.matched.toLocaleString()} matched` : `${leads.length} shown`}</span>
               </div>
 
-              <button
-                onClick={handleDownloadLeads}
-                disabled={leads.length === 0}
-                className="flex items-center cursor-pointer space-x-1 px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                <Download className="w-3 h-3" />
-                <span>Export Leads</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {/* All 16 attributes the lead table holds, not just the 7 core
+                    ones. Off by default — the full set needs sideways scrolling. */}
+                <button
+                  onClick={() => setShowAllColumns((v) => !v)}
+                  disabled={leads.length === 0}
+                  title={showAllColumns
+                    ? 'Show only the main columns'
+                    : 'Show job title, segment, size, employees, sector, sub-industry, city, state and postcode'}
+                  className="flex items-center cursor-pointer space-x-1 px-3 py-1.5 text-sm bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Columns3 className="w-3 h-3" />
+                  <span>{showAllColumns ? 'Fewer columns' : 'All columns'}</span>
+                </button>
+
+                <button
+                  onClick={handleDownloadLeads}
+                  disabled={leads.length === 0}
+                  className="flex items-center cursor-pointer space-x-1 px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  <Download className="w-3 h-3" />
+                  <span>Export Leads</span>
+                </button>
+              </div>
             </div>
           </div>
 
 
           {leads.length > 0 ? (
-            <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <div className="overflow-x-auto max-h-[calc(100vh-230px)] min-h-[420px] overflow-y-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
                     {/* Checkbox Column Header */}
                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
@@ -1288,6 +1380,12 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
                     <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Phone
                     </th>
+                    {/* The remaining lead attributes, shown on request */}
+                    {showAllColumns && EXTRA_COLUMNS.map((c) => (
+                      <th key={c.key} className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                        {c.label}
+                      </th>
+                    ))}
                     {/* Actions Column Header */}
                     <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -1295,10 +1393,10 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {leads.map((lead, index) => (
+                  {(gated ? leads.slice(0, 15) : leads).map((lead, index) => (
                     <tr key={lead.id || index} className={`hover:bg-gray-50 ${selectedLeads.has(lead.id) ? 'bg-blue-50' : ''}`}>
                       {/* Checkbox Column */}
-                      <td className="px-3 py-3 whitespace-nowrap">
+                      <td className="px-3 py-2 whitespace-nowrap">
                         <input
                           type="checkbox"
                           checked={selectedLeads.has(lead.id)}
@@ -1306,31 +1404,31 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
                           className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                         />
                       </td>
-                      <td className="px-2 py-3 whitespace-nowrap">
+                      <td className="px-2 py-2 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
                           {`${lead.First_Name || ''} ${lead.Last_Name || ''}`.trim() || 'N/A'}
                         </div>
                       </td>
-                      <td className="px-2 py-3 whitespace-nowrap">
+                      <td className="px-2 py-2 whitespace-nowrap">
                         <div className="text-sm text-gray-900" title={lead.Account_Name || 'N/A'}>
                           {truncateCompanyName(lead.Account_Name || 'N/A')}
                         </div>
                       </td>
-                      <td className="px-2 py-3 whitespace-nowrap">
+                      <td className="px-2 py-2 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{lead.GTM_Industry || 'N/A'}</div>
                       </td>
-                      <td className="px-2 py-3 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {lead.Mailing_Country || 'N/A'}
+                      <td className="px-2 py-2 whitespace-nowrap">
+                        <div className="text-sm text-gray-900" title={lead.Mailing_Country || ''}>
+                          {countryLabel(lead.Mailing_Country) || 'N/A'}
                         </div>
                       </td>
-                      <td className="px-2 py-3 whitespace-nowrap">
+                      <td className="px-2 py-2 whitespace-nowrap">
                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                           {lead.Account_Sub_Segment || 'N/A'}
                         </span>
                       </td>
                       {/* Email Column */}
-                      <td className="px-2 py-3 whitespace-nowrap">
+                      <td className="px-2 py-2 whitespace-nowrap">
                         {lead.email ? (
                           visibleEmails.has(lead.id) ? (
                             <div className="flex items-center space-x-1">
@@ -1352,7 +1450,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
                       </td>
 
                       {/* Phone Column */}
-                      <td className="px-2 py-3 whitespace-nowrap">
+                      <td className="px-2 py-2 whitespace-nowrap">
                         {(lead.phone || lead.mobile) ? (
                           visiblePhones.has(lead.id) ? (
                             <div className="flex items-center space-x-1">
@@ -1373,8 +1471,23 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
                         )}
                       </td>
 
+                      {/* The remaining lead attributes */}
+                      {showAllColumns && EXTRA_COLUMNS.map((c) => {
+                        const raw = lead[c.key];
+                        const text = raw === null || raw === undefined || raw === ''
+                          ? '—'
+                          : (c.key === 'employees' ? Number(raw).toLocaleString() : String(raw));
+                        return (
+                          <td key={c.key} className="px-2 py-2 whitespace-nowrap">
+                            <div className="text-sm text-gray-700 max-w-[10rem] truncate" title={text}>
+                              {text}
+                            </div>
+                          </td>
+                        );
+                      })}
+
                       {/* Actions Column */}
-                      <td className="px-2 py-3 whitespace-nowrap">
+                      <td className="px-2 py-2 whitespace-nowrap">
                         {/* Empty for now - actions will be added later */}
                       </td>
                     </tr>
@@ -1390,8 +1503,41 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
             </div>
           )}
 
+          {/* Gated preview: agent-driven view shows the first 15 leads, the rest
+              are locked behind purchasing the project. */}
+          {gated && leads.length > 0 && (() => {
+            const shown = Math.min(15, leads.length);
+            const totalMatched = searchStats?.matched || allLeads.length || shown;
+            const hasLocked = totalMatched > shown || hasMore;
+            return (
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <div className="flex flex-col items-center justify-center text-center gap-2">
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Lock className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium">
+                      Showing {shown}
+                      {hasLocked ? ` of ${totalMatched.toLocaleString()}` : ''} contacts
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    {hasLocked
+                      ? 'Buy this project to unlock all matching contacts.'
+                      : 'Buy this project to save, export and email these contacts.'}
+                  </p>
+                  <a
+                    href={`/project-marketplace/${projectSlug || 'outbound-list-builder'}`}
+                    className="mt-1 inline-flex items-center gap-2 px-5 py-2 bg-[#D44A1C] hover:bg-[#C04018] text-white text-sm font-semibold rounded-lg transition-colors duration-200"
+                  >
+                    <Lock className="w-4 h-4" />
+                    Buy this project to see more
+                  </a>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Pagination Controls - Below Table */}
-          {(totalPages > 1 || hasMore) && (
+          {!gated && (totalPages > 1 || hasMore) && (
             <div className="px-6 py-1.5 bg-gray-50 border-t border-gray-200">
               <div className="flex items-center justify-center space-x-4">
                 <div className="flex items-center space-x-2">

@@ -4,35 +4,15 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext';
 import TopNavbar from '@/components/TopNavbar';
 import SideLeftBar from './SideLeftBar';
-import {
-  Mail,
-  Target,
-  BarChart3,
-  Settings,
-  Users,
-  TrendingUp,
-  Database,
-  Menu,
-  X,
-  RefreshCw,
-  Zap,
-  Eye,
-  Phone,
-  Send,
-  ListChecks,
-  Clock,
-  ArrowRight,
-  AlertCircle,
-  FileSpreadsheet,
-  Search
-} from 'lucide-react';
-import LeadGeneration from './LeadGeneration';
-import Campaign from './Campaign';
-import { PROJECT_TAB_ACCESS } from '../index';
+import { Menu, X, BarChart3, Settings, Target, Users } from 'lucide-react';
 import AgentPanel, { LEAD_PLAYBOOK, EMAIL_PLAYBOOK } from '../AgentPanel';
 import { Sparkles } from 'lucide-react';
 import { getIndustries } from '../../../services/industriesApi';
 import { getRegions, getSegments, getSeniority } from '../../../services/leadFiltersApi';
+import { usePathname, useRouter } from 'next/navigation';
+import { WorkspaceProvider } from './WorkspaceContext';
+import { WORKSPACE_BASE, workspacePath, tabAccessFor } from '../workspaceRoutes';
+import { fetchMyProjects } from '@/lib/catalogApi';
 
 const hotLeadScrollbarStyles = `
   .hotlead-page-scroll::-webkit-scrollbar {
@@ -53,110 +33,29 @@ const hotLeadScrollbarStyles = `
   }
 `;
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+import {
+  apiBaseUrl, initialDashboardState, formatNumber, formatShortDate,
+  getCampaignStatusCounts, getColorStyles, getActivityLabel, LockedTab,
+} from './shared';
 
-const initialDashboardState = {
-  loading: true,
-  error: null,
-  crmLists: [],
-  campaigns: [],
-  campaignSummary: {
-    totalCampaigns: 0,
-    activeCampaigns: 0,
-    totalEmailsSent: 0,
-    totalCreditsUsed: 0
-  },
-  creditStats: null,
-  creditHistory: []
-};
+export { LockedTab };
 
-const formatNumber = (value) => Number(value || 0).toLocaleString();
-
-const formatShortDate = (dateValue) => {
-  if (!dateValue) return 'N/A';
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return 'N/A';
-
-  return date.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  });
-};
-
-const getCampaignStatusCounts = (campaigns) => campaigns.reduce((acc, campaign) => {
-  const status = campaign.status || 'draft';
-  acc[status] = (acc[status] || 0) + 1;
-  return acc;
-}, {});
-
-const colorStyles = {
-  amber: {
-    iconWrap: 'bg-amber-50',
-    icon: 'text-amber-600',
-    button: 'bg-amber-600 hover:bg-amber-700'
-  },
-  blue: {
-    iconWrap: 'bg-blue-50',
-    icon: 'text-blue-600',
-    button: 'bg-blue-600 hover:bg-blue-700'
-  },
-  emerald: {
-    iconWrap: 'bg-emerald-50',
-    icon: 'text-emerald-600',
-    button: 'bg-emerald-600 hover:bg-emerald-700'
-  },
-  green: {
-    iconWrap: 'bg-green-50',
-    icon: 'text-green-600',
-    button: 'bg-green-600 hover:bg-green-700'
-  },
-  indigo: {
-    iconWrap: 'bg-indigo-50',
-    icon: 'text-indigo-600',
-    button: 'bg-indigo-600 hover:bg-indigo-700'
-  },
-  purple: {
-    iconWrap: 'bg-purple-50',
-    icon: 'text-purple-600',
-    button: 'bg-purple-600 hover:bg-purple-700'
-  }
-};
-
-const getColorStyles = (color) => colorStyles[color] || colorStyles.indigo;
-
-const getActivityLabel = (actionType) => ({
-  DOWNLOAD_LEADS: 'Downloaded leads',
-  SEND_CAMPAIGN_EMAIL: 'Campaign send',
-  VIEW_EMAIL: 'Viewed email',
-  VIEW_PHONE: 'Viewed phone'
-}[actionType] || actionType?.replaceAll('_', ' ') || 'Credit activity');
-
-// Locked tab placeholder
-function LockedTab({ tabName, unlockedIn }) {
-  return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[400px] py-20 text-center px-6">
-      <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-5">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-        </svg>
-      </div>
-      <h3 className="text-lg font-bold text-gray-800 mb-2">{tabName} not included</h3>
-      <p className="text-sm text-gray-500 max-w-sm leading-relaxed mb-6">
-        {tabName} is part of <span className="font-semibold text-gray-700">HotLead in a Box</span> — the full outbound package that includes both Lead Generation and Email Campaigns.
-        {unlockedIn && <><br /><span className="mt-1 inline-block">Your current plan includes: <span className="font-semibold text-gray-700">{unlockedIn}</span>.</span></>}
-      </p>
-      <a href="/project-marketplace/hotlead-in-a-box"
-        className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors">
-        Upgrade to HotLead in a Box
-      </a>
-    </div>
-  );
-}
-
-export default function HotLeadInBox({ projectMetadata, projectSlug }) {
+export default function HotLeadInBox({ projectMetadata, projectSlug, children }) {
   const { user, getAuthHeader } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // The active tab IS the route now — derived from the URL, never stored.
+  // setActiveTab navigates, so Back/refresh/sharing all behave normally.
+  const pathname = usePathname();
+  const router = useRouter();
+  const activeTab = useMemo(() => {
+    const base = `${WORKSPACE_BASE}/${projectSlug}`;
+    if (!pathname || !pathname.startsWith(base)) return 'dashboard';
+    const rest = pathname.slice(base.length).replace(/^\//, '');
+    return rest.split('/')[0] || 'dashboard';
+  }, [pathname, projectSlug]);
+  const setActiveTab = useCallback(
+    (tab) => router.push(workspacePath(projectSlug, tab)),
+    [router, projectSlug]
+  );
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dashboardState, setDashboardState] = useState(initialDashboardState);
@@ -176,12 +75,24 @@ export default function HotLeadInBox({ projectMetadata, projectSlug }) {
   const [segments, setSegments]   = useState([]);
   const [seniority, setSeniority] = useState([]);
   const [leadCriteria, setLeadCriteria] = useState({}); // accumulated filters, for progressive refinement
+  const [ownedSlugs, setOwnedSlugs] = useState([]); // every project the user has bought (for cross-project unlocks)
 
   const openAgent = (mode) => {
     setAgentMode(mode);
     setAgentOpen(true);
     setSidebarCollapsed(true);
   };
+
+  // Load every project the user owns so a capability bought in one project (e.g. the
+  // email agency) unlocks the matching tab inside a sibling project (e.g. the B2B
+  // intelligence leads-only project), and vice-versa.
+  useEffect(() => {
+    let active = true;
+    fetchMyProjects()
+      .then((list) => { if (active && Array.isArray(list)) setOwnedSlugs(list.map((p) => p.slug).filter(Boolean)); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   // Load the real industry list so the lead assistant's options map to actual DB rows.
   useEffect(() => {
@@ -207,7 +118,12 @@ export default function HotLeadInBox({ projectMetadata, projectSlug }) {
   // Lead playbook with real industry chips (so the search returns real contacts).
   const leadPlaybook = useMemo(() => {
     if (!industries.length) return LEAD_PLAYBOOK;
-    const chips = industries.slice(0, 8).map((i) => i.label).filter(Boolean);
+    // Show ALL real industries as options (the chip area scrolls) so users can pick
+    // theirs instead of being forced to "Other". Sorted A→Z for scanability.
+    const chips = industries
+      .map((i) => i.label)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
     return {
       ...LEAD_PLAYBOOK,
       steps: LEAD_PLAYBOOK.steps.map((s) =>
@@ -270,6 +186,10 @@ export default function HotLeadInBox({ projectMetadata, projectSlug }) {
     } catch (e) {
       console.error('Lead search failed:', e);
       setAgentResult({ criteria, leads: [] });
+    } finally {
+      // Close the assistant so the leads are shown clean, unobstructed. Small
+      // delay lets the "here are your contacts" message land first.
+      setTimeout(() => setAgentOpen(false), 700);
     }
   };
 
@@ -484,551 +404,50 @@ export default function HotLeadInBox({ projectMetadata, projectSlug }) {
     return undefined;
   }, [activeTab, fetchDashboardData]);
 
-  const dashboardMetrics = useMemo(() => {
-    const crmLists = dashboardState.crmLists || [];
-    const campaigns = dashboardState.campaigns || [];
-    const campaignSummary = dashboardState.campaignSummary || initialDashboardState.campaignSummary;
-    const creditBreakdown = dashboardState.creditStats?.breakdown || {};
-    const statusCounts = getCampaignStatusCounts(campaigns);
+  // Which tabs are unlocked. Start from THIS project's own access, then grant any
+  // tab another purchased project provides — owning the email agency unlocks
+  // Campaigns here, owning the leads builder unlocks Lead Generation, and owning
+  // the full bundle unlocks both. The rule lives in workspaceRoutes so the tab
+  // pages' guard and this shell can never disagree.
+  const access = useMemo(
+    () => tabAccessFor(projectSlug, ownedSlugs),
+    [projectSlug, ownedSlugs]
+  );
 
-    const totalCrmLeads = crmLists.reduce((sum, list) => sum + Number(list.totalLeads || 0), 0);
-    const emailReadyLeads = crmLists.reduce((sum, list) => sum + Number(list.emailLeadCount || 0), 0);
-    const downloadedLeadCount = dashboardState.creditHistory.reduce((sum, record) => {
-      if (record.actionType !== 'DOWNLOAD_LEADS') return sum;
-      return sum + Number(record.metadata?.downloadCount || 1);
-    }, 0);
-    const totalCampaignAudience = campaigns.reduce((sum, campaign) => (
-      sum + Number(campaign.stats?.totalLeads || campaign.selectedLeads?.length || 0)
-    ), 0);
-    const emailsSent = campaignSummary.totalEmailsSent ||
-      campaigns.reduce((sum, campaign) => sum + Number(campaign.stats?.sentCount || 0), 0);
-
-    const totalLeadActions =
-      Number(creditBreakdown.VIEW_EMAIL?.count || 0) +
-      Number(creditBreakdown.VIEW_PHONE?.count || 0) +
-      Number(creditBreakdown.DOWNLOAD_LEADS?.count || 0);
-
-    return {
-      totalCrmLeads,
-      emailReadyLeads,
-      downloadedLeadCount,
-      totalLeadActions,
-      crmListCount: crmLists.length,
-      totalCampaigns: campaignSummary.totalCampaigns || campaigns.length,
-      activeCampaigns: campaignSummary.activeCampaigns || (statusCounts.sending || 0) + (statusCounts.scheduled || 0),
-      draftCampaigns: statusCounts.draft || 0,
-      completedCampaigns: statusCounts.completed || 0,
-      emailsSent,
-      totalCampaignAudience,
-      remainingCredits: dashboardState.creditStats?.remainingCredits || 0,
-      totalCreditsUsed: dashboardState.creditStats?.totalCreditsUsed || campaignSummary.totalCreditsUsed || 0,
-      emailReveals: creditBreakdown.VIEW_EMAIL?.count || 0,
-      phoneReveals: creditBreakdown.VIEW_PHONE?.count || 0,
-      downloads: creditBreakdown.DOWNLOAD_LEADS?.count || 0,
-      statusCounts
-    };
-  }, [dashboardState]);
-
-  const hasDashboardActivity = dashboardMetrics.crmListCount > 0 ||
-    dashboardMetrics.totalCampaigns > 0 ||
-    dashboardMetrics.totalLeadActions > 0 ||
-    dashboardMetrics.totalCreditsUsed > 0;
-
-  const StatTile = ({ label, value, helper, icon: Icon, color = 'indigo' }) => {
-    const classes = getColorStyles(color);
-
-    return (
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-gray-600">{label}</p>
-            <div className="mt-2 text-2xl font-bold text-gray-900">{value}</div>
-            {helper && <p className="mt-1 text-xs text-gray-500">{helper}</p>}
-          </div>
-          <div className={`p-3 ${classes.iconWrap} rounded-lg flex-shrink-0`}>
-            <Icon className={`w-5 h-5 ${classes.icon}`} />
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const ActionCard = ({ icon: Icon, title, description, buttonLabel, onClick, color = 'indigo' }) => {
-    const classes = getColorStyles(color);
-
-    return (
-      <div className="bg-white border border-gray-200 rounded-lg p-5">
-        <div className="flex items-start gap-4">
-          <div className={`p-3 ${classes.iconWrap} rounded-lg flex-shrink-0`}>
-            <Icon className={`w-6 h-6 ${classes.icon}`} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-base font-semibold text-gray-900">{title}</h3>
-            <p className="mt-1 text-sm text-gray-600">{description}</p>
-            <button
-              onClick={onClick}
-              className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white ${classes.button} transition-colors cursor-pointer`}
-            >
-              <span>{buttonLabel}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderDashboard = () => {
-    // Project-specific labels
-    const PROJECT_LABELS = {
-      'hotlead-in-a-box':      { title: 'HotLead in a Box Dashboard',          sub: 'Your lead lists, campaigns, and credit activity in one place.' },
-      'outbound-list-builder': { title: 'B2B Contact Intelligence Dashboard',   sub: 'Your enriched lead lists and contact pipeline in one place.' },
-      'ai-email-sales-agency': { title: 'AI Email Outbound Dashboard',          sub: 'Your email campaigns, sequences, and outreach stats in one place.' },
-    };
-    const label = PROJECT_LABELS[projectSlug] || PROJECT_LABELS['hotlead-in-a-box'];
-    const UPGRADE_URL = '/project-marketplace/hotlead-in-a-box/overview';
-
-    if (dashboardState.loading) {
-      return (
-        <div className="flex items-center justify-center py-16">
-          <RefreshCw className="w-7 h-7 text-indigo-600 animate-spin" />
-          <span className="ml-3 text-gray-600">Loading dashboard...</span>
-        </div>
-      );
-    }
-
-    const recentCrmLists = [...dashboardState.crmLists]
-      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-      .slice(0, 3);
-    const recentCampaigns = [...dashboardState.campaigns]
-      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-      .slice(0, 3);
-    const recentActivity = dashboardState.creditHistory.slice(0, 3);
-
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{label.title}</h1>
-            <p className="mt-1 text-gray-600">
-              {hasDashboardActivity ? label.sub : 'Get started by exploring the features available in your plan.'}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <button
-              onClick={fetchDashboardData}
-              className="inline-flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span>Refresh</span>
-            </button>
-            {access.leads ? (
-              <button
-                onClick={() => setActiveTab('leads')}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors cursor-pointer"
-              >
-                <TrendingUp className="w-4 h-4" />
-                <span>Get Leads</span>
-              </button>
-            ) : (
-              <a href={UPGRADE_URL}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-lg transition-colors">
-                <TrendingUp className="w-4 h-4" />
-                <span>Upgrade to get leads</span>
-              </a>
-            )}
-            {access.campaigns ? (
-              <button
-                onClick={() => setActiveTab('campaigns')}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors cursor-pointer"
-              >
-                <Target className="w-4 h-4" />
-                <span>Create Campaign</span>
-              </button>
-            ) : (
-              <a href={UPGRADE_URL}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm text-purple-700 bg-purple-50 border border-purple-200 hover:bg-purple-100 rounded-lg transition-colors">
-                <Target className="w-4 h-4" />
-                <span>Upgrade to run campaigns</span>
-              </a>
-            )}
-          </div>
-        </div>
-
-        {dashboardState.error && (
-          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <div className="text-sm font-semibold text-amber-900">Some dashboard data could not be loaded</div>
-              <div className="mt-1 text-sm text-amber-800">{dashboardState.error}</div>
-            </div>
-          </div>
-        )}
-
-        {!hasDashboardActivity ? (
-          <div className="space-y-6">
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                <div className="max-w-2xl">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium">
-                    <Zap className="w-4 h-4" />
-                    New workspace
-                  </div>
-                  <h2 className="mt-4 text-xl font-semibold text-gray-900">Build your first outreach pipeline</h2>
-                  <p className="mt-2 text-gray-600">
-                    Search for matching contacts, save the selected leads as an email list, then use that list as the audience for an email campaign.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <button
-                    onClick={() => setActiveTab('leads')}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
-                  >
-                    <TrendingUp className="w-4 h-4" />
-                    <span>Get Leads</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('campaigns')}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
-                  >
-                    <Target className="w-4 h-4" />
-                    <span>Create Campaign</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {access.leads ? (
-                <ActionCard
-                  icon={TrendingUp}
-                  title="Find Leads"
-                  description="Search by industry, company, segment, and location, then unlock or export the contacts you need."
-                  buttonLabel="Open Lead Search"
-                  onClick={() => setActiveTab('leads')}
-                  color="indigo"
-                />
-              ) : (
-                <div className="bg-white border border-gray-200 rounded-lg p-5">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-gray-100 rounded-lg flex-shrink-0">
-                      <TrendingUp className="w-6 h-6 text-gray-400" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-semibold text-gray-900">Lead Generation</h3>
-                      <p className="mt-1 text-sm text-gray-500">Not included in your current plan. Upgrade to access lead search, enrichment, and CRM export.</p>
-                      <a href={UPGRADE_URL} className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-gray-700 hover:bg-gray-800 transition-colors">
-                        Upgrade to get leads <ArrowRight className="w-4 h-4" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {access.campaigns ? (
-                <ActionCard
-                  icon={Target}
-                  title="Create Campaign"
-                  description="Create templates, manage email lists, and start campaigns from saved lead inventory."
-                  buttonLabel="Open Campaigns"
-                  onClick={() => setActiveTab('campaigns')}
-                  color="purple"
-                />
-              ) : (
-                <div className="bg-white border border-gray-200 rounded-lg p-5">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-gray-100 rounded-lg flex-shrink-0">
-                      <Target className="w-6 h-6 text-gray-400" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-semibold text-gray-900">Email Campaigns</h3>
-                      <p className="mt-1 text-sm text-gray-500">Not included in your current plan. Upgrade to build sequences, manage templates, and launch campaigns.</p>
-                      <a href={UPGRADE_URL} className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-gray-700 hover:bg-gray-800 transition-colors">
-                        Upgrade to run campaigns <ArrowRight className="w-4 h-4" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-              {[
-                { label: 'Search Leads', icon: Search, text: 'Find contacts from your ICP.' },
-                { label: 'Export Email List', icon: FileSpreadsheet, text: 'Save selected leads as an email list.' },
-                { label: 'Create Template', icon: Mail, text: 'Write a reusable email template.' },
-                { label: 'Launch Campaign', icon: Send, text: 'Send and track outreach.' }
-              ].map((step, index) => {
-                const Icon = step.icon;
-                return (
-                  <div key={step.label} className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-semibold text-gray-500">Step {index + 1}</div>
-                      <Icon className="w-5 h-5 text-indigo-600" />
-                    </div>
-                    <div className="mt-3 font-semibold text-gray-900">{step.label}</div>
-                    <p className="mt-1 text-sm text-gray-600">{step.text}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {access.leads ? (
-                <StatTile label="Saved Leads" value={formatNumber(dashboardMetrics.totalCrmLeads)} helper={`${formatNumber(dashboardMetrics.emailReadyLeads)} email ready`} icon={Database} color="blue" />
-              ) : (
-                <div className="bg-white border border-gray-200 rounded-lg p-4 relative overflow-hidden">
-                  <p className="text-sm font-medium text-gray-400">Saved Leads</p>
-                  <div className="mt-2 text-2xl font-bold text-gray-200">—</div>
-                  <a href={UPGRADE_URL} className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:underline">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    Upgrade to get leads
-                  </a>
-                </div>
-              )}
-              {access.leads ? (
-                <StatTile label="Email Lists" value={formatNumber(dashboardMetrics.crmListCount)} helper={`${formatNumber(dashboardMetrics.downloadedLeadCount)} leads downloaded`} icon={ListChecks} color="emerald" />
-              ) : (
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <p className="text-sm font-medium text-gray-400">Email Lists</p>
-                  <div className="mt-2 text-2xl font-bold text-gray-200">—</div>
-                  <a href={UPGRADE_URL} className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:underline">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    Upgrade to get leads
-                  </a>
-                </div>
-              )}
-              {access.campaigns ? (
-                <StatTile label="Campaigns" value={formatNumber(dashboardMetrics.totalCampaigns)} helper={`${formatNumber(dashboardMetrics.activeCampaigns)} active, ${formatNumber(dashboardMetrics.draftCampaigns)} draft`} icon={Target} color="purple" />
-              ) : (
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <p className="text-sm font-medium text-gray-400">Campaigns</p>
-                  <div className="mt-2 text-2xl font-bold text-gray-200">—</div>
-                  <a href={UPGRADE_URL} className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-purple-600 hover:underline">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    Upgrade to run campaigns
-                  </a>
-                </div>
-              )}
-              <StatTile label="Credits" value={formatNumber(dashboardMetrics.remainingCredits)} helper={`${formatNumber(dashboardMetrics.totalCreditsUsed)} used`} icon={Zap} color="amber" />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <StatTile
-                label="Email Reveals"
-                value={formatNumber(dashboardMetrics.emailReveals)}
-                helper="Individual emails unlocked"
-                icon={Eye}
-                color="indigo"
-              />
-              <StatTile
-                label="Phone Reveals"
-                value={formatNumber(dashboardMetrics.phoneReveals)}
-                helper="Phone numbers unlocked"
-                icon={Phone}
-                color="green"
-              />
-              <StatTile
-                label="Emails Sent"
-                value={formatNumber(dashboardMetrics.emailsSent)}
-                helper={`${formatNumber(dashboardMetrics.totalCampaignAudience)} total campaign audience`}
-                icon={Send}
-                color="blue"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-              <div className="bg-white border border-gray-200 rounded-lg p-5 xl:col-span-2">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">Campaign Overview</h2>
-                    <p className="text-sm text-gray-600">Status mix across created campaigns.</p>
-                  </div>
-                  {access.campaigns ? (
-                    <button
-                      onClick={() => setActiveTab('campaigns')}
-                      className="text-sm text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer"
-                    >
-                      Manage Campaigns
-                    </button>
-                  ) : (
-                    <a href={UPGRADE_URL} className="text-sm text-gray-500 hover:text-gray-700 font-medium flex items-center gap-1">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                      Upgrade to run campaigns
-                    </a>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                  {[
-                    ['Draft', dashboardMetrics.statusCounts.draft || 0, 'bg-gray-100 text-gray-700'],
-                    ['Sending', dashboardMetrics.statusCounts.sending || 0, 'bg-yellow-100 text-yellow-800'],
-                    ['Paused', dashboardMetrics.statusCounts.paused || 0, 'bg-orange-100 text-orange-800'],
-                    ['Completed', dashboardMetrics.completedCampaigns, 'bg-green-100 text-green-800']
-                  ].map(([label, value, className]) => (
-                    <div key={label} className="border border-gray-200 rounded-lg p-4">
-                      <div className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${className}`}>{label}</div>
-                      <div className="mt-3 text-2xl font-bold text-gray-900">{formatNumber(value)}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-white border border-gray-200 rounded-lg p-5">
-                <h2 className="text-lg font-semibold text-gray-900">Lead Pipeline</h2>
-                <div className="mt-4 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Saved lead inventory</span>
-                    <span className="font-semibold text-gray-900">{formatNumber(dashboardMetrics.totalCrmLeads)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Email-ready leads</span>
-                    <span className="font-semibold text-gray-900">{formatNumber(dashboardMetrics.emailReadyLeads)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Campaign audience</span>
-                    <span className="font-semibold text-gray-900">{formatNumber(dashboardMetrics.totalCampaignAudience)}</span>
-                  </div>
-                  {access.leads ? (
-                    <button
-                      onClick={() => setActiveTab('leads')}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
-                    >
-                      <TrendingUp className="w-4 h-4" />
-                      <span>Find More Leads</span>
-                    </button>
-                  ) : (
-                    <a href={UPGRADE_URL}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                      <span>Upgrade to get leads</span>
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-              <div className="bg-white border border-gray-200 rounded-lg p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Recent Email Lists</h2>
-                  <Database className="w-5 h-5 text-blue-600" />
-                </div>
-                {recentCrmLists.length === 0 ? (
-                  <p className="text-sm text-gray-500">No email lists saved yet.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {recentCrmLists.map((list) => (
-                      <div key={list.id} className="border border-gray-100 rounded-lg p-3">
-                        <div className="font-medium text-gray-900 truncate">{list.crmObjectName}</div>
-                        <div className="mt-1 flex items-center justify-between text-xs text-gray-500">
-                          <span>{formatNumber(list.emailLeadCount)} email ready</span>
-                          <span>{formatShortDate(list.createdAt)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-white border border-gray-200 rounded-lg p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Recent Campaigns</h2>
-                  <Target className="w-5 h-5 text-purple-600" />
-                </div>
-                {recentCampaigns.length === 0 ? (
-                  <p className="text-sm text-gray-500">No campaigns created yet.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {recentCampaigns.map((campaign) => (
-                      <div key={campaign._id} className="border border-gray-100 rounded-lg p-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="font-medium text-gray-900 truncate">{campaign.name}</div>
-                          <span className="text-xs text-gray-500 capitalize">{campaign.status}</span>
-                        </div>
-                        <div className="mt-1 flex items-center justify-between text-xs text-gray-500">
-                          <span>{formatNumber(campaign.stats?.totalLeads || 0)} leads</span>
-                          <span>{formatShortDate(campaign.createdAt)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-white border border-gray-200 rounded-lg p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-                  <Clock className="w-5 h-5 text-amber-600" />
-                </div>
-                {recentActivity.length === 0 ? (
-                  <p className="text-sm text-gray-500">No credit activity yet.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {recentActivity.map((activity) => (
-                      <div key={activity._id} className="border border-gray-100 rounded-lg p-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="text-sm font-medium text-gray-900 capitalize">
-                            {getActivityLabel(activity.actionType).toLowerCase()}
-                          </div>
-                          <span className="text-xs font-semibold text-amber-700">{formatNumber(activity.creditsConsumed)} credits</span>
-                        </div>
-                        <div className="mt-1 text-xs text-gray-500">{formatShortDate(activity.createdAt)}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Determine which tabs this slug can access (default: full access)
-  const access = PROJECT_TAB_ACCESS[projectSlug] || { leads: true, campaigns: true };
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return renderDashboard();
-      case 'leads':
-        if (!access.leads) {
-          return <LockedTab tabName="Lead Generation" unlockedIn="Email Campaigns" />;
-        }
-        return (
-          <LeadGeneration
-            onCollapseSidebar={() => setSidebarCollapsed(true)}
-            onExpandSidebar={() => setSidebarCollapsed(false)}
-            injectedResult={agentResult}
-          />
-        );
-      case 'campaigns':
-        if (!access.campaigns) {
-          return <LockedTab tabName="Email Campaigns" unlockedIn="Lead Generation" />;
-        }
-        return <Campaign
-          onCollapseSidebar={() => setSidebarCollapsed(true)}
-          onExpandSidebar={() => setSidebarCollapsed(false)}
-          onEnterCreate={() => openAgent('email')}
-          emailDraft={emailDraft}
-          draftBusy={draftBusy}
-          onAcceptDraft={handleAcceptDraft}
-          onRequestExpert={handleRequestExpert}
-          draftNotice={draftNotice}
-          onClearDraft={() => { setDraftNotice(null); setEmailDraft(null); }}
-          initialTemplate={prefillTemplate}
-          initialName={prefillName}
-          onResetPrefill={() => { setPrefillTemplate(null); setPrefillName(''); }}
-        />;
-      default:
-        return <div className="text-center py-12 text-gray-500">Feature coming soon...</div>;
-    }
-  };
+  // Everything a tab page needs from the shell. Memoised so switching routes
+  // doesn't re-render every consumer on an unrelated state change.
+  const workspace = useMemo(() => ({
+    projectSlug,
+    projectMetadata,
+    access,
+    activeTab,
+    setActiveTab,
+    // Dashboard data
+    dashboardState,
+    fetchDashboardData,
+    // Sidebar / layout controls the tabs reach for
+    collapseSidebar: () => setSidebarCollapsed(true),
+    expandSidebar: () => setSidebarCollapsed(false),
+    // AI assistant hand-offs between tabs
+    openAgent,
+    agentResult,
+    emailDraft,
+    draftBusy,
+    draftNotice,
+    handleAcceptDraft,
+    handleRequestExpert,
+    clearDraft: () => { setDraftNotice(null); setEmailDraft(null); },
+    prefillTemplate,
+    prefillName,
+    resetPrefill: () => { setPrefillTemplate(null); setPrefillName(''); },
+  }), [
+    projectSlug, projectMetadata, access, activeTab, setActiveTab,
+    dashboardState, fetchDashboardData, agentResult, emailDraft, draftBusy,
+    draftNotice, prefillTemplate, prefillName,
+  ]);
 
   return (
-    <>
+    <WorkspaceProvider value={workspace}>
       <style dangerouslySetInnerHTML={{ __html: hotLeadScrollbarStyles }} />
       <div className="w-full h-screen min-h-0 bg-gray-50 overflow-hidden">
       {/* Sidebar - Fixed position (unchanged) */}
@@ -1102,7 +521,7 @@ export default function HotLeadInBox({ projectMetadata, projectSlug }) {
 
             {/* Tab Content */}
             <div className="px-4 lg:px-6 pb-8">
-              {renderTabContent()}
+              {children}
             </div>
           </div>
         </div>
@@ -1134,7 +553,7 @@ export default function HotLeadInBox({ projectMetadata, projectSlug }) {
         <Sparkles className="relative h-6 w-6" strokeWidth={2} fill="currentColor" fillOpacity={0.15} />
       </button>
     </div>
-    </>
+    </WorkspaceProvider>
   );
 }
 

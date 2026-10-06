@@ -4,19 +4,12 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  Home,
   Users,
-  Phone,
-  FileSpreadsheet,
-  Database,
   Settings,
-  CreditCard,
-  HelpCircle,
-  Bot,
   Target,
   ArrowLeft,
-  Mail,
   BarChart3,
+  Crosshair,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -38,19 +31,9 @@ export default function SideLeftBar({
   const mainTabs = [
     { id: 'dashboard', icon: BarChart3, label: 'Dashboard' },
     { id: 'leads', icon: Users, label: 'Leads' },
+    { id: 'icp', icon: Crosshair, label: 'ICP' },
     { id: 'campaigns', icon: Target, label: 'Campaigns' },
     { id: 'settings', icon: Settings, label: 'Settings' }
-  ];
-
-  const additionalItems = [
-    { icon: Phone, label: 'Search Phone Numbers' },
-    { icon: Mail, label: 'Email Templates' },
-    { icon: FileSpreadsheet, label: 'CSV Enrichment' },
-    { icon: Database, label: 'API Enrichment' },
-    { icon: Database, label: 'Email Lists' },
-    { icon: Bot, label: 'AI Assistant' },
-    { icon: CreditCard, label: 'Billing & Invoices' },
-    { icon: HelpCircle, label: 'Help & Support' }
   ];
 
   return (
@@ -134,7 +117,8 @@ export default function SideLeftBar({
           <div className="mb-4">
             {mainTabs.map((item) => {
               const isLocked = (item.id === 'leads' && !tabAccess.leads) ||
-                               (item.id === 'campaigns' && !tabAccess.campaigns);
+                               (item.id === 'campaigns' && !tabAccess.campaigns) ||
+                               (item.id === 'icp' && !tabAccess.campaigns);
               return (
                 <button
                   key={item.id}
@@ -164,22 +148,6 @@ export default function SideLeftBar({
               );
             })}
           </div>
-
-          {/* Additional Menu Items */}
-          {!collapsed && (
-            <div className="border-t border-indigo-500/30 pt-4">
-              <div className="text-xs text-indigo-300 mb-2 px-3">MORE TOOLS</div>
-              {additionalItems.map((item, index) => (
-                <button
-                  key={index}
-                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors mb-1 text-indigo-200 hover:bg-white/10 hover:text-white"
-                >
-                  <item.icon size={18} />
-                  <span className="text-sm">{item.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
         </nav>
 
         {/* Custom Scrollbar Styles */}

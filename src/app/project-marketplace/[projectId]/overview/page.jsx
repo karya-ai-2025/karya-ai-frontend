@@ -24,7 +24,8 @@ const TIER_THEME = {
   platform: { badge: 'bg-violet-100 text-violet-700 border-violet-200', checkBg: 'bg-violet-600',  accent: 'text-violet-700', upgradeBg: 'bg-violet-50 border-violet-200' },
 };
 
-const NEXT_TIER_MAP = { credit: 'Bronze', bronze: 'Silver', silver: 'Gold', gold: null, platform: null };
+// Tier ladder parked for now — no upgrade prompts anywhere.
+const NEXT_TIER_MAP = { credit: null, bronze: null, silver: null, gold: null, platform: null };
 
 // Feature key → deliverable label+desc for the checklist
 const ALL_TIER_DELIVERABLES = [
@@ -54,7 +55,7 @@ export default function ProjectOverviewPage() {
   const isExpert = activeRole === 'expert'; // experts can view but not buy/hire
   const searchParams = useSearchParams();
   const projectId = params?.projectId;
-  const tierParam = searchParams.get('tier') || 'silver';
+  const tierParam = searchParams.get('tier') || 'gold';
   const modeParam = searchParams.get('mode') || 'agency';
 
   const [project, setProject]           = useState(null);
@@ -87,7 +88,7 @@ export default function ProjectOverviewPage() {
         setPricingTiers(tiers || []);
         setProjectExperts(experts || []);
         if (tiers?.length > 0) {
-          const match = tiers.find(t => t.tierId === tierParam) || tiers.find(t => t.popular) || tiers[0];
+          const match = tiers.find(t => t.tierId === tierParam) || tiers.find(t => t.tierId === 'gold') || tiers.find(t => t.popular) || tiers[0];
           setSelectedTier(match);
         }
         // Fetch any existing negotiation for this user+project
@@ -266,7 +267,7 @@ export default function ProjectOverviewPage() {
             <div className="px-8 pt-5">
               <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-full px-3 py-1.5 w-fit">
                 <Package className="w-3.5 h-3.5 text-blue-600" />
-                <span className="text-xs font-semibold text-blue-700">{project?.title} — {selectedTier.name || selectedTier.tierId} plan selected</span>
+                <span className="text-xs font-semibold text-blue-700">{project?.title} selected</span>
               </div>
             </div>
           )}
@@ -473,7 +474,7 @@ export default function ProjectOverviewPage() {
             {/* Tier-aware Deliverables */}
             {(() => {
               const effectiveTier = modeParam === 'platform' ? 'platform' : tierParam;
-              const theme = TIER_THEME[effectiveTier] || TIER_THEME.silver;
+              const theme = TIER_THEME[effectiveTier] || TIER_THEME.gold;
               const tierData = pricingTiers.find(t => t.tierId === effectiveTier);
               const nextTier = NEXT_TIER_MAP[effectiveTier];
               // Compute included deliverables from DB features (always tier-based)
@@ -512,10 +513,7 @@ export default function ProjectOverviewPage() {
                         <Package className="w-5 h-5 text-blue-600" /> What You'll Get
                       </h2>
                       <p className="text-sm text-gray-500 mt-0.5">
-                        Deliverables in your{' '}
-                        <span className={`font-semibold ${theme.accent}`}>
-                          {effectiveTier === 'platform' ? 'Platform Managed' : `${effectiveTier.charAt(0).toUpperCase() + effectiveTier.slice(1)}`} plan
-                        </span>
+                        {effectiveTier === 'platform' ? 'Deliverables in your Platform Managed plan' : 'What is included in this project'}
                       </p>
                     </div>
                     <span className={`text-xs font-bold px-3 py-1.5 rounded-full border flex-shrink-0 ${theme.badge}`}>
@@ -944,7 +942,7 @@ export default function ProjectOverviewPage() {
               <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
                 <div className={`bg-gradient-to-r ${project.gradient} px-5 py-5 text-white`}>
                   <p className="text-xs text-white/70 mb-1 uppercase tracking-wide font-semibold">
-                    {modeParam === 'platform' ? 'Platform Managed' : `${tierParam.charAt(0).toUpperCase() + tierParam.slice(1)} Plan`}
+                    {modeParam === 'platform' ? 'Platform Managed' : 'Project Plan'}
                   </p>
                   <p className="text-3xl font-bold">
                     {selectedTier
@@ -977,7 +975,7 @@ export default function ProjectOverviewPage() {
                 {selectedTier?.features && (
                   <div className="px-5 py-3 border-t border-gray-100 mt-2">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                      Included in {selectedTier.name}
+                      What's included
                     </p>
                     <div className="space-y-1.5">
                       {ALL_TIER_DELIVERABLES.filter(d => selectedTier.features[d.key]).slice(0, 6).map((d) => (

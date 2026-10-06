@@ -1,5 +1,6 @@
 'use client';
 
+import { useUrlNumberState } from '@/hooks/useUrlState';
 import React, { useEffect, useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import {
@@ -26,6 +27,15 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import EmailTemplateBuilder from './EmailTemplateBuilder';
+
+// The four emails every campaign sends, in order. Keys match CampaignICP so an
+// approved sequence lines up step for step with what was chosen here.
+const SEQUENCE_STEPS = [
+  { step: 1, key: 'initial',   short: 'First email', label: 'First email',  who: 'Goes to everyone on your list' },
+  { step: 2, key: 'follow_up', short: 'Follow-up',   label: 'Follow-up',    who: 'Only people who opened the first email' },
+  { step: 3, key: 'recall',    short: 'Recall',      label: 'Recall email', who: 'Only people who did not open it' },
+  { step: 4, key: 'final',     short: 'Final call',  label: 'Final call',   who: 'Everyone who has not replied yet' },
+];
 
 const scrollbarStyles = `
   .campaign-form-scroll::-webkit-scrollbar {
@@ -58,7 +68,9 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
 
   const MAX_LEADS = 100; // a single uploaded/created email list can hold at most 100 leads
 
-  const [currentStep, setCurrentStep] = useState(aiFlow ? 2 : 1);
+  // The step lives in the URL (?step=2) so refresh and Back behave. push:true
+  // because stepping through the wizard is exactly what Back should walk.
+  const [currentStep, setCurrentStep] = useUrlNumberState('step', aiFlow ? 2 : 1, { push: true });
   const steps = [
     { number: 1, title: 'Basic Info', icon: Edit3 },
     { number: 2, title: 'Select Leads', icon: Users },
@@ -72,6 +84,10 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
     selectedLeads: [],
     emailTemplateId: null,
     emailTemplate: null,
+    // One template per sequence step, keyed the same way the ICP is. Picking all
+    // four here means the ICP the customer approves arrives already written.
+    // { initial: template, follow_up: template, recall: template, final: template }
+    sequenceTemplates: {},
     settings: {
       sendingRate: 100,
       followUpEnabled: false,
@@ -82,6 +98,29 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
     scheduledAt: null
   });
 
+  // ── Step guard ────────────────────────────────────────────────────────────
+  // The step is in the URL, but the answers are not — they are too large to put
+  // there, and they reset on refresh. So landing directly on ?step=4 (a refresh,
+  // a shared link, a typed URL) would show "Settings & Review" for a campaign
+  // with no name, no leads and no template.
+  //
+  // Walk forward from step 1 and stop at the first step whose prerequisite is
+  // missing, then send the user there instead.
+  const firstIncompleteStep = () => {
+    if (!campaignData.name.trim()) return 1;
+    if (!campaignData.selectedLeads.length) return 2;
+    // The AI flow arrives with a template already chosen and skips step 3.
+    if (!aiFlow && !campaignData.emailTemplateId) return 3;
+    return 4;
+  };
+
+  useEffect(() => {
+    const allowed = firstIncompleteStep();
+    if (currentStep > allowed) setCurrentStep(allowed);
+    // Only guards the URL the user arrived on; moving forward is handled by nextStep.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep]);
+
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -90,6 +129,9 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
   const [crmObjectsLoading, setCrmObjectsLoading] = useState(false);
   const [selectedLeadSource, setSelectedLeadSource] = useState(null);
   const [selectedCrmObject, setSelectedCrmObject] = useState(null);
+
+  // Which of the four sequence emails the template picker is currently filling.
+  const [activeSeqKey, setActiveSeqKey] = useState('initial');
 
   const [emailTemplates, setEmailTemplates] = useState([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
@@ -207,7 +249,13 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
       company: lead.company || lead.rawData?.Account_Name || 'N/A',
       phone: lead.phone || lead.mobile || lead.rawData?.phone || lead.rawData?.mobile || '',
       industry: lead.industry || lead.rawData?.GTM_Industry || 'N/A',
-      jobTitle: lead.title || lead.jobTitle || lead.rawData?.title || 'N/A'
+      jobTitle: lead.title || lead.jobTitle || lead.rawData?.title || 'N/A',
+      // Persisted verification status from the saved lead (UserCRM). Surfaced as
+      // a prior emailValidation so ticks show even before re-validating this session.
+      verificationStatus: lead.verificationStatus || '',
+      emailValidation: lead.verificationStatus
+        ? { isValidated: true, isValid: lead.verificationStatus === 'valid', status: lead.verificationStatus, fromSaved: true }
+        : null
     };
   };
 
@@ -241,6 +289,19 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
         <XCircle className="w-4 h-4" />
       </span>
     );
+  };
+
+  // Count verification status across a saved list's leads (for the card badge).
+  const countVerification = (leads = []) => {
+    let valid = 0;
+    let checked = 0;
+    leads.forEach((l) => {
+      if (l.verificationStatus) {
+        checked += 1;
+        if (l.verificationStatus === 'valid') valid += 1;
+      }
+    });
+    return { valid, invalid: checked - valid, checked };
   };
 
   const fetchUserCrmObjects = async () => {
@@ -657,12 +718,21 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
     }
   };
 
+  // Assign the picked template to whichever sequence step is being edited.
+  // Step 1 also sets emailTemplateId, which the sender and the campaign schema
+  // still treat as the campaign's primary template.
   const selectTemplate = (template) => {
-    setCampaignData((prev) => ({
-      ...prev,
-      emailTemplateId: template._id,
-      emailTemplate: template
-    }));
+    setCampaignData((prev) => {
+      const next = {
+        ...prev,
+        sequenceTemplates: { ...prev.sequenceTemplates, [activeSeqKey]: template },
+      };
+      if (activeSeqKey === 'initial') {
+        next.emailTemplateId = template._id;
+        next.emailTemplate = template;
+      }
+      return next;
+    });
   };
 
   const editTemplate = (template) => {
@@ -692,6 +762,12 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
           name: campaignData.name,
           description: campaignData.description,
           emailTemplateId: campaignData.emailTemplateId,
+          // Only the steps that were actually given a template. The server
+          // re-derives step numbers and verifies each template belongs to
+          // this user, so this is just which template goes with which step.
+          sequenceTemplates: SEQUENCE_STEPS
+            .filter((s) => campaignData.sequenceTemplates?.[s.key]?._id)
+            .map((s) => ({ key: s.key, templateId: campaignData.sequenceTemplates[s.key]._id })),
           selectedLeads: campaignData.selectedLeads
             .filter((lead) => lead.email && lead.email.includes('@'))
             .map((lead) => ({
@@ -1112,6 +1188,25 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
                           <div>Format: <span className="font-medium text-gray-900">{crmObject.exportFormat === 'email_phone' ? 'Email + Phone' : 'Email Only'}</span></div>
                         </div>
 
+                        {(() => {
+                          const v = countVerification(crmObject.leads || []);
+                          if (!v.checked) {
+                            return <div className="mt-2 text-xs text-gray-400">Not verified yet</div>;
+                          }
+                          return (
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                              <span className="inline-flex items-center gap-1 text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
+                                <Check className="w-3 h-3" /> {v.valid} valid
+                              </span>
+                              {v.invalid > 0 && (
+                                <span className="inline-flex items-center gap-1 text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5">
+                                  <XCircle className="w-3 h-3" /> {v.invalid} invalid
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+
                         <div className="mt-3 text-xs text-gray-500">
                           Saved {crmObject.createdAt ? new Date(crmObject.createdAt).toLocaleDateString() : 'N/A'}
                         </div>
@@ -1225,7 +1320,51 @@ export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapse
     return (
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Email Template</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">Choose your email sequence</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            A campaign sends four emails, each to a different group depending on what
+            happened to the one before. Pick a template for each.
+          </p>
+
+          {/* Which step the picker below is filling */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-5">
+            {SEQUENCE_STEPS.map((s) => {
+              const chosen = campaignData.sequenceTemplates?.[s.key];
+              const active = activeSeqKey === s.key;
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setActiveSeqKey(s.key)}
+                  className={`rounded-lg border p-3 text-left transition-all cursor-pointer ${
+                    active
+                      ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-200'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold ${
+                      chosen ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-500'
+                    }`}>
+                      {chosen ? '✓' : s.step}
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900">{s.short}</span>
+                  </div>
+                  <p className="mt-1.5 text-[11px] leading-snug text-gray-500">{s.who}</p>
+                  <p className="mt-1 text-xs font-medium text-gray-700 truncate">
+                    {chosen ? chosen.templateName : 'Not chosen'}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mb-3 text-sm font-medium text-gray-700">
+            Choosing template for:{' '}
+            <span className="text-indigo-700">
+              {SEQUENCE_STEPS.find((s) => s.key === activeSeqKey)?.label}
+            </span>
+          </div>
 
           {templatesLoading ? (
             <div className="flex items-center justify-center py-8">

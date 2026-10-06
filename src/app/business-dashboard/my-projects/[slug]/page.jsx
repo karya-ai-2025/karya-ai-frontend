@@ -7,6 +7,8 @@ import Sidebar from '@/components/Sidebar';
 import TopNavbar from '@/components/TopNavbar';
 import { fetchMyProjects, fetchProjectBySlug, fetchProjectPricing } from '@/lib/catalogApi';
 import { getProjectComponent, getProjectMetadata } from '@/components/Projects';
+import DashboardTab from '@/components/Projects/HotLeadInBox/Dashboard';
+import { isWorkspaceSlug } from '@/components/Projects/workspaceRoutes';
 import {
   ArrowLeft, Loader2, CheckCircle2, Circle,
   Users, FileText, MessageSquare, Zap, BarChart3,
@@ -44,13 +46,6 @@ function getProjectExpertise(project) {
   // Generic fallback
   return ['Growth Marketing'];
 }
-
-const TIER_THEME = {
-  credit: { badge: 'bg-gray-100 text-gray-700 border-gray-200',      dot: 'bg-gray-500'   },
-  bronze: { badge: 'bg-orange-100 text-orange-700 border-orange-200', dot: 'bg-orange-500' },
-  silver: { badge: 'bg-blue-100 text-blue-700 border-blue-200',       dot: 'bg-blue-600'   },
-  gold:   { badge: 'bg-amber-100 text-amber-700 border-amber-200',    dot: 'bg-amber-500'  },
-};
 
 const STATUS_THEME = {
   started:      'bg-blue-50 text-blue-700 border-blue-200',
@@ -140,6 +135,15 @@ export default function ProjectWorkspacePage() {
       .finally(() => setLoading(false));
   }, [slug]);
 
+  // ── Workspace projects (HotLead family) ──────────────────────────────────
+  // The shell lives in layout.jsx and wraps every tab route, so the project root
+  // just renders the dashboard tab. Placed before the loading gate because the
+  // dashboard loads its own data — waiting on the purchase fetch would only
+  // blank the page for no reason.
+  if (isWorkspaceSlug(slug)) {
+    return <DashboardTab />;
+  }
+
   // ── Loading ───────────────────────────────────────────────────────────────
   if (authLoading || loading) {
     return (
@@ -164,9 +168,8 @@ export default function ProjectWorkspacePage() {
     );
   }
 
-  // ── Registered component (e.g. HotLeadInBox) ─────────────────────────────
-  // If this slug has a dedicated React app in the registry, render it directly.
-  // It manages its own full layout (sidebar + content), so we skip the outer shell.
+  // ── Other registered components (e.g. ContentProject) ────────────────────
+  // These bring their own full-screen layout, so they render as before.
   const RegisteredComponent = getProjectComponent(slug);
   if (RegisteredComponent) {
     const metadata = getProjectMetadata(slug);
@@ -174,7 +177,6 @@ export default function ProjectWorkspacePage() {
   }
 
   // ── Generic workspace ─────────────────────────────────────────────────────
-  const tierTheme   = TIER_THEME[purchase?.tierId]  || TIER_THEME.silver;
   const statusClass = STATUS_THEME[purchase?.status] || STATUS_THEME.started;
   const currentStep = purchase?.progress?.currentStep || 1;
   const currentPhase = PHASES.find(p => p.id === currentStep) || PHASES[0];
@@ -209,10 +211,6 @@ export default function ProjectWorkspacePage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${tierTheme.badge}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${tierTheme.dot}`} />
-                    {tierData?.name || purchase?.tierId} Plan
-                  </span>
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border capitalize ${statusClass}`}>
                     {purchase?.status?.replace('-', ' ')}
                   </span>

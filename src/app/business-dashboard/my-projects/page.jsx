@@ -5,16 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Sidebar from '@/components/Sidebar';
 import TopNavbar from '@/components/TopNavbar';
-import { fetchMyProjects, removeCatalogProject } from '@/lib/catalogApi';
-import { FolderKanban, ArrowRight, Clock, Package, ChevronRight, Trash2 } from 'lucide-react';
-
-const TIER_THEME = {
-  credit:   { badge: 'bg-gray-100 text-gray-700 border-gray-200',       dot: 'bg-gray-500' },
-  bronze:   { badge: 'bg-orange-100 text-orange-700 border-orange-200',  dot: 'bg-orange-500' },
-  silver:   { badge: 'bg-blue-100 text-blue-700 border-blue-200',        dot: 'bg-blue-600' },
-  gold:     { badge: 'bg-amber-100 text-amber-700 border-amber-200',     dot: 'bg-amber-500' },
-  platform: { badge: 'bg-violet-100 text-violet-700 border-violet-200',  dot: 'bg-violet-600' },
-};
+import { fetchMyProjects } from '@/lib/catalogApi';
+import { FolderKanban, ArrowRight, Clock, Package, ChevronRight } from 'lucide-react';
 
 function formatDate(iso) {
   try {
@@ -30,7 +22,6 @@ export default function MyProjectsPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState('my-projects');
   const [projects, setProjects]   = useState([]);
-  const [removing, setRemoving]   = useState(null); // slug being removed
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -51,20 +42,6 @@ export default function MyProjectsPage() {
         }
       });
   }, []);
-
-  const handleRemove = async (e, slug) => {
-    e.stopPropagation(); // don't navigate to workspace
-    if (!confirm('Remove this project from your account?')) return;
-    setRemoving(slug);
-    try {
-      await removeCatalogProject(slug);
-      setProjects(prev => prev.filter(p => p.slug !== slug));
-    } catch {
-      alert('Failed to remove project. Please try again.');
-    } finally {
-      setRemoving(null);
-    }
-  };
 
   if (loading) {
     return (
@@ -124,24 +101,17 @@ export default function MyProjectsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {projects.map((p, i) => {
-                const theme = TIER_THEME[p.tierId] || TIER_THEME.silver;
                 return (
                   <div
                     key={`${p.slug}-${i}`}
                     className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer group"
                     onClick={() => router.push(`/business-dashboard/my-projects/${p.slug}`)}
                   >
-                    {/* Tier badge */}
-                    <div className="flex items-center justify-between mb-3">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${theme.badge}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${theme.dot}`} />
-                        {p.tierName || p.tierId}
-                      </span>
-                      {p.priceLabel && (
+                    {p.priceLabel && (
+                      <div className="flex items-center justify-end mb-3">
                         <span className="text-xs font-bold text-gray-700">{p.priceLabel}</span>
-                      )}
-                    </div>
-
+                      </div>
+                    )}
                     {/* Title */}
                     <h3 className="text-sm font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
                       {p.title}
@@ -157,14 +127,6 @@ export default function MyProjectsPage() {
                         <span>Started {formatDate(p.purchasedAt)}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={(e) => handleRemove(e, p.slug)}
-                          disabled={removing === p.slug}
-                          className="p-1 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
-                          title="Remove project"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
                         <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
                       </div>
                     </div>

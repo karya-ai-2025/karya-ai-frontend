@@ -7,10 +7,11 @@ import { fetchMyProjects, fetchAllProjects } from '@/lib/catalogApi';
 import { fetchMySubmissions } from '@/lib/submissionApi';
 import { checkUserPlanAccess } from '@/services/planService';
 import { getOnboardingStatus } from '@/services/onboardingApi';
+import { icpPath, tabAccessFor } from '@/components/Projects/workspaceRoutes';
 import {
   FolderKanban, ClipboardList, Loader2, ChevronRight, AlertCircle,
-  Sparkles, Target, Megaphone, TrendingUp, Users, Rocket, Send, Bot,
-  ShieldAlert, CalendarDays, CheckCircle2, Clock, X, ArrowUpRight, PenLine,
+  Sparkles, Target, Megaphone, TrendingUp, Users, Rocket, Send,
+  ShieldAlert, CalendarDays, CheckCircle2, Clock,
 } from 'lucide-react';
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -70,12 +71,11 @@ export default function DashboardHome() {
   const [submissions, setSubmissions] = useState([]);
   const [planStatus, setPlanStatus]   = useState(null);
   const [hitlPending, setHitlPending] = useState([]); // real HITL approval requests
+  const [icpPending, setIcpPending] = useState([]); // ICPs the admin sent for approval
   const [catalog, setCatalog]         = useState([]); // marketplace projects for recommendations
   const [profile, setProfile]         = useState(null); // onboarding profile (industry, goals, ICPs)
   const [loading, setLoading]         = useState(true);
   const [tab, setTab]                 = useState('All');
-  const [orchestratorOpen, setOrchestratorOpen] = useState(false);
-  const [orchestratorInput, setOrchestratorInput] = useState('');
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -86,59 +86,68 @@ export default function DashboardHome() {
       token
         ? fetch(`${apiBaseUrl}/hitl?status=awaiting_user`, { headers: { Authorization: `Bearer ${token}` }, credentials: 'include' }).then(r => r.json()).catch(() => null)
         : Promise.resolve(null),
+      token
+        ? fetch(`${apiBaseUrl}/icp`, { headers: { Authorization: `Bearer ${token}` }, credentials: 'include' }).then(r => r.json()).catch(() => null)
+        : Promise.resolve(null),
       fetchAllProjects({ limit: 24 }).then(r => r.projects).catch(() => []),
       token ? getOnboardingStatus().catch(() => null) : Promise.resolve(null),
-    ]).then(([projRes, subRes, planRes, hitlRes, catRes, profRes]) => {
+    ]).then(([projRes, subRes, planRes, hitlRes, icpRes, catRes, profRes]) => {
       if (projRes.status === 'fulfilled') setProjects(projRes.value || []);
       else { try { setProjects(JSON.parse(localStorage.getItem('myProjects') || '[]').slice().reverse()); } catch { setProjects([]); } }
       if (subRes.status === 'fulfilled') setSubmissions(subRes.value || []);
       if (planRes.status === 'fulfilled') setPlanStatus(planRes.value);
       if (hitlRes.status === 'fulfilled' && hitlRes.value?.success) setHitlPending(hitlRes.value.data || []);
+      if (icpRes.status === 'fulfilled' && icpRes.value?.success) setIcpPending(icpRes.value.data || []);
       if (catRes.status === 'fulfilled') setCatalog(catRes.value || []);
       if (profRes.status === 'fulfilled') setProfile(profRes.value);
     }).finally(() => setLoading(false));
   }, []);
 
-  // Enrich projects with GTM signals
+  // Enrich projects with GTM signals.
+  //
+  // Everything here comes from the project record. Progress used to fall back to
+  // a hash of the slug, and "pending HITL" / "stuck" were derived from that hash
+  // too — so a brand-new account saw invented progress bars and alerts about work
+  // it had never done. A project with no recorded progress is now simply at 0%.
   const ops = useMemo(() => projects.map((p, i) => {
-    const pct   = p.progress?.percentage ?? (8 + hashNum((p.slug || p.title || String(i)), 88));
+    const pct   = p.progress?.percentage ?? 0;
     const stage = stageFromPct(pct);
-    const seed  = hashNum((p.slug || '') + 'x');
-    const theme = THEMES[seed % THEMES.length];
-    const pendingHITL = seed % 3 === 0;
-    const stuck       = seed % 7 === 0 && pct < 70;
-    const launchReady = pct >= 88 && !stuck;
-    const statusLabel = pendingHITL ? 'HITL review' : stuck ? 'Stuck' : pct < 50 ? 'In progress' : launchReady ? 'Ready' : 'Active';
-    return { ...p, pct, stage, theme, pendingHITL, stuck, launchReady, statusLabel,
+    // Theme is presentational only — a stable colour per project, not a claim.
+    const theme = THEMES[hashNum(p.slug || p.title || String(i)) % THEMES.length];
+    const launchReady = pct >= 88;
+    const statusLabel = pct === 0 ? 'Not started'
+      : pct < 50 ? 'In progress'
+      : launchReady ? 'Ready' : 'Active';
+    return { ...p, pct, stage, theme, launchReady, statusLabel,
       stageLabel: GTM_STAGES[stage].label, lastActivity: p.lastAccessedAt || p.purchasedAt };
   }), [projects]);
 
   const credits       = planStatus?.data?.limits?.remainingCredits ?? null;
-  const active        = ops.filter(p => p.pct < 92);
-  const pendingHITL   = ops.filter(p => p.pendingHITL);
-  // Real email approval requests created by the AI Email assistant + mock project HITL.
-  const hitlPendingCount = pendingHITL.length + hitlPending.length;
+  const active        = ops.filter(p => p.pct > 0 && p.pct < 92);
+  // Only real approval requests — one row per outstanding request.
+  const hitlPendingCount = hitlPending.length;
   const launchReady   = ops.filter(p => p.launchReady);
   const delivered     = ops.filter(p => p.pct >= 92).length;
   const themeCount    = new Set(ops.map(p => p.theme.id)).size;
 
   const filtered = ops.filter(p => tab === 'All' || p.theme.id === tab);
 
-  // Milestones this week (from real projects)
-  const milestones = useMemo(() => {
-    const days = ['Mon', 'Today', 'Wed', 'Thu', 'Fri'];
-    return active.slice(0, 5).map((p, i) => ({
-      id: p.slug + i,
-      title: p.pendingHITL ? `${p.stageLabel} review by expert (HITL pending)`
-        : p.pct > 60 ? `${p.stageLabel} drafted by research agent`
-        : `${p.stageLabel} scheduled for ${p.title}`,
-      project: p.title,
-      day: days[i % days.length],
-      state: p.pendingHITL ? 'pending' : p.pct > 60 ? 'done' : 'scheduled',
-    }));
-  }, [active]);
+  // Milestones — derived from each project's real stage and progress.
+  // Only projects that have actually started appear, so a new account sees none.
+  const milestones = useMemo(() => active.slice(0, 5).map((p, i) => ({
+    id: p.slug + i,
+    title: p.pct > 60
+      ? `${p.stageLabel} drafted by research agent`
+      : `${p.stageLabel} in progress`,
+    project: p.title,
+    // No due date is stored on a project yet, so show the stage rather than
+    // inventing a weekday the way this used to.
+    day: p.stageLabel,
+    state: p.pct > 60 ? 'done' : 'scheduled',
+  })), [active]);
 
-  const focus = pendingHITL[0] || active[0] || ops[0];
+  // The project to highlight — whatever is actually moving.
+  const focus = active[0] || ops[0];
 
   // ── Recommended projects — derived from the user's onboarding (industry, goals, ICPs) ──
   const recommendations = useMemo(() => {
@@ -172,35 +181,62 @@ export default function DashboardHome() {
   }, [catalog, projects, profile, user]);
 
   // Attention Center — prioritised work that needs the user
-  const pendingSubs = submissions.filter(s => s.status === 'submitted' || s.status === 'under-review');
+  // Submissions are still fetched (they feed other parts of the page) but no
+  // longer raise an Attention row — My Submissions is not reachable right now.
   const attention = useMemo(() => {
     const items = [];
-    // Real AI-email approval requests come first.
-    hitlPending.forEach(r => items.push({
-      id: r._id,
-      icon: ShieldAlert,
-      color: 'amber',
-      title: `Approve email — ${r.payload?.subject || r.title || 'Outbound email'}`,
-      sub: 'AI draft • awaiting your sign-off',
-      action: 'Review',
-      href: '/business-dashboard/hitl-approval',
-    }));
-    ops.forEach(p => {
-      if (p.pendingHITL) items.push({ id: p.slug + '-h', icon: ShieldAlert, color: 'amber', title: `Approve expert work — ${p.title}`, sub: `${p.stageLabel} • awaiting your sign-off`, action: 'Review', href: '/business-dashboard/hitl-approval' });
-      if (p.stuck) items.push({ id: p.slug + '-s', icon: AlertCircle, color: 'red', title: `Project stalled — ${p.title}`, sub: `No movement at ${p.stageLabel}`, action: 'Review', href: `/business-dashboard/my-projects/${p.slug}` });
-    });
-    pendingSubs.forEach(s => items.push({ id: s._id, icon: ClipboardList, color: 'violet', title: `Submission under review — ${s.title}`, sub: 'Marketplace team is evaluating', action: 'Track', href: `/business-dashboard/my-submissions/${s._id}` }));
+
+    // HITL email approvals are deliberately NOT surfaced here. The email content
+    // is now reviewed as part of the ICP approval, so listing it separately asked
+    // the customer to sign off on the same thing twice.
+    //
+    // None of the HITL logic is removed — /business-dashboard/hitl-approval, the
+    // admin queue at /admin/email-approvals and the whole /api/hitl flow are
+    // untouched, and the "HITL pending" count card still reads from it.
+
+    // ICPs the Karya team has sent for the customer's approval.
+    // The link goes straight to that ICP inside whichever of their projects can
+    // show it — the ICP tab follows campaign access, so pick a project that has it.
+    const icpProject =
+      projects.find(p => tabAccessFor(p.slug).campaigns) || projects[0];
+
+    icpPending
+      .filter(icp => icp.status === 'awaiting_user')
+      .forEach(icp => {
+        const campaignId = icp.campaignId?._id || icp.campaignId;
+        items.push({
+          id: `icp-${icp._id}`,
+          icon: Target,
+          color: 'blue',
+          title: `Approve ICP — ${icp.name}`,
+          sub: `${icp.campaignId?.name || 'Campaign'} • awaiting your approval`,
+          action: 'Review',
+          href: icpProject
+            ? icpPath(icpProject.slug, campaignId)
+            : '/business-dashboard/my-projects',
+        });
+      });
+
+    // Nothing else goes in here. The "Approve expert work" and "Project stalled"
+    // rows used to be generated from a hash of the project slug, so they appeared
+    // for accounts that had done nothing — and the submission row pointed at
+    // My Submissions, which is not reachable at the moment.
+    //
+    // An empty Attention Center is the correct state for a new account.
     return items.slice(0, 5);
-  }, [ops, pendingSubs, hitlPending]);
+  }, [icpPending, projects]);
 
   if (loading) return <div className="flex items-center justify-center py-20"><Loader2 className="w-7 h-7 text-blue-500 animate-spin" /></div>;
 
-  // ── Overview cards (match reference) ────────────────────────────────────────
+  // ── Overview cards ──────────────────────────────────────────────────────────
+  // Every number is counted from what the account actually owns. "Total projects"
+  // and "Active" were previously hardcoded to 20 and 2, so a new account was shown
+  // twenty projects it had never bought.
   const workflowCards = [
-    { label: 'Total projects',      value: 20,                            color: 'text-gray-900' },
-    { label: 'Active',              value: 2, sub2: '/ 20',               color: 'text-gray-900' },
-    { label: 'HITL pending',        value: hitlPendingCount,              color: 'text-gray-900' },
-    { label: 'Available to launch', value: launchReady.length,            color: 'text-gray-900' },
+    { label: 'Total projects',      value: ops.length,                              color: 'text-gray-900' },
+    { label: 'Active',              value: active.length, sub2: `/ ${ops.length}`,  color: 'text-gray-900' },
+    { label: 'HITL pending',        value: hitlPendingCount,                        color: 'text-gray-900' },
+    { label: 'Available to launch', value: launchReady.length,                      color: 'text-gray-900' },
   ];
 
   // attention icon tiles (colored by kind)
@@ -441,104 +477,9 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* ── Floating Orchestrator launcher (bottom-right) ──────────────────── */}
-      {!orchestratorOpen && (
-        <button
-          onClick={() => setOrchestratorOpen(true)}
-          aria-label="Open GTM Orchestrator"
-          title="GTM Orchestrator"
-          className="fixed bottom-6 right-6 z-[60] w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white flex items-center justify-center shadow-[0_8px_30px_-6px_rgba(37,99,235,0.55)] transition-all hover:scale-105 active:scale-95"
-        >
-          <span className="absolute inset-1.5 rounded-xl border border-white/20" />
-          <Bot className="w-6 h-6 relative" strokeWidth={2} />
-        </button>
-      )}
-
-      {/* ── Orchestrator drawer — full height, hidden until opened ─────────── */}
-      {orchestratorOpen && (
-        <div className="fixed inset-0 z-[70]" onClick={() => setOrchestratorOpen(false)}>
-          <div className="absolute inset-0 bg-black/20" />
-          <aside
-            onClick={e => e.stopPropagation()}
-            className="absolute top-0 right-0 h-full w-full sm:w-[400px] bg-[#faf9f6] text-gray-900 flex flex-col shadow-2xl border-l border-gray-200 animate-orch-in"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-white">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center"><Bot className="w-5 h-5 text-white" /></div>
-                <div>
-                  <p className="text-[15px] font-bold text-gray-900 tracking-tight">GTM Orchestrator</p>
-                  <p className="text-[11px] text-gray-400">Agentic AI · always on</p>
-                </div>
-              </div>
-              <button onClick={() => setOrchestratorOpen(false)} className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors"><X className="w-4 h-4 text-gray-500" /></button>
-            </div>
-
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <p className="text-[13px] leading-relaxed text-gray-600">
-                  {focus
-                    ? <>Your project <span className="font-bold text-gray-900">"{focus.title}"</span> is {focus.pct}% done at <span className="font-bold text-gray-900">{focus.stageLabel}</span>. {focus.pendingHITL ? 'An expert deliverable needs your approval to continue.' : focus.launchReady ? "It's ready to launch — want me to kick off the campaign?" : 'Want me to push it to the next stage?'}</>
-                    : "Tell me your GTM goal and I'll set up the project, match experts, and run the workflow."}
-                </p>
-              </div>
-
-              {/* Suggested next actions */}
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-2">Suggested next actions</p>
-                <div className="space-y-2">
-                  {[
-                    focus?.pendingHITL && { label: `Review & approve — ${focus.title}`, href: '/business-dashboard/hitl-approval', icon: ShieldAlert },
-                    focus?.launchReady && { label: `Launch campaign — ${focus.title}`, href: `/business-dashboard/my-projects/${focus.slug}`, icon: Rocket },
-                    { label: 'Generate an ICP', href: '/agent', icon: Target },
-                    { label: 'Draft outreach sequence', href: '/agent', icon: Send },
-                    { label: 'Hire a vetted expert', href: '/expert-marketplace', icon: Users },
-                  ].filter(Boolean).map((a, i) => {
-                    const Icon = a.icon;
-                    return (
-                      <button key={i} onClick={() => router.push(a.href)}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-left transition-colors">
-                        <Icon className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                        <span className="text-[13px] font-medium text-gray-700 flex-1">{a.label}</span>
-                        <ArrowUpRight className="w-3.5 h-3.5 text-gray-400" />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Attention quick-glance */}
-              {pendingHITL.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-2">Needs your approval</p>
-                  <div className="space-y-2">
-                    {pendingHITL.slice(0, 3).map(p => (
-                      <button key={p.slug} onClick={() => router.push(`/business-dashboard/my-projects/${p.slug}`)}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-left hover:bg-amber-100 transition-colors">
-                        <ShieldAlert className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-                        <span className="text-[12px] text-amber-800 truncate flex-1">{p.title}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Input */}
-            <div className="px-5 py-4 border-t border-gray-200 bg-white">
-              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
-                <input value={orchestratorInput} onChange={e => setOrchestratorInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && orchestratorInput.trim()) { sessionStorage.setItem('pendingAgentMessage', orchestratorInput.trim()); router.push('/agent'); } }}
-                  placeholder="Message the orchestrator…"
-                  className="flex-1 bg-transparent text-[13px] text-gray-900 placeholder-gray-400 outline-none" />
-                <button onClick={() => { if (orchestratorInput.trim()) sessionStorage.setItem('pendingAgentMessage', orchestratorInput.trim()); router.push('/agent'); }}
-                  className="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-500 flex items-center justify-center transition-colors text-white"><Send className="w-4 h-4" /></button>
-              </div>
-            </div>
-          </aside>
-        </div>
-      )}
+      {/* The GTM Orchestrator launcher and drawer are removed while the AI agent
+          is "coming soon" — both were entry points into /agent. The in-project
+          assistant inside the workspace projects is a different feature and stays. */}
     </>
   );
 }

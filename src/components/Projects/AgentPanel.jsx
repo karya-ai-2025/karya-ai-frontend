@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Sparkles, X, Send } from 'lucide-react';
+import { trackEvent } from '@/services/analyticsApi';
 
 /**
  * AgentPanel — the right-side conversational assistant drawer for projects.
@@ -70,8 +71,9 @@ export default function AgentPanel({
   const [stepIndex, setStepIndex] = useState(-1);
   const [typing, setTyping] = useState(false);
   const [input, setInput] = useState('');
-  const [phase, setPhase] = useState('qa'); // qa | leads-done | drafting | email-done | draft-error
+  const [phase, setPhase] = useState('qa'); // qa | leads-done | drafting | email-done | draft-error | other-done
   const [refineUsed, setRefineUsed] = useState({}); // which dimensions are already applied
+  const [otherMode, setOtherMode] = useState(false); // "Other" chosen → free-text escape hatch open
 
   const scrollRef = useRef(null);
   const startedRef = useRef(false);
@@ -162,7 +164,7 @@ export default function AgentPanel({
       pushAgent({ text: 'Great — drafting your email now…' });
       generateDraft();
     } else {
-      pushAgent({ text: "Perfect — I've pulled your matching contacts into the Leads page. Want to narrow them down? Tap a suggestion below, or tell me — e.g. \"only decision makers\" or \"in apac\"." });
+      pushAgent({ text: "Perfect — here are your matching contacts →" });
       setPhase('leads-done');
       onComplete?.(answersRef.current);
     }
@@ -189,27 +191,61 @@ export default function AgentPanel({
   const submitAnswer = (value) => {
     const text = String(value || '').trim();
     if (!text || phase !== 'qa' || !currentStep) return;
+    setOtherMode(false);
     pushUser(text);
     answersRef.current = { ...answersRef.current, [currentStep.id]: text };
     setInput('');
     askStep(stepIndex + 1);
   };
 
+  // Message shown when the user picks "Other" — we log it and stop (we don't
+  // silently proceed with an answer we can't actually serve).
+  const OTHER_MESSAGE =
+    "Thanks — we've recorded your answer. We don't currently have expertise on that, " +
+    "but our team will look into it and try to provide a solution as soon as possible.";
+
+  const chooseOther = () => { setOtherMode(true); setInput(''); };
+
+  const submitOther = () => {
+    const text = input.trim();
+    if (!text || !currentStep) return;
+    pushUser(text);
+    // Record the unsupported request so the team can review it later.
+    try {
+      trackEvent('AGENT_UNSUPPORTED_REQUEST', {
+        step: currentStep.id,
+        value: text,
+        playbook: playbook.title || (isEmail ? 'email' : 'lead'),
+      });
+    } catch { /* analytics must never break the flow */ }
+    setOtherMode(false);
+    setInput('');
+    setTyping(true);
+    setTimeout(() => {
+      setTyping(false);
+      pushAgent({ text: OTHER_MESSAGE });
+      setPhase('other-done');
+    }, 450);
+  };
+
+  // A question is "choice-only" when it has predefined options (chips). Those must
+  // be selected — no free typing — so unusual/unsupported answers can't slip through.
+  const isChoiceStep = phase === 'qa' && !!currentStep && (currentStep.chips?.length > 0);
+  // Free-text bottom input only for open questions (e.g. company/campaign name) or refinement.
+  const showBottomInput = (phase === 'qa' && !!currentStep && !isChoiceStep && !otherMode) || refineActive;
+  const inputActive = showBottomInput;
+  const inputPlaceholder =
+    phase === 'qa' && currentStep ? 'Type your answer…'
+    : refineActive ? 'Refine, e.g. “only decision makers”'
+    : 'Type your answer…';
+
   const handleSend = (e) => {
     e?.preventDefault?.();
     const text = input.trim();
     if (!text) return;
-    if (phase === 'qa' && currentStep) { submitAnswer(text); return; }
     if (refineActive) { setInput(''); submitRefineText(text); return; }
+    if (phase === 'qa' && currentStep && !isChoiceStep) { submitAnswer(text); return; }
   };
-
-  const inputActive = (phase === 'qa' && currentStep) || refineActive;
-  const inputPlaceholder =
-    phase === 'qa' && currentStep ? 'Type your answer…'
-    : refineActive ? 'Refine, e.g. “only decision makers”'
-    : phase === 'email-done' ? 'Draft ready — see the middle'
-    : phase === 'leads-done' ? 'Conversation complete'
-    : 'Working…';
 
   return (
     <div
@@ -263,18 +299,57 @@ export default function AgentPanel({
         )}
       </div>
 
-      {/* Quick-reply chips (QA only) */}
-      {currentStep?.chips?.length > 0 && !typing && (
-        <div className="flex flex-wrap gap-2 border-t border-gray-100 px-4 pt-3">
-          {currentStep.chips.map((chip) => (
+      {/* Choice-only question — pick an option (or "Other"); no free typing */}
+      {isChoiceStep && !typing && !otherMode && (
+        <div className="border-t border-gray-100 px-4 pt-3 pb-5">
+          <p className="text-[11px] font-medium text-gray-500 mb-2">Choose an option</p>
+          <div className="flex flex-wrap gap-2 max-h-44 overflow-y-auto">
+            {currentStep.chips.map((chip) => (
+              <button
+                key={chip}
+                onClick={() => submitAnswer(chip)}
+                className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+              >
+                {chip}
+              </button>
+            ))}
             <button
-              key={chip}
-              onClick={() => submitAnswer(chip)}
-              className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+              onClick={chooseOther}
+              className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors"
             >
-              {chip}
+              Other…
             </button>
-          ))}
+          </div>
+        </div>
+      )}
+
+      {/* "Other" escape hatch — free text, recorded but not served right now */}
+      {otherMode && !typing && (
+        <div className="border-t border-gray-100 px-4 pt-3">
+          <p className="text-[11px] font-medium text-gray-500 mb-1.5">Tell us in your own words</p>
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            rows={3}
+            autoFocus
+            placeholder="Describe what you're looking for…"
+            className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+          />
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              onClick={submitOther}
+              disabled={!input.trim()}
+              className="flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Submit
+            </button>
+            <button
+              onClick={() => { setOtherMode(false); setInput(''); }}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Back
+            </button>
+          </div>
         </div>
       )}
 
@@ -307,23 +382,25 @@ export default function AgentPanel({
         </div>
       )}
 
-      {/* Input */}
-      <form onSubmit={handleSend} className="flex items-center gap-2 border-t border-gray-200 p-3">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={inputPlaceholder}
-          disabled={!inputActive}
-          className="flex-1 rounded-xl border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-400"
-        />
-        <button
-          type="submit"
-          disabled={!inputActive || !input.trim()}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          <Send className="h-4 w-4" />
-        </button>
-      </form>
+      {/* Free-text input — only for open questions (e.g. company name) or refinement */}
+      {showBottomInput && (
+        <form onSubmit={handleSend} className="flex items-center gap-2 border-t border-gray-200 p-3">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={inputPlaceholder}
+            disabled={!inputActive}
+            className="flex-1 rounded-xl border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-400"
+          />
+          <button
+            type="submit"
+            disabled={!inputActive || !input.trim()}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </form>
+      )}
     </div>
   );
 }

@@ -53,6 +53,17 @@ const scrollbarStyles = `
   .template-builder-scroll::-webkit-scrollbar-corner {
     background: #f3f4f6;
   }
+
+  /* WYSIWYG email editor */
+  .email-wysiwyg:empty:before {
+    content: attr(data-placeholder);
+    color: #9ca3af;
+    pointer-events: none;
+  }
+  .email-wysiwyg img { max-width: 100%; height: auto; border-radius: 6px; }
+  .email-wysiwyg a { color: #4f46e5; }
+  .email-wysiwyg h2 { font-size: 22px; line-height: 1.3; margin: 0 0 12px; color: #111827; font-weight: 700; }
+  .email-wysiwyg:focus { outline: none; }
 `;
 
 const defaultTemplateSettings = {
@@ -138,6 +149,7 @@ const formatFileSize = (bytes = 0) => {
 
 export default function EmailTemplateBuilder({ onBack, onCollapseSidebar }) {
   const attachmentInputRef = useRef(null);
+  const bodyEditorRef = useRef(null);
   const [activeView, setActiveView] = useState('list'); // 'list', 'create', 'edit'
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -179,6 +191,18 @@ export default function EmailTemplateBuilder({ onBack, onCollapseSidebar }) {
   useEffect(() => {
     fetchTemplates();
   }, []);
+
+  // Keep the WYSIWYG editor's DOM in sync when the body is set externally
+  // (loading a template into the form, resetting) — but never while the user is
+  // typing in it, so the caret isn't reset.
+  useEffect(() => {
+    const el = bodyEditorRef.current;
+    if (!el) return;
+    if (document.activeElement === el) return;
+    if (el.innerHTML !== (formData.emailBody || '')) {
+      el.innerHTML = formData.emailBody || '';
+    }
+  }, [formData.emailBody, activeView, selectedTemplate]);
 
   const fetchTemplates = async () => {
     try {
@@ -408,136 +432,79 @@ export default function EmailTemplateBuilder({ onBack, onCollapseSidebar }) {
     }
   };
 
-  // Insert variable into email body
-  const insertVariable = (variable) => {
-    insertIntoEmailBody(variable);
-  };
-
-  const insertIntoEmailBody = (value) => {
-    const textarea = document.getElementById('emailBody');
-    if (textarea) {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const text = formData.emailBody;
-      const before = text.substring(0, start);
-      const after = text.substring(end, text.length);
-
-      setFormData({
-        ...formData,
-        emailBody: before + value + after
-      });
-
-      // Set cursor position after inserted variable
-      setTimeout(() => {
-        textarea.selectionStart = textarea.selectionEnd = start + value.length;
-        textarea.focus();
-      }, 0);
+  // ── Rich-text (WYSIWYG) editor helpers ──────────────────────────────────────
+  // The body is edited in a contentEditable div, so what you see is what sends.
+  const syncBody = () => {
+    if (bodyEditorRef.current) {
+      setFormData((prev) => ({ ...prev, emailBody: bodyEditorRef.current.innerHTML }));
     }
   };
 
-  const wrapEmailBodySelection = (prefix, suffix, fallbackText = '') => {
-    const textarea = document.getElementById('emailBody');
-    if (!textarea) return;
+  const handleBodyInput = () => syncBody();
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = formData.emailBody.substring(start, end);
-    const innerText = selectedText || fallbackText;
-    const before = formData.emailBody.substring(0, start);
-    const after = formData.emailBody.substring(end);
-    const wrappedValue = `${prefix}${innerText}${suffix}`;
-
-    setFormData({
-      ...formData,
-      emailBody: before + wrappedValue + after
-    });
-
-    setTimeout(() => {
-      if (selectedText) {
-        textarea.selectionStart = start;
-        textarea.selectionEnd = start + wrappedValue.length;
-      } else {
-        textarea.selectionStart = start + prefix.length;
-        textarea.selectionEnd = start + prefix.length + fallbackText.length;
-      }
-      textarea.focus();
-    }, 0);
+  // Insert raw HTML at the caret (replacing the selection if any), then sync state.
+  const insertHtmlAtCaret = (html) => {
+    const el = bodyEditorRef.current;
+    if (!el) return;
+    el.focus();
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && el.contains(sel.anchorNode)) {
+      document.execCommand('insertHTML', false, html);
+    } else {
+      el.innerHTML += html;
+    }
+    syncBody();
   };
+
+  const execFormat = (command) => {
+    bodyEditorRef.current?.focus();
+    document.execCommand(command, false);
+    syncBody();
+  };
+
+  const getSelectedText = () => {
+    const sel = window.getSelection();
+    return sel && sel.rangeCount ? sel.toString() : '';
+  };
+
+  // Insert a template variable (e.g. {firstName}) at the caret.
+  const insertVariable = (variable) => insertHtmlAtCaret(escapeHtml(variable));
 
   const insertHtmlBlock = (blockType) => {
-    let snippet = '';
-
-    if (blockType === 'bold') {
-      wrapEmailBodySelection('<strong>', '</strong>', 'bold text');
-      return;
-    }
-
-    if (blockType === 'italic') {
-      wrapEmailBodySelection('<em>', '</em>', 'italic text');
-      return;
-    }
+    if (blockType === 'bold') return execFormat('bold');
+    if (blockType === 'italic') return execFormat('italic');
 
     if (blockType === 'heading') {
-      wrapEmailBodySelection(
-        '<h2 style="margin:0 0 12px;font-size:22px;line-height:1.3;color:#111827;">',
-        '</h2>',
-        'Section heading'
-      );
-      return;
+      const inner = getSelectedText() || 'Section heading';
+      return insertHtmlAtCaret(`<h2 style="margin:0 0 12px;font-size:22px;line-height:1.3;color:#111827;">${escapeHtml(inner)}</h2>`);
     }
 
     if (blockType === 'divider') {
-      snippet = '<hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />';
+      return insertHtmlAtCaret('<hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />');
     }
 
     if (blockType === 'link') {
-      const textarea = document.getElementById('emailBody');
-      const selectedText = textarea
-        ? formData.emailBody.substring(textarea.selectionStart, textarea.selectionEnd)
-        : '';
-      const linkText = window.prompt('Link text', selectedText || 'View details');
+      const linkText = window.prompt('Link text', getSelectedText() || 'View details');
       if (!linkText) return;
       const url = window.prompt('Link URL', 'https://');
       if (!url) return;
-      if (selectedText) {
-        wrapEmailBodySelection(
-          `<a href="${escapeHtml(url)}" style="color:#4f46e5;text-decoration:underline;">`,
-          '</a>',
-          linkText
-        );
-        return;
-      }
-      snippet = `<a href="${escapeHtml(url)}" style="color:#4f46e5;text-decoration:underline;">${escapeHtml(linkText)}</a>`;
+      return insertHtmlAtCaret(`<a href="${escapeHtml(url)}" style="color:#4f46e5;text-decoration:underline;">${escapeHtml(linkText)}</a>`);
     }
 
     if (blockType === 'button') {
-      const textarea = document.getElementById('emailBody');
-      const selectedText = textarea
-        ? formData.emailBody.substring(textarea.selectionStart, textarea.selectionEnd)
-        : '';
-      const buttonText = window.prompt('Button text', selectedText || 'Book a demo');
+      const buttonText = window.prompt('Button text', getSelectedText() || 'Book a demo');
       if (!buttonText) return;
       const url = window.prompt('Button URL', 'https://');
       if (!url) return;
-      if (selectedText) {
-        wrapEmailBodySelection(
-          `<a href="${escapeHtml(url)}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600;">`,
-          '</a>',
-          buttonText
-        );
-        return;
-      }
-      snippet = `<a href="${escapeHtml(url)}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600;">${escapeHtml(buttonText)}</a>`;
+      return insertHtmlAtCaret(`<a href="${escapeHtml(url)}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600;">${escapeHtml(buttonText)}</a>`);
     }
 
     if (blockType === 'image') {
       const imageUrl = window.prompt('Image URL', 'https://');
       if (!imageUrl) return;
       const altText = window.prompt('Image alt text', 'Email image') || 'Email image';
-      snippet = `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(altText)}" style="display:block;max-width:100%;height:auto;border:0;border-radius:6px;" />`;
+      return insertHtmlAtCaret(`<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(altText)}" style="display:block;max-width:100%;height:auto;border:0;border-radius:6px;" />`);
     }
-
-    insertIntoEmailBody(snippet);
   };
 
   const handleAttachmentButtonClick = () => {
@@ -1082,13 +1049,15 @@ export default function EmailTemplateBuilder({ onBack, onCollapseSidebar }) {
                   />
                 </div>
               </div>
-              <textarea
+              <div
                 id="emailBody"
-                value={formData.emailBody}
-                onChange={(e) => setFormData({ ...formData, emailBody: e.target.value })}
-                placeholder="Hi {firstName},&#10;&#10;I hope this email finds you well...&#10;&#10;Or use HTML like <p>Hi {firstName},</p>"
-                rows={12}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm ${
+                ref={bodyEditorRef}
+                contentEditable
+                suppressContentEditableWarning
+                onInput={handleBodyInput}
+                onBlur={handleBodyInput}
+                data-placeholder="Hi {firstName}, write your email here… use the toolbar for bold, headings, links, buttons and images."
+                className={`email-wysiwyg w-full min-h-[280px] max-h-[520px] overflow-y-auto px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm leading-relaxed ${
                   formErrors.emailBody ? 'border-red-300' : 'border-gray-300'
                 }`}
               />

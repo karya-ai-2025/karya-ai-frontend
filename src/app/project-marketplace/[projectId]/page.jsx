@@ -291,7 +291,7 @@ export default function ProjectDetailPage() {
   const [loadingProject, setLoadingProject] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedHireMode, setSelectedHireMode] = useState('agency');
-  const [selectedPriceTier, setSelectedPriceTier] = useState(urlTier || 'silver');
+  const [selectedPriceTier, setSelectedPriceTier] = useState(urlTier || 'gold');
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [pricingTiersFromApi, setPricingTiersFromApi] = useState([]);
   const [userRole, setUserRole] = useState('owner');
@@ -356,7 +356,7 @@ export default function ProjectDetailPage() {
   // DB-driven credit/bronze/silver/gold tiers — augmented with display theme
   const dbPriceTiers = pricingTiersFromApi.map(t => ({
     ...t,
-    ...(TIER_THEME[t.tierId] || TIER_THEME.silver),
+    ...(TIER_THEME[t.tierId] || TIER_THEME.gold),
   }));
 
   return (
@@ -1376,7 +1376,7 @@ function HireCard({ project, pricingTiers, dbPriceTiers, selectedHireMode, setSe
       {(() => {
         const activeTier = dbPriceTiers.find(t => t.tierId === selectedPriceTier);
         const displayPrice = selectedHireMode === 'platform' ? (project.budgetRange || 'Custom Quote') : (activeTier?.priceLabel || project.budgetRange);
-        const displayLabel = selectedHireMode === 'platform' ? 'Platform Managed' : `${activeTier?.name || ''} Plan Selected`;
+        const displayLabel = selectedHireMode === 'platform' ? 'Platform Managed' : 'Project Plan';
         return (
           <div className={`${project.bgLight} border-b ${project.borderColor} px-5 py-4`}>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{displayLabel}</p>

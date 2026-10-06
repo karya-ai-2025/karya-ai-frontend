@@ -13,11 +13,6 @@ const ROLES = {
   EXPERT: 'expert'
 };
 
-// Team-only unlock for the business/owner flow while it's "Coming soon" to the public.
-// Team link:  /login?team=karya-team-2026
-// Change this word to rotate access. Keep it IDENTICAL to the one in register/page.jsx.
-const TEAM_ACCESS_CODE = 'karya-team-2026';
-
 const ROLE_CONFIG = {
   [ROLES.OWNER]: {
     title: 'Business Owner Login',
@@ -41,12 +36,10 @@ const ROLE_CONFIG = {
 function Login() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Business/owner is "Coming soon" for the public. Only the secret team link
-  // (?team=<code>) unlocks it; otherwise any owner request falls back to Expert,
-  // so the public can never reach the business login.
-  const businessUnlocked = searchParams.get('team') === TEAM_ACCESS_CODE;
-  const requestedRole = searchParams.get('role') || (businessUnlocked ? ROLES.OWNER : ROLES.EXPERT);
-  const role = requestedRole === ROLES.OWNER && !businessUnlocked ? ROLES.EXPERT : requestedRole;
+  // Both roles are open to the public. Business/owner used to be hidden behind a
+  // ?team=<code> link while it was "coming soon"; that gate is gone, so ?role=owner
+  // works for anyone and the switcher offers both. Owner is the default landing.
+  const role = searchParams.get('role') || ROLES.OWNER;
   const { login: authLogin, isAuthenticated, loading: authLoading, activeRole } = useAuth();
 
   // Handle users who are ALREADY logged in when they land on the login page.
@@ -226,28 +219,16 @@ function Login() {
 
             {/* Role Switcher */}
             <div className="mt-5 flex items-center gap-2 p-1 bg-gray-100 rounded-xl w-fit">
-              {businessUnlocked ? (
-                <button
-                  onClick={() => router.push(`/login?role=${ROLES.OWNER}&team=${TEAM_ACCESS_CODE}`)}
-                  className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
-                    role === ROLES.OWNER ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Business Owner
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  title="Business accounts are coming soon"
-                  className="px-5 py-2 rounded-lg text-sm font-bold text-gray-400 cursor-not-allowed flex items-center gap-1.5"
-                >
-                  Business Owner
-                  <span className="text-[10px] font-semibold uppercase bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded">Soon</span>
-                </button>
-              )}
               <button
-                onClick={() => router.push(businessUnlocked ? `/login?role=${ROLES.EXPERT}&team=${TEAM_ACCESS_CODE}` : `/login?role=${ROLES.EXPERT}`)}
+                onClick={() => router.push(`/login?role=${ROLES.OWNER}`)}
+                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer ${
+                  role === ROLES.OWNER ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Business Owner
+              </button>
+              <button
+                onClick={() => router.push(`/login?role=${ROLES.EXPERT}`)}
                 className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
                   role === ROLES.EXPERT ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                 }`}

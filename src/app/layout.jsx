@@ -1,7 +1,6 @@
 import './globals.css';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import Providers from '@/components/Providers';
-import ChatLauncher from '@/components/ChatLauncher';
 import AnalyticsTracker from '@/components/AnalyticsTracker';
 
 const jakarta = Plus_Jakarta_Sans({
@@ -26,7 +25,9 @@ export default function RootLayout({ children }) {
     <html lang="en" className={jakarta.variable}>
       <body className={`${jakarta.className} bg-white text-gray-900`}>
         <Providers>{children}</Providers>
-        <ChatLauncher />
+        {/* The floating agent launcher is removed while the AI agent is "coming
+            soon". ChatLauncher.jsx is left in place so it can be mounted again
+            here in one line when the agent ships. */}
         <AnalyticsTracker />
       </body>
     </html>

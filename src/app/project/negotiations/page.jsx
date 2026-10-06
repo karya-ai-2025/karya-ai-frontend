@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   Check, X, Clock, CheckCircle, XCircle,
-  Package, Tag, Loader2, RefreshCw, Trash2,
+  Package, Loader2, RefreshCw, Trash2,
 } from 'lucide-react';
 import { getAllNegotiations, updateNegotiationStatus, deleteNegotiation } from '@/lib/negotiationApi';
 import AdminGuard from '@/components/AdminGuard';
@@ -173,15 +173,11 @@ export default function NegotiationsPage() {
                   </div>
 
                   <div className="px-6 py-4">
-                    {/* Project + Tier */}
+                    {/* Project */}
                     <div className="flex items-center gap-4 mb-4 flex-wrap">
                       <div className="flex items-center gap-1.5 text-sm text-gray-700">
                         <Package className="w-4 h-4 text-blue-500" />
                         <span className="font-semibold">{n.projectSlug}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-sm text-gray-700">
-                        <Tag className="w-4 h-4 text-orange-500" />
-                        <span className="capitalize font-medium">{n.tierId} tier</span>
                       </div>
                     </div>
 

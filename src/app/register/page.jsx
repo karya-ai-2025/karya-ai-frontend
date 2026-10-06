@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertTriangle, CheckCircle, Check, X } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertTriangle, Phone, CheckCircle, Check, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackEvent } from '@/services/analyticsApi';
 
@@ -13,11 +13,6 @@ const ROLES = {
   OWNER: 'owner',
   EXPERT: 'expert'
 };
-
-// Team-only unlock for the business/owner flow while it's "Coming soon" to the public.
-// Team link:  /register?team=karya-team-2026
-// Change this word to rotate access. Keep it IDENTICAL to the one in login/page.jsx.
-const TEAM_ACCESS_CODE = 'karya-team-2026';
 
 const ROLE_CONFIG = {
   [ROLES.OWNER]: {
@@ -86,12 +81,10 @@ const checkPasswordStrength = (password) => {
 function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Business/owner is "Coming soon" for the public. Only the secret team link
-  // (?team=<code>) unlocks it; otherwise any owner request falls back to Expert,
-  // so the public can never register a business account.
-  const businessUnlocked = searchParams.get('team') === TEAM_ACCESS_CODE;
-  const requestedRole = searchParams.get('role') || (businessUnlocked ? ROLES.OWNER : ROLES.EXPERT);
-  const role = requestedRole === ROLES.OWNER && !businessUnlocked ? ROLES.EXPERT : requestedRole;
+  // Both roles are open to the public. Business/owner used to be hidden behind a
+  // ?team=<code> link while it was "coming soon"; that gate is gone, so ?role=owner
+  // works for anyone and the switcher offers both. Owner is the default landing.
+  const role = searchParams.get('role') || ROLES.OWNER;
   const { isAuthenticated, loading: authLoading, activeRole, register: authRegister } = useAuth();
 
   // Redirect users who land on /register while ALREADY logged in.
@@ -129,6 +122,7 @@ function RegisterContent() {
     fullName: '',
     email: '',
     company: '',
+    phone: '',
     password: '',
     confirmPassword: '',
     acceptTerms: false
@@ -138,6 +132,7 @@ function RegisterContent() {
     fullName: false,
     email: false,
     company: false,
+    phone: false,
     password: false,
     confirmPassword: false,
     acceptTerms: false
@@ -167,6 +162,15 @@ function RegisterContent() {
     return '';
   };
 
+  // Matches the backend rule in validators/authValidators.js. Optional there,
+  // but required here so every account has a contact number.
+  const validatePhone = (phone) => {
+    if (!phone.trim()) return 'Phone number is required';
+    const cleaned = phone.replace(/[\s().-]/g, '');
+    if (!/^[+]?[0-9]{10,15}$/.test(cleaned)) return 'Enter a valid phone number';
+    return '';
+  };
+
   const validatePassword = (password) => {
     if (!password) return 'Password is required';
     if (password.length < 8) return 'Password must be at least 8 characters';
@@ -193,6 +197,7 @@ function RegisterContent() {
     fullName: validateFullName(formData.fullName),
     email: validateEmail(formData.email),
     company: validateCompany(formData.company),
+    phone: validatePhone(formData.phone),
     password: validatePassword(formData.password),
     confirmPassword: validateConfirmPassword(formData.confirmPassword),
     acceptTerms: validateTerms(formData.acceptTerms)
@@ -241,6 +246,7 @@ function RegisterContent() {
       fullName: true,
       email: true,
       company: true,
+      phone: true,
       password: true,
       confirmPassword: true,
       acceptTerms: true
@@ -262,13 +268,16 @@ function RegisterContent() {
         password: formData.password,
         confirmPassword: formData.confirmPassword,
         role,
-        company: formData.company.trim() || undefined
+        company: formData.company.trim() || undefined,
+        phone: formData.phone.trim()
       });
 
       if (!result.success) {
         throw new Error(result.error || 'Registration failed');
       }
 
+      // Straight into onboarding. Email OTP verification is switched off for now,
+      // so nothing stands between registering and getting started.
       router.replace(ROLE_CONFIG[role].onboardingRoute);
 
     } catch (err) {
@@ -381,28 +390,16 @@ function RegisterContent() {
 
             {/* Role Switcher */}
             <div className="mt-5 flex items-center gap-2 p-1 bg-gray-100 rounded-xl w-fit">
-              {businessUnlocked ? (
-                <button
-                  onClick={() => router.push(`/register?role=${ROLES.OWNER}&team=${TEAM_ACCESS_CODE}`)}
-                  className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
-                    role === ROLES.OWNER ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Business Owner
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  title="Business accounts are coming soon"
-                  className="px-5 py-2 rounded-lg text-sm font-bold text-gray-400 cursor-not-allowed flex items-center gap-1.5"
-                >
-                  Business Owner
-                  <span className="text-[10px] font-semibold uppercase bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded">Soon</span>
-                </button>
-              )}
               <button
-                onClick={() => router.push(businessUnlocked ? `/register?role=${ROLES.EXPERT}&team=${TEAM_ACCESS_CODE}` : `/register?role=${ROLES.EXPERT}`)}
+                onClick={() => router.push(`/register?role=${ROLES.OWNER}`)}
+                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer ${
+                  role === ROLES.OWNER ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Business Owner
+              </button>
+              <button
+                onClick={() => router.push(`/register?role=${ROLES.EXPERT}`)}
                 className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
                   role === ROLES.EXPERT ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                 }`}
@@ -521,6 +518,36 @@ function RegisterContent() {
               </div>
               {touched.company && errors.company && (
                 <p className="mt-1 text-xs text-[#ef4444]">{errors.company}</p>
+              )}
+            </div>
+
+            {/* Phone Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2">
+                Phone Number <span className="text-[#ef4444]">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Phone className={`w-5 h-5 ${touched.phone && errors.phone ? 'text-[#ef4444]' : 'text-gray-500'}`} />
+                </div>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  onBlur={() => handleBlur('phone')}
+                  disabled={isLoading}
+                  autoComplete="tel"
+                  className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
+                    touched.phone && errors.phone
+                      ? 'border-[#fca5a5] focus:border-[#ef4444] focus:ring-[#ef4444]/50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
+                  }`}
+                  placeholder="+91 98765 43210"
+                />
+              </div>
+              {touched.phone && errors.phone && (
+                <p className="mt-1 text-xs text-[#ef4444]">{errors.phone}</p>
               )}
             </div>
 

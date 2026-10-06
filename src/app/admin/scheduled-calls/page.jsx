@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
-  Video, CheckCircle, Clock, RefreshCw,
+  Video, CheckCircle, Clock, RefreshCw, FileText,
   Loader2, Calendar, Mail, User, ExternalLink, PhoneCall,
 } from 'lucide-react';
 import { getAllScheduledCalls, markCallComplete } from '@/lib/scheduledCallsApi';
@@ -26,6 +27,7 @@ export default function ScheduledCallsPage() {
   const [loading, setLoading]           = useState(true);
   const [actionLoading, setActionLoading] = useState({});
   const [filter, setFilter]             = useState('all');
+  const router = useRouter();
 
   const load = () => {
     setLoading(true);
@@ -73,12 +75,20 @@ export default function ScheduledCallsPage() {
               Join onboarding calls and mark them complete to trigger transcript processing
             </p>
           </div>
-          <button
-            onClick={load}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 border border-gray-200 rounded-xl px-3 py-2 hover:border-blue-300 transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" /> Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push('/admin/transcripts')}
+              className="flex items-center gap-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-xl px-3 py-2 transition-colors cursor-pointer"
+            >
+              <FileText className="w-4 h-4" /> Transcripts
+            </button>
+            <button
+              onClick={load}
+              className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 border border-gray-200 rounded-xl px-3 py-2 hover:border-blue-300 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" /> Refresh
+            </button>
+          </div>
         </div>
 
         {/* Filter tabs */}
