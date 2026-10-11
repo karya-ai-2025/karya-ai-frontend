@@ -11,7 +11,7 @@ import {
   PencilLine, CheckCheck, Inbox,
 } from 'lucide-react';
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 // ── Demo fallback (shown when there are no live approval requests) ──────────────
 const DEMO_SEQUENCES = [

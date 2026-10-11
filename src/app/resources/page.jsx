@@ -10,7 +10,7 @@ import {
   MessageSquare, Rocket, BarChart3, Globe, Menu, Loader2
 } from 'lucide-react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 const NAV_LINKS = [
   { label: 'About', path: '/about' },

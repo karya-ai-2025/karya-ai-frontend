@@ -3,7 +3,7 @@ import {
   BarChart3, Radio, Headphones, Bot, Sparkles, Network,
 } from 'lucide-react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Icons cannot come from the database (React components).

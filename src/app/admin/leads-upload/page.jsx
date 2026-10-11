@@ -6,7 +6,7 @@ import {
   X, ListChecks, Database,
 } from 'lucide-react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 // Mirrors the backend's required columns (kept here only to inform the admin in the UI).
 const REQUIRED_COLUMNS = ['First Name', 'email', 'phone', 'Mailing Country', 'GTM Industry'];

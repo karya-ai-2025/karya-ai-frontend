@@ -5,7 +5,7 @@ import { FolderOpen, Plus, Trash2, Loader2, CheckCircle, AlertCircle, X, Pencil 
 import { useAuth } from '@/contexts/AuthContext';
 import ExpertPageWrapper from '@/components/expert/ExpertPageWrapper';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 const EMPTY_FORM = { title: '', description: '', results: '', clientName: '', projectUrl: '' };
 

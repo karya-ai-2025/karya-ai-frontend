@@ -61,7 +61,7 @@ export default function CampaignStats({ campaign, onBack }) {
   const [followUpSending, setFollowUpSending] = useState(false);
   const [followUpMsg, setFollowUpMsg] = useState('');
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
   const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
 
   useEffect(() => {
@@ -83,7 +83,7 @@ export default function CampaignStats({ campaign, onBack }) {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/campaigns/${campaign._id}/stats`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/campaigns/${campaign._id}/stats`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'

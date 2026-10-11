@@ -36,7 +36,7 @@ import * as agentApi from '@/services/agentApi';
 import Sidebar from '@/components/Sidebar';
 import LeadsWorkspace from '@/components/LeadsWorkspace';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 function KaryaLogo({ size = 28, className = '' }) {
   return (

@@ -14,7 +14,7 @@ import {
   ShieldAlert, CalendarDays, CheckCircle2, Clock,
 } from 'lucide-react';
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 // GTM workflow stages
 const GTM_STAGES = [

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import AdminGuard from '@/components/AdminGuard';
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 function authHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;

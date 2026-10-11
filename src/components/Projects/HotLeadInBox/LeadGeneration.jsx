@@ -99,7 +99,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
   // (no filter sidebar, first 15 leads shown, rest behind a "buy this project" lock).
   const gated = !!injectedResult;
   const { user, getAuthHeader } = useAuth();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
   const [searchCriteria, setSearchCriteria] = useState({
     industry: '',
@@ -374,7 +374,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
         requestBody.leadPhone = lead.phone || lead.mobile;
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads/credits/consume`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/leads/credits/consume`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -773,7 +773,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
 
     try {
       setCompanyLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads/companies/suggestions?search=${encodeURIComponent(searchTerm)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/leads/companies/suggestions?search=${encodeURIComponent(searchTerm)}`);
       const data = await response.json();
 
       if (data.success) {
@@ -791,7 +791,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
   const fetchCompanySegments = async (industryValue) => {
     try {
       setSegmentsLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads/segments?industry=${encodeURIComponent(industryValue)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/leads/segments?industry=${encodeURIComponent(industryValue)}`);
       const data = await response.json();
 
       if (data.success) {
@@ -810,7 +810,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
 
     try {
       setLocationsLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads/locations`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/leads/locations`);
       const data = await response.json();
 
       if (data.success) {
@@ -847,7 +847,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
     // Fetch and auto-set the company segment
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads/company-segment?companyName=${encodeURIComponent(companyName)}`
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/leads/company-segment?companyName=${encodeURIComponent(companyName)}`
       );
       const data = await response.json();
 
@@ -880,7 +880,7 @@ export default function LeadGeneration({ onCollapseSidebar, onExpandSidebar, inj
       if (page === 1) {
         console.log('Fetching fresh data from API...');
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads/generate`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/leads/generate`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

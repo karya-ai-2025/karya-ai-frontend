@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx';
 import { UploadCloud, FileSpreadsheet, Loader2, CheckCircle, AlertTriangle, Briefcase } from 'lucide-react';
 import AdminGuard from '@/components/AdminGuard';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 export default function AdminJobsPage() {
   const [fileName, setFileName] = useState('');

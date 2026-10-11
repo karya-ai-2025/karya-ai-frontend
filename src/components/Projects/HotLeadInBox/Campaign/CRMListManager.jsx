@@ -83,7 +83,7 @@ const getLeadName = (lead) => (
 
 export default function CRMListManager({ onBack, onCollapseSidebar }) {
   const { getAuthHeader } = useAuth();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
   const [activeView, setActiveView] = useState('list');
   const [crmLists, setCrmLists] = useState([]);

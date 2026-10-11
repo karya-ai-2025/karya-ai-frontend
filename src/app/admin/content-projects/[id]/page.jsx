@@ -15,7 +15,7 @@ import {
   adminSendToClient,
 } from '@/lib/contentProjectApi';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 const STATUS_META = {
   intake_pending:     { label: 'Awaiting Brief',   color: 'text-amber-600  bg-amber-50  border-amber-200' },

@@ -3,7 +3,7 @@
 // IMPORTANT: always send the lowercase value (region_name / segment_name / level_name)
 // to /leads/generate — never the display_name (which is for UI only).
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 const fetchJson = async (path) => {
   const res = await fetch(`${API_URL}${path}`, {

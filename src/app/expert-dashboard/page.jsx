@@ -302,7 +302,7 @@ function ExpertDashboard() {
 
   // Load the expert's portfolio so the highlight reflects real items.
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/profiles/expert`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/profiles/expert`, {
       headers: { ...getAuthHeader() },
     })
       .then((r) => r.json())

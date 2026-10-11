@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { trackEvent } from '@/services/analyticsApi';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 const AuthContext = createContext(null);
 
@@ -112,6 +112,38 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       setError(err.message);
       trackEvent('LOGIN_FAILED', { email }, 'failure');
+      return { success: false, error: err.message };
+    }
+  };
+
+  // Finish a social sign-in (Google / LinkedIn). The backend hands the callback
+  // page a token; this stores it and loads the account it belongs to.
+  const loginWithToken = async (token) => {
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.user) {
+        throw new Error(data.message || 'Could not sign you in. Please try again.');
+      }
+
+      localStorage.removeItem('myProjects'); // clear previous user's cached projects
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      setUser(data.user);
+
+      trackEvent('LOGIN_SUCCESS', { role: data.user.activeRole, method: 'social' });
+      return { success: true, user: data.user };
+    } catch (err) {
+      setError(err.message);
+      trackEvent('LOGIN_FAILED', { method: 'social' }, 'failure');
       return { success: false, error: err.message };
     }
   };
@@ -363,6 +395,22 @@ export const AuthProvider = ({ children }) => {
   const hasExpertProfile = user?.hasExpertProfile || false;
   const canSwitchRole = hasOwnerProfile && hasExpertProfile;
 
+  // ── Enterprise ──────────────────────────────────────────────────────────
+  // An individual account has no organization. An enterprise account carries
+  // `user.organization` — the company, this person's role in it, and the flat
+  // list of things that role may do.
+  const organization = user?.organization || null;
+  const isEnterprise = user?.accountType === 'enterprise' && !!organization;
+  const orgRole = organization?.role || null;
+
+  // May this person do this? Individuals own their account outright, so the
+  // answer is always yes; enterprise members are held to their role. This only
+  // decides what to SHOW — the backend checks every request independently.
+  const can = (capability) => {
+    if (!isEnterprise) return true;
+    return (organization.capabilities || []).includes(capability);
+  };
+
   const value = {
     user,
     loading,
@@ -372,7 +420,12 @@ export const AuthProvider = ({ children }) => {
     hasOwnerProfile,
     hasExpertProfile,
     canSwitchRole,
+    organization,
+    isEnterprise,
+    orgRole,
+    can,
     login,
+    loginWithToken,
     register,
     logout,
     switchRole,

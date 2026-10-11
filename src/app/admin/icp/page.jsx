@@ -13,7 +13,7 @@ import {
 } from '@/lib/icpApi';
 import { getSegments, getSeniority } from '@/services/leadFiltersApi';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 // Size and seniority stay pick-lists: they only work as an EXACT value from the
 // mapping tables, because the query turns them into an employee range and a set

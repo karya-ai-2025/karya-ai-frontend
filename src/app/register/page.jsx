@@ -4,8 +4,9 @@ import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertTriangle, Phone, CheckCircle, Check, X } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertTriangle, Phone, CheckCircle, Check, X, Building2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 import { trackEvent } from '@/services/analyticsApi';
 
 // Constants
@@ -55,8 +56,30 @@ const ROLE_CONFIG = {
   }
 };
 
+// A business signs up either on its own or as a company with a team. Asked
+// once, here — it cannot be changed afterwards. Experts are always individual.
+const ACCOUNT_TYPES = {
+  INDIVIDUAL: 'individual',
+  ENTERPRISE: 'enterprise'
+};
+
+const ACCOUNT_TYPE_OPTIONS = [
+  {
+    id: ACCOUNT_TYPES.INDIVIDUAL,
+    icon: User,
+    title: 'Single user',
+    description: 'Just me. My own campaigns, leads and credits.'
+  },
+  {
+    id: ACCOUNT_TYPES.ENTERPRISE,
+    icon: Building2,
+    title: 'Enterprise',
+    description: 'My company. Invite a team with roles and shared credits.'
+  }
+];
+
 // API Base URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 // Password strength checker
 const checkPasswordStrength = (password) => {
@@ -109,6 +132,9 @@ function RegisterContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading]);
+
+  const [accountType, setAccountType] = useState(ACCOUNT_TYPES.INDIVIDUAL);
+  const isEnterpriseSignup = role === ROLES.OWNER && accountType === ACCOUNT_TYPES.ENTERPRISE;
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -268,6 +294,9 @@ function RegisterContent() {
         password: formData.password,
         confirmPassword: formData.confirmPassword,
         role,
+        // Only a business account can be an enterprise; the backend ignores
+        // this for experts either way.
+        accountType: isEnterpriseSignup ? ACCOUNT_TYPES.ENTERPRISE : ACCOUNT_TYPES.INDIVIDUAL,
         company: formData.company.trim() || undefined,
         phone: formData.phone.trim()
       });
@@ -407,6 +436,44 @@ function RegisterContent() {
                 Expert
               </button>
             </div>
+
+            {/* Account type — business accounts only */}
+            {role === ROLES.OWNER && (
+              <div className="mt-5">
+                <p className="text-sm font-medium text-gray-600 mb-2">How will you use Karya-AI?</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {ACCOUNT_TYPE_OPTIONS.map((option) => {
+                    const OptionIcon = option.icon;
+                    const selected = accountType === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => setAccountType(option.id)}
+                        disabled={isLoading}
+                        aria-pressed={selected}
+                        className={`text-left p-4 rounded-xl border transition-all cursor-pointer disabled:opacity-50 ${
+                          selected
+                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/30'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <OptionIcon className={`w-4 h-4 ${selected ? 'text-blue-600' : 'text-gray-500'}`} />
+                          <span className="text-sm font-bold text-gray-900">{option.title}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 leading-snug">{option.description}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+                {isEnterpriseSignup && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    You&apos;ll be the admin of your company&apos;s workspace and can invite managers and employees after signing up.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
         {/* Register Form */}
@@ -711,6 +778,9 @@ function RegisterContent() {
             </button>
 
           </form>
+
+          {/* Sign in with Google / LinkedIn — creates the account on first use */}
+          <SocialAuthButtons role={role} disabled={isLoading} />
 
           {/* Sign In Link */}
           <div className="mt-6 text-center">

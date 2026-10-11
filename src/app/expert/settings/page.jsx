@@ -5,7 +5,7 @@ import { User, Lock, Bell, CreditCard, Save, Loader2, CheckCircle, AlertCircle, 
 import { useAuth } from '@/contexts/AuthContext';
 import ExpertPageWrapper from '@/components/expert/ExpertPageWrapper';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 const TABS = [
   { id: 'profile',       label: 'Profile',        icon: User },
   { id: 'password',      label: 'Password',        icon: Lock },

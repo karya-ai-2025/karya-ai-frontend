@@ -1,7 +1,7 @@
 // services/marketplaceApi.js
 // API service for expert marketplace (public routes)
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 // Generic API call function
 const apiCall = async (endpoint, options = {}) => {

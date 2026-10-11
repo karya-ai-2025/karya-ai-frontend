@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 
 // Constants
 const ROLES = {
@@ -367,6 +368,9 @@ function Login() {
             </button>
 
           </form>
+
+          {/* Sign in with Google / LinkedIn — creates the account on first use */}
+          <SocialAuthButtons role={role} disabled={isLoading} />
 
           {/* Sign Up Link */}
           <div className="mt-6 text-center">

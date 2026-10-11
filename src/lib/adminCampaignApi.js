@@ -3,7 +3,7 @@
 // Every call is admin-authenticated server-side. The campaign that comes back
 // belongs to the CUSTOMER — the admin is only the author of record.
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 function authHeaders(json = false) {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;

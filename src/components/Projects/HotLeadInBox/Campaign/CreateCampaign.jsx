@@ -60,7 +60,7 @@ const scrollbarStyles = `
 
 export default function CreateCampaign({ onCampaignCreated, onCancel, onCollapseSidebar, initialTemplate, initialName }) {
   const { getAuthHeader } = useAuth();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
   // AI flow: the email was already drafted & the name collected in the assistant,
   // so we land on "Select Leads" (step 2) and skip the "Email Template" step (step 3).

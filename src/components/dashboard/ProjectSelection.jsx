@@ -7,7 +7,7 @@ import { PURCHASES_ENABLED, PURCHASES_DISABLED_MESSAGE } from '@/lib/purchases';
 import { ChevronRight, Clock, Star, Tag, Crown } from 'lucide-react';
 import { checkUserPlanAccess } from '@/services/planService';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 export default function ProjectSelection() {
   const [projects, setProjects] = useState([]);

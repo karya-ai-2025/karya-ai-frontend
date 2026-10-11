@@ -18,8 +18,12 @@ import {
   Search,
   Eye,
   Copy,
-  X
+  X,
+  Send,
+  ThumbsUp,
+  ThumbsDown
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Enhanced scrollbar styles for the campaigns table
 const scrollbarStyles = `
@@ -67,6 +71,9 @@ export default function CampaignDashboard({
   onRefresh,
   onCollapseSidebar
 }) {
+  // Enterprise roles. For an individual account `can` is always true, so
+  // nothing below changes for them.
+  const { user, can } = useAuth();
   const [campaigns, setCampaigns] = useState([]);
   const [filteredCampaigns, setFilteredCampaigns] = useState([]);
   const [campaignsLoading, setCampaignsLoading] = useState(true);
@@ -96,7 +103,7 @@ export default function CampaignDashboard({
   const fetchCampaigns = async () => {
     try {
       setCampaignsLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/campaigns?limit=50`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/campaigns?limit=50`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -151,7 +158,7 @@ export default function CampaignDashboard({
       setActionLoading({ ...actionLoading, [campaignId]: 'starting' });
       setCreditError(null);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/campaigns/${campaignId}/start`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/campaigns/${campaignId}/start`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -182,11 +189,56 @@ export default function CampaignDashboard({
     }
   };
 
+  // Enterprise approval loop: an employee submits, a manager or admin decides.
+  // action is 'submit' | 'approve' | 'reject'.
+  const handleApprovalAction = async (campaignId, action) => {
+    let note;
+    if (action === 'reject') {
+      note = prompt('What should be changed before this campaign can go out? (optional)');
+      if (note === null) return; // cancelled
+    }
+
+    try {
+      setActionLoading({ ...actionLoading, [campaignId]: action });
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/campaigns/${campaignId}/${action}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(note ? { note } : {})
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        fetchCampaigns();
+        onRefresh();
+      } else {
+        alert(data.message || 'Could not update the campaign approval');
+      }
+    } catch (error) {
+      console.error('Error updating campaign approval:', error);
+      alert('Could not update the campaign approval. Please try again.');
+    } finally {
+      setActionLoading({ ...actionLoading, [campaignId]: null });
+    }
+  };
+
+  // Who may press Start: anyone whose role allows it, or the campaign's own
+  // creator once it has been approved. Mirrors the backend's rule.
+  const canStartCampaign = (campaign) => {
+    if (can('campaign.start')) return true;
+    const isCreator = String(campaign.userId) === String(user?._id || user?.id);
+    return campaign.approval?.status === 'approved' && isCreator;
+  };
+
   const handlePauseCampaign = async (campaignId) => {
     try {
       setActionLoading({ ...actionLoading, [campaignId]: 'pausing' });
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/campaigns/${campaignId}/pause`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/campaigns/${campaignId}/pause`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -218,7 +270,7 @@ export default function CampaignDashboard({
     try {
       setActionLoading({ ...actionLoading, [campaignId]: 'deleting' });
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/campaigns/${campaignId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/campaigns/${campaignId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -279,7 +331,7 @@ export default function CampaignDashboard({
       setActionLoading({ ...actionLoading, [campaign._id]: 'copying' });
       setCopyModal((prev) => ({ ...prev, error: '' }));
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/campaigns/${campaign._id}/duplicate`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/campaigns/${campaign._id}/duplicate`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -333,6 +385,26 @@ export default function CampaignDashboard({
     );
   };
 
+  // Approval badge — only ever shown for enterprise campaigns in the loop.
+  const ApprovalBadge = ({ approval }) => {
+    const approvalConfig = {
+      pending: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Awaiting approval' },
+      approved: { bg: 'bg-green-100', text: 'text-green-800', label: 'Approved' },
+      rejected: { bg: 'bg-red-100', text: 'text-red-800', label: 'Changes requested' }
+    };
+    const config = approvalConfig[approval?.status];
+    if (!config) return null;
+
+    return (
+      <span
+        className={`mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text}`}
+        title={approval.note || undefined}
+      >
+        {config.label}
+      </span>
+    );
+  };
+
   // Campaign row component
   const CampaignRow = ({ campaign }) => (
     <tr key={campaign._id} className="hover:bg-gray-50 border-b border-gray-200">
@@ -351,7 +423,10 @@ export default function CampaignDashboard({
       </td>
 
       <td className="px-4 py-4 min-w-24">
-        <StatusBadge status={campaign.status} />
+        <div className="flex flex-col items-start">
+          <StatusBadge status={campaign.status} />
+          <ApprovalBadge approval={campaign.approval} />
+        </div>
       </td>
 
       <td className="px-4 py-4 text-sm text-gray-900 min-w-20">
@@ -404,8 +479,53 @@ export default function CampaignDashboard({
             </button>
           )}
 
-          {/* Start/Pause */}
-          {campaign.status === 'draft' || campaign.status === 'paused' ? (
+          {/* Approve / send back — managers and admins, on a submitted campaign */}
+          {campaign.approval?.status === 'pending' && can('campaign.approve') && (
+            <>
+              <button
+                onClick={() => handleApprovalAction(campaign._id, 'approve')}
+                disabled={actionLoading[campaign._id]}
+                className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Approve Campaign"
+              >
+                {actionLoading[campaign._id] === 'approve' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ThumbsUp className="w-4 h-4" />
+                )}
+              </button>
+              <button
+                onClick={() => handleApprovalAction(campaign._id, 'reject')}
+                disabled={actionLoading[campaign._id]}
+                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Request Changes"
+              >
+                {actionLoading[campaign._id] === 'reject' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ThumbsDown className="w-4 h-4" />
+                )}
+              </button>
+            </>
+          )}
+
+          {/* Start/Pause — or, for someone whose role cannot start, Submit for approval */}
+          {(campaign.status === 'draft' || campaign.status === 'paused') && !canStartCampaign(campaign) ? (
+            campaign.approval?.status !== 'pending' && can('campaign.submitForApproval') ? (
+              <button
+                onClick={() => handleApprovalAction(campaign._id, 'submit')}
+                disabled={actionLoading[campaign._id]}
+                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Submit for Approval"
+              >
+                {actionLoading[campaign._id] === 'submit' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </button>
+            ) : null
+          ) : campaign.status === 'draft' || campaign.status === 'paused' ? (
             <button
               onClick={() => handleStartCampaign(campaign._id)}
               disabled={actionLoading[campaign._id]}

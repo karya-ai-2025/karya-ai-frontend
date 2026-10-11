@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { HelpCircle, MessageSquare, Phone, Mail, Upload, Bell, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 const authHeaders = () => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   return token ? { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } : { 'Content-Type': 'application/json' };

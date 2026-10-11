@@ -44,7 +44,7 @@ const scrollbarStyles = `
 
 export default function EditCampaign({ campaign, onCampaignUpdated, onCancel, onCollapseSidebar }) {
   const { getAuthHeader } = useAuth();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
   const [activeSection, setActiveSection] = useState('info');
   const [loading, setLoading] = useState(false);

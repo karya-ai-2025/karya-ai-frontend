@@ -187,7 +187,7 @@ function LeadSearch({ customer, onAdd }) {
       <AdditionalFilters
         value={filters}
         onChange={setFilters}
-        apiBaseUrl={process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}
+        apiBaseUrl={process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}
         authHeader={{ Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') : ''}` }}
       />
 

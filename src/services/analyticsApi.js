@@ -2,7 +2,7 @@
 // Posts page views + events to the backend analytics ingestion endpoints.
 // Attribution: sends the auth token (if present) and a per-tab session id.
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 // One session id per browser tab (survives route changes, resets on tab close).
 const getSessionId = () => {

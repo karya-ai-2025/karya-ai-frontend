@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Loader2, ShieldCheck, RotateCw, AlertTriangle } from 'lucide-react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN = 60; // must match otpResendWaitSeconds() on the server
 

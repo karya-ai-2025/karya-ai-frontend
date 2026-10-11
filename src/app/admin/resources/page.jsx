@@ -7,7 +7,7 @@ import {
   Zap, BarChart3, Globe, CheckCircle, AlertCircle, Loader2, Edit3
 } from 'lucide-react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 const TYPE_OPTIONS = [
   { value: 'guide',      label: 'Guide',       icon: BookOpen  },

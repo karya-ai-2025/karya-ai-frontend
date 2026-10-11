@@ -7,7 +7,7 @@
 
 import React from 'react';
 
-export const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+export const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 export const initialDashboardState = {
   loading: true,

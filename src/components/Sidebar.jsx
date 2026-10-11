@@ -22,7 +22,9 @@ import {
   PlusCircle,
   ClipboardList,
   Lock,
+  UsersRound,
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const navigationItems = [
   { id: 'home', label: 'Home', icon: Home, href: '/business-dashboard' },
@@ -51,6 +53,9 @@ const knowledgeSection = [
 const additionalSection = [
   { id: 'settings', label: 'Settings', icon: Settings, href: '/settings' },
 ];
+
+// Enterprise accounts only — an individual account has no team to manage.
+const teamMembersItem = { id: 'team', label: 'Team Members', icon: UsersRound, href: '/business-dashboard/team' };
 
 const NavItem = ({ item, section = 'main', isActive, onClick, sidebarCollapsed }) => {
   const Icon = item.icon;
@@ -98,6 +103,8 @@ const SectionHeader = ({ title, sidebarCollapsed }) => {
 
 export default function Sidebar({ sidebarCollapsed, setSidebarCollapsed, activeItem, setActiveItem }) {
   const router = useRouter();
+  const { isEnterprise } = useAuth();
+  const teamItems = isEnterprise ? [...teamSection, teamMembersItem] : teamSection;
   // The AI agent is not live yet. Clicking Karya AI says so in place, matching
   // the homepage's wording, rather than routing to a page that isn't ready.
   const [showAgentNotice, setShowAgentNotice] = useState(false);
@@ -170,7 +177,7 @@ export default function Sidebar({ sidebarCollapsed, setSidebarCollapsed, activeI
         <div className="pt-3">
           <SectionHeader title="Team" sidebarCollapsed={sidebarCollapsed} />
           <div className="space-y-0.5">
-            {teamSection.map((item) => (
+            {teamItems.map((item) => (
               <NavItem
                 key={item.id}
                 item={item}
