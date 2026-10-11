@@ -191,7 +191,7 @@ export default function ScheduledCallsPage() {
                       </div>
                     ) : (
                       <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-4 text-sm text-gray-400">
-                        No Meet link (booked in mock mode)
+                        No joining link recorded for this booking
                       </div>
                     )}
 

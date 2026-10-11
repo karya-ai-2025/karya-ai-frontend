@@ -4,27 +4,9 @@ function getToken() {
   return typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 }
 
-/**
- * Books a 30-minute onboarding call.
- * @param {{ dateTime: string, timezone: string, source: string }} params
- *   dateTime — ISO 8601 string, e.g. "2026-05-10T09:00:00"
- *   timezone — IANA timezone, e.g. "Asia/Kolkata"
- *   source   — "onboarding-owner" | "onboarding-expert"
- */
-export async function bookCall({ dateTime, timezone, source }) {
-  const token = getToken();
-  const res = await fetch(`${API_URL}/scheduling/book`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify({ dateTime, timezone, source }),
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.message || 'Failed to book call');
-  return json; // { success, data: { scheduledCall, meetLink, isMock } }
-}
+// Calls are booked on Cal.com (see components/scheduling/CalBooking.jsx), which
+// reports each booking to the backend through a webhook. Nothing is booked
+// from here — this only reads the result.
 
 /**
  * Returns the current user's latest scheduled call, or null if none.

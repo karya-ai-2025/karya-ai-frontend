@@ -1,10 +1,10 @@
 'use client';
 // pages/WelcomeOnboard.jsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { bookCall, getMyCall } from '@/lib/schedulingApi';
+import CalBooking from '@/components/scheduling/CalBooking';
 import { trackEvent } from '@/services/analyticsApi';
 import {
   Play,
@@ -12,11 +12,7 @@ import {
   CheckCircle,
   Calendar,
   FileEdit,
-  Clock,
   Video,
-  X,
-  Loader2,
-  Mail,
 } from 'lucide-react';
 
 function WelcomeOnboard() {
@@ -24,71 +20,9 @@ function WelcomeOnboard() {
   const { activeRole } = useAuth();
   const [showOptions, setShowOptions] = useState(false);
   const [showScheduler, setShowScheduler] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [bookingLoading, setBookingLoading] = useState(false);
-  const [bookingError, setBookingError] = useState('');
-  const [bookedCall, setBookedCall] = useState(null);
-  const [canJoin, setCanJoin] = useState(false);
-  const [joinCountdown, setJoinCountdown] = useState('');
-  const [checkingExisting, setCheckingExisting] = useState(false);
-  const [existingCall, setExistingCall] = useState(null);
 
   const getDashboardPath = () =>
     activeRole === 'expert' ? '/expert-dashboard' : '/business-dashboard';
-
-  // Unlock join button 5 minutes before the meeting
-  useEffect(() => {
-    if (!bookedCall) return;
-    const meetingTime = new Date(bookedCall.dateTime).getTime();
-    const updateJoin = () => {
-      const diff = meetingTime - Date.now() - 5 * 60 * 1000; // ms until 5-min mark
-      if (diff <= 0) {
-        setCanJoin(true);
-        setJoinCountdown('');
-      } else {
-        setCanJoin(false);
-        const totalMins = Math.ceil(diff / 60000);
-        const hrs  = Math.floor(totalMins / 60);
-        const mins = totalMins % 60;
-        setJoinCountdown(hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`);
-      }
-    };
-    updateJoin();
-    const id = setInterval(updateJoin, 30000);
-    return () => clearInterval(id);
-  }, [bookedCall]);
-
-  // Generate time slots 9:00 AM → 11:30 PM → 12:00 AM
-  const timeSlots = (() => {
-    const slots = [];
-    for (let h = 9; h < 24; h++) {
-      for (let m = 0; m < 60; m += 30) {
-        const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-        const period = h < 12 ? 'AM' : 'PM';
-        slots.push(`${hour12}:${String(m).padStart(2, '0')} ${period}`);
-      }
-    }
-    slots.push('12:00 AM');
-    return slots;
-  })();
-
-  // Disable a time slot if it's in the past for the selected (or given) date
-  const isTimeSlotDisabled = (timeStr, overrideDateStr) => {
-    const dateStr = overrideDateStr !== undefined ? overrideDateStr : selectedDate;
-    if (!dateStr) return false;
-    const [time, period] = timeStr.split(' ');
-    let [hours, minutes] = time.split(':').map(Number);
-    if (period === 'PM' && hours !== 12) hours += 12;
-    if (period === 'AM' && hours === 12) hours = 0;
-    const [y, mo, d] = dateStr.split('-').map(Number);
-    // 12:00 AM means midnight of the NEXT day
-    const slotDate = hours === 0 && minutes === 0
-      ? new Date(y, mo - 1, d + 1, 0, 0, 0)
-      : new Date(y, mo - 1, d, hours, minutes, 0);
-    return slotDate <= new Date();
-  };
 
   const handleSkip = () => {
     router.replace(getDashboardPath());
@@ -103,118 +37,10 @@ function WelcomeOnboard() {
     router.replace('/onboarding-owner/platform-usage');
   };
 
-  const handleScheduleCall = async () => {
+  const handleScheduleCall = () => {
     trackEvent('ONBOARDING_STARTED', { role: 'owner', method: 'schedule' });
-    setCheckingExisting(true);
-    setExistingCall(null);
-    try {
-      const result = await getMyCall();
-      if (result.data && result.data.status === 'scheduled') {
-        setExistingCall(result.data);
-      }
-    } catch (_) {
-      // ignore — let user proceed to booking
-    } finally {
-      setCheckingExisting(false);
-      setShowScheduler(true);
-    }
+    setShowScheduler(true);
   };
-
-  // Converts "9:00 AM" + "2026-05-10" → ISO string
-  const toISODateTime = (dateStr, timeStr) => {
-    const [time, period] = timeStr.split(' ');
-    let [hours, minutes] = time.split(':').map(Number);
-    if (period === 'PM' && hours !== 12) hours += 12;
-    if (period === 'AM' && hours === 12) hours = 0;
-    return `${dateStr}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
-  };
-
-  const handleConfirmSchedule = async () => {
-    if (!selectedDate || !selectedTime) return;
-    setBookingError('');
-    setBookingLoading(true);
-    try {
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const dateTime = toISODateTime(selectedDate, selectedTime);
-      const result = await bookCall({ dateTime, timezone, source: 'onboarding-owner' });
-      setBookedCall({
-        dateTime,
-        meetLink: result.data.meetLink,
-        isMock: result.data.isMock,
-      });
-    } catch (err) {
-      setBookingError(err.message || 'Something went wrong. Please try again.');
-    } finally {
-      setBookingLoading(false);
-    }
-  };
-
-  // Calendar functions
-  const getDaysInMonth = (date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-
-    return { daysInMonth, startingDayOfWeek };
-  };
-
-  const generateCalendarDays = () => {
-    const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
-    const days = [];
-
-    // Add empty cells for days before month starts
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push(null);
-    }
-
-    // Add days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      days.push(day);
-    }
-
-    return days;
-  };
-
-  const isDateDisabled = (day) => {
-    if (!day) return true;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const selectedDateObj = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      day
-    );
-
-    // Disable past dates
-    return selectedDateObj < today;
-  };
-
-  const formatSelectedDate = (day) => {
-    const year = currentMonth.getFullYear();
-    const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
-    const dayStr = String(day).padStart(2, '0');
-    return `${year}-${month}-${dayStr}`;
-  };
-
-  const changeMonth = (direction) => {
-    const newMonth = new Date(currentMonth);
-    newMonth.setMonth(currentMonth.getMonth() + direction);
-    setCurrentMonth(newMonth);
-  };
-
-  const getMonthYearString = () => {
-    return currentMonth.toLocaleDateString('en-US', {
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
-  // timeSlots and isTimeSlotDisabled are defined above with the useEffect
 
   const priorityItems = [
     {
@@ -385,9 +211,7 @@ function WelcomeOnboard() {
                   </li>
                 </ul>
                 <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg text-white font-semibold flex items-center justify-center gap-2 group-hover:from-blue-700 group-hover:to-orange-600 transition-all">
-                  {checkingExisting
-                    ? <><Loader2 className="w-5 h-5 animate-spin" /> Checking...</>
-                    : <>Schedule Now <Calendar className="w-5 h-5" /></>}
+                  Schedule Now <Calendar className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -403,237 +227,13 @@ function WelcomeOnboard() {
           </div>
         )}
 
-        {/* Scheduler Modal */}
+        {/* Call booking (Cal.com) */}
         {showScheduler && (
-          <div className="bg-white border border-gray-200 shadow-lg rounded-2xl p-8 max-w-4xl mx-auto">
-
-            {existingCall ? (
-              <div className="text-center py-8">
-                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Calendar className="w-10 h-10 text-blue-500" />
-                </div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Meeting Already Scheduled</h2>
-                <p className="text-gray-500 mb-2">
-                  {new Date(existingCall.dateTime).toLocaleDateString('en-IN', {
-                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-                  })}
-                </p>
-                <p className="text-gray-500 mb-6">
-                  at {new Date(existingCall.dateTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                </p>
-                <p className="text-sm text-gray-400 mb-8">
-                  You can only book one call at a time. Complete your current meeting first.
-                </p>
-                <button
-                  onClick={() => router.replace(getDashboardPath())}
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:opacity-90 rounded-xl text-white font-semibold transition flex items-center gap-2 mx-auto"
-                >
-                  Go to Dashboard <ArrowRight className="w-5 h-5" />
-                </button>
-              </div>
-            ) : bookedCall ? (
-              <div className="text-center py-8">
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle className="w-10 h-10 text-green-500" />
-                </div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Call Confirmed!</h2>
-                <p className="text-gray-500 mb-6">
-                  {new Date(bookedCall.dateTime).toLocaleDateString('en-IN', {
-                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-                  })}{' '}
-                  at {selectedTime}
-                </p>
-
-                {bookedCall.meetLink ? (
-                  canJoin ? (
-                    <a
-                      href={bookedCall.meetLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-orange-500 text-white font-semibold rounded-xl hover:opacity-90 transition mb-6"
-                    >
-                      <Video className="w-5 h-5" />
-                      Join Google Meet
-                    </a>
-                  ) : (
-                    <div className="inline-flex items-center gap-2 px-5 py-3 bg-gray-100 border border-gray-200 text-gray-500 rounded-xl mb-6 text-sm font-medium cursor-not-allowed select-none">
-                      <Clock className="w-4 h-4" />
-                      Join link opens {joinCountdown ? `in ${joinCountdown}` : 'soon'} (5 min before meeting)
-                    </div>
-                  )
-                ) : (
-                  <div className="inline-flex items-center gap-2 px-5 py-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl mb-6 text-sm font-medium">
-                    <Clock className="w-4 h-4" />
-                    Meet link will be shared once our team confirms the slot
-                  </div>
-                )}
-
-                <div className="flex items-center justify-center gap-2 text-sm text-gray-400 mb-8">
-                  <Mail className="w-4 h-4" />
-                  A confirmation email has been sent to your registered email address
-                </div>
-
-                <button
-                  onClick={() => router.replace(getDashboardPath())}
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:opacity-90 rounded-xl text-white font-semibold transition flex items-center gap-2 mx-auto"
-                >
-                  Go to Dashboard
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              </div>
-            ) : (
-              <>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-bold text-gray-900">Schedule Your Onboarding Call</h2>
-              <button
-                onClick={() => setShowScheduler(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-all"
-              >
-                <X className="w-6 h-6 text-gray-900" />
-              </button>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Date Picker */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Date</h3>
-                <div className="bg-white rounded-xl p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="font-semibold text-gray-800">{getMonthYearString()}</span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => changeMonth(-1)}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-all"
-                      >
-                        ‹
-                      </button>
-                      <button
-                        onClick={() => changeMonth(1)}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-all"
-                      >
-                        ›
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-7 gap-2">
-                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                      <div key={i} className="text-center text-xs font-medium text-gray-600 py-2">
-                        {day}
-                      </div>
-                    ))}
-                    {generateCalendarDays().map((day, index) => {
-                      const dateString = day ? formatSelectedDate(day) : null;
-                      const isDisabled = isDateDisabled(day);
-                      const isSelected = dateString === selectedDate;
-
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => {
-                          if (!isDisabled && day) {
-                            setSelectedDate(dateString);
-                            if (selectedTime && isTimeSlotDisabled(selectedTime, dateString)) {
-                              setSelectedTime('');
-                            }
-                          }
-                        }}
-                          disabled={isDisabled}
-                          className={`text-center py-2 text-sm rounded transition-all ${
-                            !day
-                              ? 'invisible'
-                              : isDisabled
-                              ? 'text-gray-300 cursor-not-allowed'
-                              : isSelected
-                              ? 'bg-blue-500 text-white font-bold'
-                              : 'text-gray-700 hover:bg-blue-100 cursor-pointer'
-                          }`}
-                        >
-                          {day || ''}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Time Picker */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Time</h3>
-                <div className="bg-white rounded-xl p-6 max-h-96 overflow-y-auto">
-                  <div className="grid grid-cols-2 gap-3">
-                    {timeSlots.map((time) => {
-                      const disabled = isTimeSlotDisabled(time);
-                      return (
-                        <button
-                          key={time}
-                          onClick={() => !disabled && setSelectedTime(time)}
-                          disabled={disabled}
-                          className={`py-3 px-4 rounded-lg text-sm font-medium transition-all ${
-                            disabled
-                              ? 'bg-gray-50 text-gray-300 cursor-not-allowed'
-                              : selectedTime === time
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
-                          }`}
-                        >
-                          {time}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Selected DateTime Display */}
-            {selectedDate && selectedTime && (
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-300 rounded-lg">
-                <div className="flex items-center gap-3 text-gray-900">
-                  <Clock className="w-5 h-5" />
-                  <span className="font-medium">
-                    Scheduled for: {new Date(selectedDate).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })} at {selectedTime}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Error */}
-            {bookingError && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
-                {bookingError}
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-4 mt-8">
-              <button
-                onClick={() => setShowScheduler(false)}
-                disabled={bookingLoading}
-                className="flex-1 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold hover:bg-gray-50 transition-all disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmSchedule}
-                disabled={!selectedDate || !selectedTime || bookingLoading}
-                className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-lg text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {bookingLoading ? (
-                  <><Loader2 className="w-5 h-5 animate-spin" /> Booking...</>
-                ) : (
-                  <><CheckCircle className="w-5 h-5" /> Confirm Schedule</>
-                )}
-              </button>
-            </div>
-            </>
-            )}
-          </div>
+          <CalBooking
+            onClose={() => setShowScheduler(false)}
+            onDone={() => router.replace(getDashboardPath())}
+            onBooked={() => trackEvent('ONBOARDING_CALL_BOOKED', { role: 'owner' })}
+          />
         )}
 
         {/* Bottom Actions - Only show on initial view */}
