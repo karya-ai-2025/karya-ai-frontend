@@ -5,12 +5,36 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, ArrowLeft, Upload, Plus, Trash2, ExternalLink, Check, FileText, AlertCircle, Loader2 } from 'lucide-react';
 import { updatePortfolio, getExpertOnboardingStatus, skipStep } from '@/services/expertonboardingApi';
+import { trackEvent } from '@/services/analyticsApi';
 
 function ExpertPortfolio() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState('');
+
+  const PROJECT_TYPE_OPTIONS = [
+    { value: '', label: 'Select project type...' },
+    { value: 'Social Media Marketing', label: 'Social Media Campaign' },
+    { value: 'Content Marketing',      label: 'Content Marketing' },
+    { value: 'Email Marketing',        label: 'Email Marketing' },
+    { value: 'SEO',                    label: 'SEO & Traffic Growth' },
+    { value: 'PPC & Paid Ads',         label: 'Paid Advertising' },
+    { value: 'Branding',               label: 'Brand & Design' },
+    { value: 'Digital Marketing',      label: 'Digital Marketing' },
+    { value: 'Marketing Strategy',     label: 'Marketing Strategy' },
+    { value: 'Growth Hacking',         label: 'Growth Hacking' },
+    { value: 'Analytics & Data',       label: 'Analytics & Data' },
+    { value: 'PR & Communications',    label: 'PR & Communications' },
+    { value: 'Influencer Marketing',   label: 'Influencer Marketing' },
+    { value: 'Video Marketing',        label: 'Video Marketing' },
+    { value: 'UX/UI Design',           label: 'UX / UI Design' },
+    { value: 'Web Development',        label: 'Web Development' },
+    { value: 'Copywriting',            label: 'Copywriting' },
+    { value: 'Graphic Design',         label: 'Graphic Design' },
+    { value: 'E-commerce Marketing',   label: 'E-commerce Marketing' },
+    { value: 'Other',                  label: 'Other' },
+  ];
 
   const [caseStudies, setCaseStudies] = useState([
     {
@@ -19,6 +43,7 @@ function ExpertPortfolio() {
       client: '',
       description: '',
       results: '',
+      projectType: '',
       link: '',
       attachments: []
     }
@@ -55,6 +80,7 @@ function ExpertPortfolio() {
               client: p.client || '',
               description: p.description || '',
               results: p.results || '',
+              projectType: p.category || '',
               link: p.link || '',
               attachments: p.attachments || []
             }));
@@ -105,6 +131,7 @@ function ExpertPortfolio() {
       client: '',
       description: '',
       results: '',
+      projectType: '',
       link: '',
       attachments: []
     }]);
@@ -128,15 +155,16 @@ function ExpertPortfolio() {
     try {
       setIsLoading(true);
       await skipStep(4);
-      router.push('/expert-landing');
+      router.push('/expert-dashboard');
     } catch (err) {
-      router.push('/expert-landing');
+      router.push('/expert-dashboard');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleComplete = async () => {
+    trackEvent('ONBOARDING_COMPLETED', { role: 'expert' });
     setIsLoading(true);
     setError('');
 
@@ -146,12 +174,13 @@ function ExpertPortfolio() {
 
       await updatePortfolio({
         caseStudies: validCaseStudies.map(cs => ({
-          title: cs.title.trim(),
-          client: cs.client.trim(),
+          title:       cs.title.trim(),
+          client:      cs.client.trim(),
           description: cs.description.trim(),
-          results: cs.results.trim(),
-          link: cs.link.trim(),
-          attachments: cs.attachments
+          results:     cs.results.trim(),
+          projectType: cs.projectType || '',
+          link:        cs.link.trim(),
+          attachments: cs.attachments,
         })),
         links: {
           website: portfolioLinks.website.trim(),
@@ -162,7 +191,7 @@ function ExpertPortfolio() {
       });
 
       // Navigate to dashboard
-      router.push('/expert-landing');
+      router.push('/expert-dashboard');
     } catch (err) {
       setError(err.message || 'Failed to save portfolio. Please try again.');
     } finally {
@@ -378,6 +407,23 @@ function ExpertPortfolio() {
                         disabled={isLoading}
                         className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all resize-none disabled:opacity-50"
                       />
+                    </div>
+
+                    {/* Project Type */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-2">
+                        Project Type <span className="text-xs text-gray-400">(Helps match you to marketplace projects)</span>
+                      </label>
+                      <select
+                        value={caseStudy.projectType}
+                        onChange={(e) => handleCaseStudyChange(caseStudy.id, 'projectType', e.target.value)}
+                        disabled={isLoading}
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50"
+                      >
+                        {PROJECT_TYPE_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
                     </div>
 
                     {/* Project Link */}

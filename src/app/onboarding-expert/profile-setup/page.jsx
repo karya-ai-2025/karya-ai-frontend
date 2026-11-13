@@ -90,10 +90,19 @@ function ExpertProfileSetup() {
     }
   };
 
+  const BIO_WORD_LIMIT = 300;
+  const countWords = (text) => (text.trim() ? text.trim().split(/\s+/).length : 0);
+  const bioWords = countWords(formData.bio);
+
   const handleChange = (e) => {
+    let { name, value } = e.target;
+    // Hard cap the bio at 300 words — extra words are trimmed off
+    if (name === 'bio' && countWords(value) > BIO_WORD_LIMIT) {
+      value = value.trim().split(/\s+/).slice(0, BIO_WORD_LIMIT).join(' ');
+    }
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
     setError('');
   };
@@ -126,10 +135,10 @@ function ExpertProfileSetup() {
       await updateProfileSetup({
         avatar: photoPreview || undefined,
         fullName: formData.fullName.trim(),
-        title: formData.title.trim(),
+        headline: formData.title.trim(),
         bio: formData.bio.trim(),
         communicationStyle: formData.communicationStyle || undefined,
-        workExperience: formData.workExperience || undefined,
+        yearsOfExperience: formData.workExperience || undefined,
         location: formData.location.trim() || undefined
       });
       router.push('/onboarding-expert/skills');
@@ -141,7 +150,7 @@ function ExpertProfileSetup() {
   };
 
   const handleBack = () => {
-    router.push('/');
+    router.push('/onboarding-expert/welcome');
   };
 
   const communicationStyles = ['Warm', 'Professional', 'Friendly', 'Direct'];
@@ -309,9 +318,14 @@ function ExpertProfileSetup() {
                   }`}
                   placeholder="Tell businesses about your expertise, experience, and what makes you unique..."
                 />
-                {touched.bio && errors.bio && (
-                  <p className="mt-1 text-xs text-red-500">{errors.bio}</p>
-                )}
+                <div className="mt-1 flex items-center justify-between">
+                  {touched.bio && errors.bio
+                    ? <p className="text-xs text-red-500">{errors.bio}</p>
+                    : <span />}
+                  <p className={`text-xs ${bioWords >= BIO_WORD_LIMIT ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+                    {bioWords}/{BIO_WORD_LIMIT} words{bioWords >= BIO_WORD_LIMIT ? ' — limit reached' : ''}
+                  </p>
+                </div>
               </div>
 
               {/* Communication Style */}

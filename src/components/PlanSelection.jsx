@@ -11,14 +11,19 @@ import {
   AlertCircle,
   Zap,
   CreditCard,
-  X,
   Shield,
   Calendar,
   Target,
   Package
 } from 'lucide-react';
-import { getPlans, getPackagesByPlan, upgradePlan } from '@/services/planService';
+import { getPlans, getPackagesByPlan, simpleUpgrade, checkUserPlanAccess } from '@/services/planService';
+import { PURCHASES_ENABLED, PURCHASES_DISABLED_MESSAGE } from '@/lib/purchases';
 import { useAuth } from '@/contexts/AuthContext';
+// ⚠️ TEMP TEST BYPASS: Cashfree checkout is disabled until payment credentials are set.
+// The "Choose plan" button below calls simpleUpgrade() (POST /user/simple-upgrade) to grant
+// credits without payment. To restore real payments, re-enable this import and swap the
+// button back to <CashfreePaymentGateway> (see the marked block in the package card).
+// import CashfreePaymentGateway from '@/components/payments/CashfreePaymentGateway';
 
 const PlanSelection = () => {
   const { user } = useAuth();
@@ -30,7 +35,6 @@ const PlanSelection = () => {
   const [error, setError] = useState('');
 
   // Upgrade flow states
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [upgradeSuccess, setUpgradeSuccess] = useState(false);
@@ -82,55 +86,37 @@ const PlanSelection = () => {
     fetchPackages(plan._id);
   };
 
-  const handlePackageSelect = (pkg) => {
-    setSelectedPackage(pkg);
-    setShowUpgradeModal(true);
-  };
-
-  const handleUpgradeConfirm = async () => {
-    if (!user?.token || !selectedPlan || !selectedPackage) {
-      setError('Missing required information for upgrade');
+  // ⚠️ TEMP TEST BYPASS: grant credits without going through Cashfree.
+  // Calls the existing /user/simple-upgrade endpoint, then refreshes the navbar credits.
+  const handleSimpleUpgrade = async (pkg) => {
+    if (!PURCHASES_ENABLED) { setError(PURCHASES_DISABLED_MESSAGE); return; }
+    if (!user || !selectedPlan) {
+      setError('Please login to upgrade your plan');
       return;
     }
-
-    setIsUpgrading(true);
-
     try {
-      const response = await upgradePlan(
-        selectedPlan._id,
-        selectedPackage._id,
-        user.token
-      );
+      setSelectedPackage(pkg);
+      setIsUpgrading(true);
+      setUpgradeSuccess(false);
+      setError('');
 
-      if (response.success) {
-        setUpgradeSuccess(true);
+      const token = localStorage.getItem('token');
+      await simpleUpgrade(selectedPlan._id, pkg._id, token);
 
-        // Trigger plan update event for navbar to refresh
-        window.dispatchEvent(new CustomEvent('planUpdated'));
+      // Refresh the credit balance shown in the navbar/dashboard.
+      try {
+        const access = await checkUserPlanAccess(token);
+        const remaining = access?.data?.limits?.remainingCredits;
+        if (typeof remaining === 'number') {
+          window.dispatchEvent(new CustomEvent('creditsUpdated', { detail: { remainingCredits: remaining } }));
+        }
+      } catch { /* non-fatal — credits still granted server-side */ }
 
-        setTimeout(() => {
-          setShowUpgradeModal(false);
-          setUpgradeSuccess(false);
-          setSelectedPackage(null);
-          // Optionally refresh user data or redirect
-          window.location.reload(); // Simple refresh to update user state
-        }, 3000);
-      } else {
-        setError(response.message || 'Failed to upgrade plan');
-      }
+      setUpgradeSuccess(true);
     } catch (err) {
-      setError('Failed to upgrade plan. Please try again.');
-      console.error('Upgrade error:', err);
+      setError(err.message || 'Failed to upgrade plan. Please try again.');
     } finally {
       setIsUpgrading(false);
-    }
-  };
-
-  const handleModalClose = () => {
-    if (!isUpgrading) {
-      setShowUpgradeModal(false);
-      setSelectedPackage(null);
-      setUpgradeSuccess(false);
     }
   };
 
@@ -189,8 +175,26 @@ const PlanSelection = () => {
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Choose Your Plan</h2>
-        <p className="text-gray-600">You are on free plan right now. Here are available plans for you.</p>
       </div>
+
+      {/* Success Message */}
+      {upgradeSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3">
+          <Check className="h-5 w-5 text-green-600" />
+          <div>
+            <p className="text-green-800 font-medium">Plan upgraded successfully!</p>
+            <p className="text-green-700 text-sm">You now have access to all premium features.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
+          <AlertCircle className="h-5 w-5 text-red-600" />
+          <p className="text-red-800">{error}</p>
+        </div>
+      )}
 
       {/* Plan Type Selection */}
       <div className="bg-white rounded-lg">
@@ -305,7 +309,7 @@ const PlanSelection = () => {
                         <div className="flex items-center space-x-3">
                           <Zap className="h-4 w-4 text-indigo-600" />
                           <span className="text-sm text-gray-700">
-                            {pkg.credits.toLocaleString()} Credits/month
+                            {pkg.credits.toLocaleString()} Credits
                           </span>
                         </div>
                         <div className="flex items-center space-x-3">
@@ -314,27 +318,49 @@ const PlanSelection = () => {
                             {pkg.projectsAvailable} Project{pkg.projectsAvailable > 1 ? 's' : ''}
                           </span>
                         </div>
-                        {pkg.Support && (
+                        {pkg.support && (
                           <div className="flex items-center space-x-3">
                             <Check className="h-4 w-4 text-indigo-600" />
                             <span className="text-sm text-gray-700">
-                              {pkg.Support}
+                              {pkg.support}
                             </span>
                           </div>
                         )}
                       </div>
 
-                      {/* Select Button */}
+                      {/* Select Button — ⚠️ TEMP TEST BYPASS (no payment).
+                          Restore the <CashfreePaymentGateway> block to re-enable real checkout. */}
                       <button
-                        className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2 ${
-                          isPopular
+                        type="button"
+                        onClick={() => handleSimpleUpgrade(pkg)}
+                        disabled={isUpgrading || !selectedPlan || !PURCHASES_ENABLED}
+                        className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors cursor-pointer flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          upgradeSuccess && selectedPackage?._id === pkg._id
+                            ? 'bg-green-600 text-white'
+                            : isUpgrading && selectedPackage?._id === pkg._id
+                            ? 'bg-gray-400 text-white'
+                            : isPopular
                             ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                             : 'bg-gray-900 text-white hover:bg-gray-800'
                         }`}
                       >
-                        <CreditCard className="h-4 w-4" />
-                        <span>Choose {pkg.name}</span>
-                        <ArrowRight className="h-4 w-4" />
+                        {isUpgrading && selectedPackage?._id === pkg._id ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Activating...</span>
+                          </>
+                        ) : upgradeSuccess && selectedPackage?._id === pkg._id ? (
+                          <>
+                            <Check className="h-4 w-4" />
+                            <span>Upgraded!</span>
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="h-4 w-4" />
+                            <span>{PURCHASES_ENABLED ? `Choose ${pkg.name}` : 'Coming soon'}</span>
+                            <ArrowRight className="h-4 w-4" />
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -344,16 +370,6 @@ const PlanSelection = () => {
           )}
         </div>
       )}
-
-      {/* Free Plan Info */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <div className="flex items-center justify-center space-x-2 text-gray-600">
-          <Zap className="h-4 w-4" />
-          <span className="text-sm font-medium">
-            Currently on Free Plan • Upgrade to unlock advanced features and higher limits
-          </span>
-        </div>
-      </div>
     </div>
   );
 };

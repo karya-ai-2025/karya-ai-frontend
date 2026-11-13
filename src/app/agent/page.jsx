@@ -1,0 +1,1716 @@
+'use client';
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
+import NextLink from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import TopNavbar from '@/components/TopNavbar';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import {
+  ArrowUp,
+  Loader2,
+  Plus,
+  MessageSquare,
+  PanelLeftClose,
+  PanelLeft,
+  Trash2,
+  LifeBuoy,
+  Target,
+  CheckCircle2,
+  PencilLine,
+  CalendarDays,
+  BarChart3,
+  Link,
+  ChevronRight,
+  Users,
+  Mail,
+  Send,
+  FileSpreadsheet,
+  UserCheck,
+  Lock,
+  ArrowUpRight,
+} from 'lucide-react';
+import * as conversationApi from '@/services/conversationApi';
+import * as agentApi from '@/services/agentApi';
+import Sidebar from '@/components/Sidebar';
+import LeadsWorkspace from '@/components/LeadsWorkspace';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+
+function KaryaLogo({ size = 28, className = '' }) {
+  return (
+    <Image
+      src="/karya-ai-logo.png"
+      alt="Karya AI"
+      width={size}
+      height={size}
+      className={`rounded-lg object-contain ${className}`}
+    />
+  );
+}
+
+function ChatSidebar({ isOpen, onToggle, conversations, activeId, onSelect, onNew, onDelete, isLoading }) {
+  return (
+    <>
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 z-30 lg:hidden"
+          onClick={onToggle}
+        />
+      )}
+
+      <aside
+        className={`flex flex-col bg-gray-900 text-white transition-all duration-300 shrink-0 ${
+          isOpen ? 'w-80' : 'w-0'
+        } overflow-hidden`}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+          <div className="flex items-center gap-2.5">
+            <KaryaLogo size={28} />
+            <span className="text-sm font-semibold whitespace-nowrap">Karya AI</span>
+          </div>
+          <button
+            onClick={onToggle}
+            className="p-1.5 rounded-lg hover:bg-gray-700 transition-colors"
+            title="Close sidebar"
+          >
+            <PanelLeftClose className="h-4 w-4 text-gray-400" />
+          </button>
+        </div>
+
+        <div className="p-3">
+          <button
+            onClick={onNew}
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-600 hover:bg-gray-800 transition-colors text-sm cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            <span>New Chat</span>
+          </button>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto px-3 space-y-0.5">
+          <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider px-2 pt-2 pb-1">
+            Recent
+          </p>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 text-gray-500 animate-spin" />
+            </div>
+          ) : conversations.length === 0 ? (
+            <p className="text-xs text-gray-500 px-2 py-4 text-center">
+              No conversations yet
+            </p>
+          ) : (
+            conversations.map((conversation) => (
+              <div
+                key={conversation._id}
+                className={`group w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+                  activeId === conversation._id
+                    ? 'bg-gray-700 text-white'
+                    : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+                }`}
+              >
+                <button
+                  onClick={() => onSelect(conversation._id)}
+                  className="flex items-center gap-2.5 flex-1 min-w-0 text-left cursor-pointer"
+                >
+                  <MessageSquare className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{conversation.title}</span>
+                </button>
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onDelete(conversation._id);
+                  }}
+                  className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-gray-600 transition-all shrink-0"
+                  title="Delete conversation"
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-gray-400" />
+                </button>
+              </div>
+            ))
+          )}
+        </nav>
+      </aside>
+    </>
+  );
+}
+
+function SignupPrompt({ agentState, onSignup, isSubmitting }) {
+  const [password, setPassword] = useState('');
+  const identity = agentState?.identity || {};
+  const role = agentState?.userType === 'expert' ? 'expert' : 'owner';
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    onSignup({
+      fullName: identity.name,
+      email: identity.email,
+      phone: identity.phone,
+      role,
+      password
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-3 max-w-sm rounded-lg border border-blue-100 bg-blue-50 p-3">
+      <label className="block text-xs font-medium text-gray-700 mb-1">
+        Create password
+      </label>
+      <input
+        type="password"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        minLength={8}
+        placeholder="Minimum 8 characters"
+        disabled={isSubmitting}
+        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+      />
+      <button
+        type="submit"
+        disabled={isSubmitting || password.length < 8}
+        className="mt-2 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:bg-gray-300"
+      >
+        {isSubmitting ? 'Creating account...' : 'Create account'}
+      </button>
+    </form>
+  );
+}
+
+function ChoicePrompt({ uiRequest, onChoose, disabled }) {
+  if (uiRequest?.type !== 'choice') return null;
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {uiRequest.options?.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onChoose(option.message || option.label)}
+          disabled={disabled}
+          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function GoalConfirmationPrompt({ uiRequest, onChoose, disabled }) {
+  if (uiRequest?.type !== 'goal_confirmation') return null;
+
+  const goal = uiRequest.goal || {};
+
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 rounded-lg bg-blue-50 p-1.5 text-blue-700">
+          <Target className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Goal
+          </p>
+          <p className="mt-1 text-sm font-medium text-gray-900">
+            {goal.description}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
+            {goal.targetMetric && (
+              <span className="rounded-md bg-gray-100 px-2 py-1">
+                {goal.targetMetric}
+              </span>
+            )}
+            {goal.timeframeDays && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1">
+                <CalendarDays className="h-3 w-3" />
+                {goal.timeframeDays} days
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => onChoose('Confirm goal')}
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:bg-gray-300"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Confirm
+        </button>
+        <button
+          type="button"
+          onClick={() => onChoose('Revise goal')}
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+        >
+          <PencilLine className="h-3.5 w-3.5" />
+          Revise
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DiagnosticIntakePrompt({
+  uiRequest,
+  agentState,
+  onRun,
+  onSaveWebsite,
+  disabled,
+  websiteLoading
+}) {
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  if (uiRequest?.type !== 'diagnostic_intake') return null;
+
+  const evidence = agentState?.businessEvidence || {};
+  const websitesCount = evidence.websites?.length || uiRequest.websitesCount || 0;
+  const hasTypedWebsite = Boolean(websiteUrl.trim());
+
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 rounded-lg bg-emerald-50 p-1.5 text-emerald-700">
+          <BarChart3 className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Business review
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
+            <span className="rounded-md bg-gray-100 px-2 py-1">
+              {websitesCount} website{websitesCount === 1 ? '' : 's'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            const trimmedUrl = websiteUrl.trim();
+            if (!trimmedUrl) return;
+            onSaveWebsite(trimmedUrl);
+            setWebsiteUrl('');
+          }}
+          className="flex min-w-full gap-2"
+        >
+          <input
+            type="text"
+            value={websiteUrl}
+            onChange={(event) => setWebsiteUrl(event.target.value)}
+            placeholder="https://company.com"
+            disabled={disabled || websiteLoading}
+            className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+          />
+          <button
+            type="submit"
+            disabled={disabled || websiteLoading || !websiteUrl.trim()}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+          >
+            {websiteLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link className="h-3.5 w-3.5" />}
+            Share website
+          </button>
+        </form>
+        <button
+          type="button"
+          onClick={() => {
+            const trimmedUrl = websiteUrl.trim();
+            if (trimmedUrl) {
+              onSaveWebsite(trimmedUrl);
+              setWebsiteUrl('');
+              return;
+            }
+            onRun('Continue without website');
+          }}
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:bg-gray-300"
+        >
+          <BarChart3 className="h-3.5 w-3.5" />
+          {hasTypedWebsite ? 'Review website first' : 'Continue without website'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function BusinessReviewPrompt({ uiRequest, onChoose, disabled }) {
+  if (uiRequest?.type !== 'business_review') return null;
+
+  const review = uiRequest.businessReview || {};
+  const helpAreas = Array.isArray(review.helpAreas) ? review.helpAreas : [];
+
+  return (
+    <div className="mt-3 max-w-2xl rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 rounded-lg bg-emerald-50 p-1.5 text-emerald-700">
+          <BarChart3 className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Where Karya AI can help
+          </p>
+          {review.summary && (
+            <p className="mt-1 text-sm text-gray-700">
+              {review.summary}
+            </p>
+          )}
+          <div className="mt-3 space-y-2">
+            {helpAreas.map((area, index) => (
+              <div key={`${area.title}-${index}`} className="rounded-lg bg-gray-50 p-2">
+                <p className="text-xs font-semibold text-gray-900">
+                  {index + 1}. {area.title}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-gray-600">
+                  {area.whyItMatters}
+                </p>
+                {area.project && (
+                  <a
+                    href={area.project.marketplaceUrl || `/project-marketplace/${area.project.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-900"
+                  >
+                    Project: {area.project.title}
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => onChoose('Generate Plan')}
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:bg-gray-300"
+        >
+          <BarChart3 className="h-3.5 w-3.5" />
+          Generate Plan
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PlanSummaryPrompt({ uiRequest }) {
+  if (uiRequest?.type !== 'plan_summary') return null;
+
+  const plan = uiRequest.plan || {};
+  const timeline = Array.isArray(plan.timeline) ? plan.timeline : [];
+  const kpis = Array.isArray(plan.kpis) ? plan.kpis : [];
+  const recommendedProjects = Array.isArray(plan.recommendedProjects) ? plan.recommendedProjects : [];
+  const ppt = plan.ppt || null;
+
+  return (
+    <div className="mt-3 max-w-2xl rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 rounded-lg bg-blue-50 p-1.5 text-blue-700">
+          <BarChart3 className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            30-60-90 plan
+          </p>
+          <p className="mt-1 text-sm font-medium text-gray-900">
+            {plan.summary}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-2 md:grid-cols-3">
+        {timeline.map((item) => (
+          <div key={item.phase} className="rounded-lg border border-gray-100 bg-gray-50 p-2">
+            <p className="text-xs font-semibold text-gray-900">{item.phase}</p>
+            <p className="mt-1 text-xs text-gray-600">{item.focus}</p>
+          </div>
+        ))}
+      </div>
+
+      {kpis.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
+          {kpis.map((kpi) => (
+            <span key={`${kpi.name}-${kpi.target}`} className="rounded-md bg-gray-100 px-2 py-1">
+              {kpi.name}: {kpi.target}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {recommendedProjects.length > 0 && (
+        <div className="mt-3 border-t border-gray-100 pt-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Recommended projects
+          </p>
+          <div className="mt-2 space-y-2">
+            {recommendedProjects.map((project) => (
+              <a
+                key={project.slug || project.title}
+                href={project.marketplaceUrl || `/project-marketplace/${project.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-lg border border-gray-100 bg-gray-50 p-2 hover:border-blue-200 hover:bg-blue-50"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold text-gray-900">
+                      {project.priority ? `${project.priority}. ` : ''}{project.title}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-gray-600">
+                      {project.rationale}
+                    </p>
+                  </div>
+                  <div className="shrink-0 space-y-1 text-right">
+                    {project.priority === 1 && (
+                      <span className="block rounded-md bg-blue-600 px-2 py-1 text-[11px] font-semibold text-white">
+                        Start here
+                      </span>
+                    )}
+                    <span className="block rounded-md bg-white px-2 py-1 text-[11px] font-medium text-blue-700">
+                      {project.phase || 'Start'}
+                    </span>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {ppt?.base64 && (
+        <div className="mt-3 border-t border-gray-100 pt-3">
+          <a
+            href={`data:${ppt.mimeType};base64,${ppt.base64}`}
+            download={ppt.fileName || 'karya-ai-growth-plan.pptx'}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gray-900 px-3 py-2 text-xs font-semibold text-white hover:bg-gray-800"
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+            Download PPT
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProjectMatchPrompt({ uiRequest }) {
+  if (uiRequest?.type !== 'project_match') return null;
+
+  const projectMatch = uiRequest.projectMatch || {};
+  const matches = Array.isArray(projectMatch.matches) ? projectMatch.matches : [];
+
+  return (
+    <div className="mt-3 max-w-2xl rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 rounded-lg bg-blue-50 p-1.5 text-blue-700">
+          <Link className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Recommended projects
+          </p>
+          <p className="mt-1 text-sm font-medium text-gray-900">
+            {matches.length > 0
+              ? 'These Karya marketplace projects best match what you asked for.'
+              : 'No strong project match found yet.'}
+          </p>
+        </div>
+      </div>
+
+      {matches.length > 0 ? (
+        <div className="mt-3 space-y-2">
+          {matches.map((project) => (
+            <a
+              key={project.slug || project.title}
+              href={project.marketplaceUrl || `/project-marketplace/${project.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-lg border border-gray-100 bg-gray-50 p-3 hover:border-blue-200 hover:bg-blue-50"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-gray-900">
+                    {project.priority ? `${project.priority}. ` : ''}{project.title}
+                  </p>
+                  {project.tagline && (
+                    <p className="mt-1 text-xs font-medium text-blue-700">
+                      {project.tagline}
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs leading-relaxed text-gray-600">
+                    {project.rationale}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-md bg-white px-2 py-1 text-[11px] font-medium text-blue-700">
+                  {project.category || 'Project'}
+                </span>
+              </div>
+
+              {Array.isArray(project.kpiSignals) && project.kpiSignals.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {project.kpiSignals.map((signal) => (
+                    <span key={signal} className="rounded-md bg-white px-2 py-1 text-[11px] text-gray-600">
+                      {signal}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 rounded-lg bg-gray-50 p-2 text-xs leading-relaxed text-gray-600">
+          Try asking with the workflow or target outcome, for example: lead generation, outreach, conversion, customer research, content, or follow-up.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function LeadsPreviewPrompt({ uiRequest, onChoose, disabled }) {
+  if (uiRequest?.type !== 'leads_preview') return null;
+
+  const nextActions = Array.isArray(uiRequest.nextActions) ? uiRequest.nextActions : [];
+  const total = uiRequest.totalMatched ?? (uiRequest.leads?.length || 0);
+
+  // Map the compact button values to natural-language messages the agent understands
+  const messageFor = (action) => {
+    switch (action.value) {
+      case 'get_more_leads': return 'Give me the full lead list';
+      case 'save_leads':     return 'Save these leads to my library';
+      case 'refine_leads':   return 'Refine these leads further';
+      case 'email_campaign': return 'Build an email outreach sequence for these leads';
+      case 'generate_plan':  return 'Create a 90-day outreach plan for these leads';
+      default:               return action.label;
+    }
+  };
+
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex items-center gap-2.5">
+        <div className="rounded-lg bg-blue-50 p-1.5 text-blue-700">
+          <Users className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Leads ready
+          </p>
+          <p className="text-sm font-medium text-gray-900">
+            {Number(total).toLocaleString()} contacts — shown in the table
+          </p>
+        </div>
+      </div>
+
+      {nextActions.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {nextActions.map((action) => (
+            <button
+              key={action.value}
+              type="button"
+              onClick={() => onChoose(messageFor(action))}
+              disabled={disabled}
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BuyProjectPrompt({ uiRequest }) {
+  if (uiRequest?.type !== 'buy_project') return null;
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-[#E5E2D8] bg-[#FCEDE4] p-3">
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 rounded-lg bg-white p-1.5 text-[#D44A1C]">
+          <Lock className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#6B6962]">Locked feature</p>
+          <p className="mt-1 text-sm text-[#15140F]">
+            To {uiRequest.feature}, you need the <span className="font-semibold">{uiRequest.projectName}</span> project.
+          </p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <NextLink
+          href={uiRequest.marketplaceUrl || '/project-marketplace'}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[#D44A1C] px-3 py-2 text-xs font-semibold text-white hover:bg-[#C04018]"
+        >
+          <ArrowUpRight className="h-3.5 w-3.5" />
+          Buy this project
+        </NextLink>
+      </div>
+    </div>
+  );
+}
+
+function LeadsSavedPrompt({ uiRequest }) {
+  if (uiRequest?.type !== 'leads_saved') return null;
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex items-center gap-2.5">
+        <div className="rounded-lg bg-emerald-50 p-1.5 text-emerald-700">
+          <CheckCircle2 className="h-4 w-4" />
+        </div>
+        <p className="text-sm text-gray-800">
+          Saved <span className="font-semibold">{Number(uiRequest.count || 0).toLocaleString()}</span> leads to your library
+          {uiRequest.listName ? ` as “${uiRequest.listName}”` : ''}.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function EmailDraftReviewPrompt({ uiRequest, onChoose, disabled }) {
+  if (uiRequest?.type !== 'email_draft_review') return null;
+
+  const draft = uiRequest.draft || {};
+
+  return (
+    <div className="mt-3 max-w-xl rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-2.5">
+        <div className="rounded-lg bg-blue-50 p-1.5 text-blue-700">
+          <Mail className="h-4 w-4" />
+        </div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Draft email — review</p>
+      </div>
+
+      <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 p-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Subject</p>
+        <p className="mt-0.5 text-sm font-medium text-gray-900">{draft.subject}</p>
+        <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Body</p>
+        <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{draft.body}</p>
+      </div>
+
+      {draft.followUpBody ? (
+        <div className="mt-2 rounded-lg border border-gray-100 bg-gray-50 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+            Follow-up · {draft.followUpSubject}
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{draft.followUpBody}</p>
+        </div>
+      ) : null}
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => onChoose('Looks good, approve and pick recipients')}
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:bg-gray-300"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Looks good — pick recipients
+        </button>
+        <button
+          type="button"
+          onClick={() => onChoose('Get an expert to refine it')}
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+        >
+          <PencilLine className="h-3.5 w-3.5" />
+          Get an expert to refine
+        </button>
+      </div>
+      <p className="mt-2 text-[11px] text-gray-400">Or type a change (e.g. “make it shorter”) to redraft. Nothing is sent yet.</p>
+    </div>
+  );
+}
+
+function CsvUploadButton({ onUploadCsv, disabled, label }) {
+  return (
+    <label className={`inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 ${disabled ? 'opacity-60 pointer-events-none' : 'cursor-pointer'}`}>
+      <input
+        type="file"
+        accept=".csv,.xlsx,.xls"
+        className="hidden"
+        disabled={disabled}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = '';
+          if (file) onUploadCsv?.(file);
+        }}
+      />
+      <FileSpreadsheet className="h-3.5 w-3.5" />
+      {label}
+    </label>
+  );
+}
+
+function EmailRecipientsChoicePrompt({ uiRequest, onChoose, onUploadCsv, disabled }) {
+  if (uiRequest?.type !== 'email_recipients_choice') return null;
+
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Choose recipients</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {uiRequest.hasSearchedLeads && (
+          <button
+            type="button"
+            onClick={() => onChoose('Use my current searched leads')}
+            disabled={disabled}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:bg-gray-300"
+          >
+            <Users className="h-3.5 w-3.5" />
+            Use current searched leads
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => onChoose('Search Karya leads for recipients')}
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+        >
+          <Users className="h-3.5 w-3.5" />
+          Search Karya leads
+        </button>
+        <CsvUploadButton onUploadCsv={onUploadCsv} disabled={disabled} label="Upload CSV / Excel" />
+      </div>
+    </div>
+  );
+}
+
+function EmailCsvUploadPrompt({ uiRequest, onUploadCsv, disabled }) {
+  if (uiRequest?.type !== 'email_csv_upload') return null;
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Upload recipients</p>
+      <p className="mt-1 text-xs text-gray-600">CSV or Excel with an email column (first name, company, title optional).</p>
+      <div className="mt-3">
+        <CsvUploadButton onUploadCsv={onUploadCsv} disabled={disabled} label="Choose file" />
+      </div>
+    </div>
+  );
+}
+
+function EmailExpertSentPrompt({ uiRequest }) {
+  if (uiRequest?.type !== 'email_expert_sent') return null;
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 rounded-lg bg-amber-50 p-1.5 text-amber-700">
+          <UserCheck className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Sent to expert</p>
+          <p className="mt-1 text-xs text-gray-600">
+            Our expert is refining your email. Approve their version to launch the campaign.
+          </p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <NextLink
+          href="/business-dashboard/hitl-approval"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Open HITL approvals
+        </NextLink>
+      </div>
+    </div>
+  );
+}
+
+function EmailCampaignCreatedPrompt({ uiRequest }) {
+  if (uiRequest?.type !== 'email_campaign_created') return null;
+
+  const campaign = uiRequest.campaign || {};
+
+  return (
+    <div className="mt-3 max-w-md rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 rounded-lg bg-emerald-50 p-1.5 text-emerald-700">
+          <Send className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Draft campaign created</p>
+          <p className="mt-1 text-sm font-medium text-gray-900">{campaign.campaignName}</p>
+          <p className="mt-1 text-xs text-gray-600">
+            {Number(campaign.recipientCount || 0).toLocaleString()} recipients
+            {campaign.followUpTemplateId ? ' · includes follow-up' : ''}
+          </p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <NextLink
+          href="/business-dashboard/my-projects"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+        >
+          <Send className="h-3.5 w-3.5" />
+          Review & send
+        </NextLink>
+      </div>
+    </div>
+  );
+}
+
+function EvidenceReviewPrompt({ uiRequest, agentState, onChoose, disabled }) {
+  if (uiRequest?.type !== 'evidence_review') return null;
+
+  const evidence = uiRequest.businessEvidence || agentState?.businessEvidence || {};
+  const websites = evidence.websites || [];
+  const items = websites.map((item) => ({
+    id: item.evidenceId || item.url,
+    title: item.url,
+    summary: item.summary
+  })).filter((item) => item.summary);
+
+  return (
+    <div className="mt-3 max-w-2xl rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 rounded-lg bg-emerald-50 p-1.5 text-emerald-700">
+          <Link className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Website summary
+          </p>
+          <div className="mt-2 space-y-2">
+            {items.map((item) => (
+              <div key={item.id} className="rounded-lg bg-gray-50 p-2">
+                <p className="truncate text-xs font-semibold text-gray-900">{item.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-gray-600">{item.summary}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => onChoose('Confirm website summary and create plan')}
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:bg-gray-300"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Confirm and create
+        </button>
+        <button
+          type="button"
+          onClick={() => onChoose('Edit evidence summary')}
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+        >
+          <PencilLine className="h-3.5 w-3.5" />
+          Edit summary
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AgentChat({ sidebarOpen, onToggleSidebar, conversationId, onTitleUpdate, onConversationCreated, onLeadsUpdate, compact = false }) {
+  const { user, register } = useAuth();
+  const [messages, setMessages] = useState([]);
+  const [inputText, setInputText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [clientState, setClientState] = useState(null);
+  const [signupLoading, setSignupLoading] = useState(false);
+  const [websiteLoading, setWebsiteLoading] = useState(false);
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+  const conversationIdRef = useRef(conversationId);
+
+  useEffect(() => {
+    conversationIdRef.current = conversationId;
+  }, [conversationId]);
+
+  // Pre-populate input with message stored before login redirect
+  useEffect(() => {
+    if (!conversationId && typeof window !== 'undefined') {
+      const pending = sessionStorage.getItem('pendingAgentMessage');
+      if (pending) {
+        setInputText(pending);
+        sessionStorage.removeItem('pendingAgentMessage');
+      }
+    }
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (!conversationId) {
+      setMessages([]);
+      setClientState(null);
+      return;
+    }
+
+    const loadConversation = async () => {
+      setIsLoadingHistory(true);
+      try {
+        const res = await conversationApi.getConversation(conversationId);
+        const conversation = res.data;
+        const agentState = conversation.agentState || null;
+        const mappedMessages = (conversation.messages || []).map((message) => ({
+            role: message.role,
+            message: message.content,
+          }));
+
+        if (agentState?.uiRequest && mappedMessages.length > 0) {
+          const lastAgentIndex = mappedMessages.map((message) => message.role).lastIndexOf('agent');
+          if (lastAgentIndex >= 0) {
+            mappedMessages[lastAgentIndex] = {
+              ...mappedMessages[lastAgentIndex],
+              uiRequest: agentState.uiRequest
+            };
+          }
+        }
+
+        const welcomeBackMessage = agentState?.memorySummary?.welcomeBackMessage;
+        const shouldShowWelcomeBack = Boolean(
+          welcomeBackMessage
+          && mappedMessages.length > 0
+          && !agentState?.missingField
+          && !['onboarding', 'goal_definition'].includes(agentState?.phase)
+        );
+
+        if (shouldShowWelcomeBack) {
+          mappedMessages.push({
+            role: 'agent',
+            message: welcomeBackMessage,
+            uiRequest: agentState.uiRequest || null
+          });
+        }
+
+        setClientState(agentState);
+        setMessages(mappedMessages);
+      } catch (err) {
+        console.error('Failed to load conversation:', err);
+        setMessages([]);
+        setClientState(null);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    loadConversation();
+  }, [conversationId]);
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping, scrollToBottom]);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [conversationId]);
+
+  const getUserInitials = (name) => {
+    if (!name) return 'U';
+    return name
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase())
+      .slice(0, 2)
+      .join('');
+  };
+
+  const addAgentResponse = ({ activeId, text, responseData, createdConversation }) => {
+    const agentMessage = responseData.assistantMessage;
+    const state = responseData.state;
+    const returnedConversationId = responseData.conversationId;
+
+    if (state) {
+      setClientState(state);
+    }
+
+    // When the agent returns a leads preview, surface it to the workspace (table view)
+    if (state?.uiRequest?.type === 'leads_preview') {
+      onLeadsUpdate?.(state.uiRequest);
+    }
+
+    if (returnedConversationId && !activeId) {
+      conversationIdRef.current = returnedConversationId;
+      onConversationCreated?.({
+        _id: returnedConversationId,
+        title: text.substring(0, 100) || 'Karya agent onboarding',
+        lastActivityAt: new Date().toISOString()
+      });
+    }
+
+    if (!activeId || conversationIdRef.current === activeId || conversationIdRef.current === returnedConversationId) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: agentMessage.role,
+          message: agentMessage.content,
+          uiRequest: state?.uiRequest || null
+        },
+      ]);
+    }
+
+    if (createdConversation) {
+      onConversationCreated?.(createdConversation);
+    } else if (returnedConversationId && text) {
+      onTitleUpdate(returnedConversationId, text.substring(0, 100));
+    }
+  };
+
+  const sendTextToAgent = async (text) => {
+    if (!text || isTyping) return;
+
+    setInputText('');
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
+    setIsTyping(true);
+    setMessages((prev) => [...prev, { role: 'user', message: text }]);
+
+    let createdConversation = null;
+
+    try {
+      let activeId = conversationIdRef.current;
+      const response = await agentApi.sendAgentChat({
+        conversationId: activeId,
+        message: text,
+        clientState
+      });
+
+      addAgentResponse({
+        activeId,
+        text,
+        responseData: response.data,
+        createdConversation
+      });
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      if (createdConversation) {
+        onConversationCreated?.(createdConversation);
+      }
+      setMessages((prev) => [
+        ...prev,
+        { role: 'system', message: err.message || 'Something went wrong. Please try again.' },
+      ]);
+    } finally {
+      setIsTyping(false);
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleSendText = async (event) => {
+    event.preventDefault();
+    const text = (inputRef.current?.value || inputText).trim();
+    await sendTextToAgent(text);
+  };
+
+  // Upload a CSV/Excel of recipients → backend builds the draft campaign from
+  // the approved email draft stored on this conversation.
+  const handleCsvUpload = async (file) => {
+    if (!file || isTyping) return;
+    const activeId = conversationIdRef.current;
+    setMessages((prev) => [...prev, { role: 'system', message: `Uploading ${file.name}...` }]);
+    setIsTyping(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('conversationId', activeId || '');
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/agent/email/recipients-csv`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include',
+        body: form,
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        if (json.buyCard) {
+          setMessages((prev) => [
+            ...prev,
+            { role: 'agent', message: json.message || 'This needs a project.', uiRequest: json.buyCard },
+          ]);
+          return;
+        }
+        throw new Error(json.message || 'Upload failed');
+      }
+      const campaign = json.data.campaign;
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'agent',
+          message: `Done — draft campaign "${campaign.campaignName}" created for ${Number(campaign.recipientCount).toLocaleString()} recipients from your file. Nothing has been sent yet.`,
+          uiRequest: { type: 'email_campaign_created', campaign },
+        },
+      ]);
+    } catch (err) {
+      setMessages((prev) => [...prev, { role: 'system', message: err.message || 'Upload failed. Please try again.' }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleSignup = async (userData) => {
+    if (!userData.fullName || !userData.email || !userData.phone) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'system', message: 'Please provide name, email, and phone before creating the account.' },
+      ]);
+      return;
+    }
+
+    setSignupLoading(true);
+    try {
+      const result = await register(userData);
+      if (!result.success) {
+        throw new Error(result.error || 'Registration failed');
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        { role: 'system', message: 'Account created. Continuing onboarding with saved conversation.' },
+      ]);
+
+      const response = await agentApi.sendAgentChat({
+        conversationId: null,
+        message: 'Continue onboarding after account creation.',
+        clientState
+      });
+
+      addAgentResponse({
+        activeId: null,
+        text: 'Karya agent onboarding',
+        responseData: response.data
+      });
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'system', message: err.message || 'Registration failed. Please try again.' },
+      ]);
+    } finally {
+      setSignupLoading(false);
+    }
+  };
+
+  const handleSaveWebsite = async (url) => {
+    setWebsiteLoading(true);
+    try {
+      await sendTextToAgent(url);
+    } finally {
+      setWebsiteLoading(false);
+    }
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      handleSendText(event);
+    }
+  };
+
+  return (
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-white">
+      {!sidebarOpen && (
+        <div className="absolute top-auto left-0 z-10 p-2">
+          <button
+            onClick={onToggleSidebar}
+            className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 bg-gray-900 cursor-pointer"
+            title="Open sidebar"
+          >
+            <PanelLeft className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto">
+        {isLoadingHistory ? (
+          <div className="flex flex-col items-center justify-center h-full">
+            <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+            <p className="text-sm text-gray-500 mt-3">Loading conversation...</p>
+          </div>
+        ) : messages.length === 0 && !isTyping ? (
+          <div className="flex flex-col items-center justify-center h-full text-center px-6">
+            <div className="relative mb-6">
+              <div className="w-20 h-20 rounded-2xl flex items-center justify-center ring-4 ring-gray-100">
+                <KaryaLogo size={72} />
+              </div>
+              <span className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
+                <LifeBuoy className="h-3.5 w-3.5 text-white" />
+              </span>
+            </div>
+            <h3 className="text-2xl font-semibold text-gray-900 mb-2">Karya AI Support</h3>
+            <p className="text-sm text-gray-500 max-w-sm">
+              How can I help today?
+            </p>
+          </div>
+        ) : (
+          <div className={`${compact ? 'w-full' : 'max-w-3xl mx-auto'} px-4 py-6 space-y-6`}>
+            {messages.map((msg, index) => {
+              if (msg.role === 'system') {
+                return (
+                  <div key={`${msg.role}-${index}`} className="flex justify-center py-1">
+                    <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                      {msg.message}
+                    </span>
+                  </div>
+                );
+              }
+
+              const isAgent = msg.role === 'agent';
+              const isLatest = index === messages.length - 1;
+
+              return (
+                <div key={`${msg.role}-${index}`} className={`flex gap-3 ${isAgent ? '' : 'flex-row-reverse'}`}>
+                  {isAgent ? (
+                    <div className="w-7 h-7 shrink-0 mt-0.5">
+                      <KaryaLogo size={28} />
+                    </div>
+                  ) : (
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-orange-500 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-[10px] font-semibold text-white">
+                        {getUserInitials(user?.fullName)}
+                      </span>
+                    </div>
+                  )}
+                  <div
+                    className={`max-w-[80%] text-sm leading-relaxed ${
+                      isAgent
+                        ? 'text-gray-800'
+                        : 'bg-gray-100 px-4 py-3 rounded-2xl text-gray-800'
+                    }`}
+                  >
+                    {isAgent ? (
+                      <div className="prose prose-sm prose-gray max-w-none [&>p]:mb-2 [&>ul]:mb-2 [&>ol]:mb-2 [&>p:last-child]:mb-0 [&>ul:last-child]:mb-0 [&>ol:last-child]:mb-0">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            a: ({ href, children }) => (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 underline"
+                              >
+                                {children}
+                              </a>
+                            ),
+                          }}
+                        >
+                          {msg.message}
+                        </ReactMarkdown>
+                        {isLatest && msg.uiRequest?.type === 'choice' && (
+                          <ChoicePrompt
+                            uiRequest={msg.uiRequest}
+                            onChoose={sendTextToAgent}
+                            disabled={isTyping}
+                          />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'goal_confirmation' && (
+                          <GoalConfirmationPrompt
+                            uiRequest={msg.uiRequest}
+                            onChoose={sendTextToAgent}
+                            disabled={isTyping}
+                          />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'diagnostic_intake' && (
+                          <DiagnosticIntakePrompt
+                            uiRequest={msg.uiRequest}
+                            agentState={clientState}
+                            onRun={sendTextToAgent}
+                            onSaveWebsite={handleSaveWebsite}
+                            disabled={isTyping}
+                            websiteLoading={websiteLoading}
+                          />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'evidence_review' && (
+                          <EvidenceReviewPrompt
+                            uiRequest={msg.uiRequest}
+                            agentState={clientState}
+                            onChoose={sendTextToAgent}
+                            disabled={isTyping}
+                          />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'business_review' && (
+                          <BusinessReviewPrompt
+                            uiRequest={msg.uiRequest}
+                            onChoose={sendTextToAgent}
+                            disabled={isTyping}
+                          />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'plan_summary' && (
+                          <PlanSummaryPrompt uiRequest={msg.uiRequest} />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'project_match' && (
+                          <ProjectMatchPrompt uiRequest={msg.uiRequest} />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'leads_preview' && (
+                          <LeadsPreviewPrompt
+                            uiRequest={msg.uiRequest}
+                            onChoose={sendTextToAgent}
+                            disabled={isTyping}
+                          />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'leads_saved' && (
+                          <LeadsSavedPrompt uiRequest={msg.uiRequest} />
+                        )}
+                        {(msg.uiRequest?.type === 'buy_project') && (
+                          <BuyProjectPrompt uiRequest={msg.uiRequest} />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'email_draft_review' && (
+                          <EmailDraftReviewPrompt
+                            uiRequest={msg.uiRequest}
+                            onChoose={sendTextToAgent}
+                            disabled={isTyping}
+                          />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'email_recipients_choice' && (
+                          <EmailRecipientsChoicePrompt
+                            uiRequest={msg.uiRequest}
+                            onChoose={sendTextToAgent}
+                            onUploadCsv={handleCsvUpload}
+                            disabled={isTyping}
+                          />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'email_csv_upload' && (
+                          <EmailCsvUploadPrompt
+                            uiRequest={msg.uiRequest}
+                            onUploadCsv={handleCsvUpload}
+                            disabled={isTyping}
+                          />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'email_expert_sent' && (
+                          <EmailExpertSentPrompt uiRequest={msg.uiRequest} />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'email_campaign_created' && (
+                          <EmailCampaignCreatedPrompt uiRequest={msg.uiRequest} />
+                        )}
+                        {isLatest && msg.uiRequest?.type === 'secure_signup' && (
+                          <SignupPrompt
+                            agentState={clientState}
+                            onSignup={handleSignup}
+                            isSubmitting={signupLoading}
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      msg.message
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {isTyping && (
+              <div className="flex gap-3">
+                <div className="w-7 h-7 shrink-0 mt-0.5">
+                  <KaryaLogo size={28} />
+                </div>
+                <div className="flex items-center gap-1 py-2">
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white">
+        <div className={`${compact ? 'w-full' : 'max-w-3xl mx-auto'} px-4 py-4`}>
+          <form onSubmit={handleSendText} className="flex items-end gap-2 bg-gray-100 border border-gray-200 rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+            <textarea
+              ref={inputRef}
+              value={inputText}
+              onChange={(event) => setInputText(event.target.value)}
+              onInput={(event) => setInputText(event.currentTarget.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Message Karya AI Support..."
+              rows={1}
+              disabled={isTyping}
+              className="flex-1 resize-none bg-transparent py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none disabled:opacity-60"
+            />
+            <button
+              type="submit"
+              disabled={isTyping}
+              className={`p-1.5 rounded-lg transition-all shrink-0 mb-0.5 ${
+                !isTyping && inputText.trim()
+                  ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+                  : 'bg-gray-300 text-white cursor-default'
+              }`}
+              title="Send message"
+            >
+              {isTyping ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowUp className="h-5 w-5" />}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── A single chat strip (thin vertical column) ─────────────────────────────────
+function StripColumn({ conv, number, isActive, onSelect, onDelete, parked, delay = 0, stackIndex = 0 }) {
+  return (
+    <div
+      onClick={() => onSelect(conv._id)}
+      title={conv.title || 'New conversation'}
+      style={parked ? {
+        animationDelay: `${delay}ms`,
+        marginLeft: stackIndex > 0 ? '-32px' : 0, // overlap like stairs (left rail only)
+        zIndex: stackIndex,
+      } : undefined}
+      className={`group relative flex-shrink-0 w-[56px] rounded-[22px] border flex flex-col items-center pt-5 pb-6 cursor-pointer transition-all duration-200 ${parked ? 'animate-strip-park hover:!z-50' : ''} ${
+        isActive
+          ? 'bg-white border-gray-300 shadow-[0_12px_30px_-8px_rgba(0,0,0,0.28)] -translate-y-1'
+          : 'bg-white border-gray-200 shadow-[0_3px_14px_-4px_rgba(0,0,0,0.14)] hover:border-gray-300 hover:shadow-[0_12px_28px_-8px_rgba(0,0,0,0.24)] hover:-translate-y-1'
+      }`}
+    >
+      {/* number badge */}
+      <span className={`flex items-center justify-center w-6 h-6 rounded-full text-[12px] font-black leading-none mb-4 transition-colors ${
+        isActive ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'
+      }`}>
+        {number}
+      </span>
+      {/* chat topic, vertical — black text */}
+      <span
+        className="flex-1 text-[13.5px] font-bold tracking-wide text-gray-900"
+        style={{ writingMode: 'vertical-rl', maxHeight: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+      >
+        {conv.title || 'New conversation'}
+      </span>
+      {/* status dot */}
+      <span className={`mt-4 w-1.5 h-1.5 rounded-full transition-colors ${isActive ? 'bg-gray-900' : 'bg-gray-300'}`} />
+      {/* delete on hover */}
+      <span
+        onClick={e => { e.stopPropagation(); onDelete(conv._id); }}
+        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-gray-300 hover:text-red-500"
+      >
+        <Trash2 className="h-3 w-3" />
+      </span>
+    </div>
+  );
+}
+
+// ── A rail of strips (horizontal row of vertical columns) ──────────────────────
+function StripRail({ items, activeId, onSelect, onDelete, parked, className = '' }) {
+  if (!items.length) return null;
+  return (
+    <div
+      className={`w-full h-full flex items-stretch overflow-x-auto pt-3 pb-7 pl-2 pr-8 ${parked ? '' : 'gap-3.5'} ${className}`}
+      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+    >
+      {items.map(({ conv, idx }, k) => (
+        <StripColumn
+          key={conv._id}
+          conv={conv}
+          number={idx + 1}
+          isActive={activeId === conv._id}
+          onSelect={onSelect}
+          onDelete={onDelete}
+          parked={parked}
+          delay={k * 45}
+          stackIndex={k}
+        />
+      ))}
+    </div>
+  );
+}
+
+export default function AgentPage() {
+  const { isAuthenticated, loading } = useAuth();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [conversations, setConversations] = useState([]);
+  const [activeConversationId, setActiveConversationId] = useState(null);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+  const [chatAnim, setChatAnim] = useState(null);   // 'open' | null
+  const [leadsView, setLeadsView] = useState(null); // set when agent returns a leads_preview
+
+  // Open a chat: chats before it park on the left, this one opens in the middle.
+  const switchConversation = (id) => {
+    if (id === activeConversationId) return;
+    setActiveConversationId(id);
+    setChatAnim('open');
+    setTimeout(() => setChatAnim(null), 320);
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setIsLoadingConversations(false);
+      return;
+    }
+
+    const fetchConversations = async () => {
+      try {
+        const response = await conversationApi.getConversations();
+        setConversations(response.data || []);
+        if (response.data && response.data.length > 0) {
+          setActiveConversationId(response.data[0]._id);
+        }
+      } catch (err) {
+        console.error('Failed to fetch conversations:', err);
+      } finally {
+        setIsLoadingConversations(false);
+      }
+    };
+
+    fetchConversations();
+  }, [isAuthenticated]);
+
+  const handleNewChat = async () => {
+    setActiveConversationId(null);
+  };
+
+  const handleDeleteConversation = async (id) => {
+    try {
+      await conversationApi.deleteConversation(id);
+      setConversations((prev) => prev.filter((conversation) => conversation._id !== id));
+      if (activeConversationId === id) {
+        const remaining = conversations.filter((conversation) => conversation._id !== id);
+        setActiveConversationId(remaining.length > 0 ? remaining[0]._id : null);
+      }
+    } catch (err) {
+      console.error('Failed to delete conversation:', err);
+    }
+  };
+
+  const handleTitleUpdate = (id, newTitle) => {
+    setConversations((prev) =>
+      prev.map((conversation) =>
+        conversation._id === id ? { ...conversation, title: newTitle } : conversation
+      )
+    );
+  };
+
+  const handleConversationCreated = (newConversation) => {
+    setConversations((prev) => {
+      if (prev.some((conversation) => conversation._id === newConversation._id)) {
+        return prev;
+      }
+      return [newConversation, ...prev];
+    });
+    setActiveConversationId(newConversation._id);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  // ── Leads workspace mode: table in main area, chat docked to the right rail ──
+  if (leadsView) {
+    return (
+      <div className="flex h-screen bg-white overflow-hidden">
+        <Sidebar
+          sidebarCollapsed={sidebarCollapsed}
+          setSidebarCollapsed={setSidebarCollapsed}
+          activeItem="karya-ai"
+          setActiveItem={() => {}}
+        />
+
+        {/* Main: leads table */}
+        <LeadsWorkspace leadsView={leadsView} onBackToChat={() => setLeadsView(null)} />
+
+        {/* Right: live agent chat */}
+        <div className="flex-shrink-0 flex flex-col border-l border-gray-200 bg-white" style={{ width: '440px' }}>
+          <AgentChat
+            sidebarOpen={true}
+            onToggleSidebar={() => {}}
+            conversationId={activeConversationId}
+            onTitleUpdate={handleTitleUpdate}
+            onConversationCreated={handleConversationCreated}
+            onLeadsUpdate={setLeadsView}
+            compact
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Split strips: those BEFORE the open chat park on the left, the rest stay right
+  const activeIndex = conversations.findIndex(c => c._id === activeConversationId);
+  const leftItems  = (activeIndex > 0 ? conversations.slice(0, activeIndex) : [])
+    .map((conv, idx) => ({ conv, idx }));
+  const rightItems = (activeIndex >= 0 ? conversations.slice(activeIndex + 1) : conversations)
+    .map((conv, k) => ({ conv, idx: (activeIndex >= 0 ? activeIndex + 1 : 0) + k }));
+
+  return (
+    <div className="flex h-screen bg-white overflow-hidden">
+      {/* Left: Business dashboard sidebar */}
+      <Sidebar
+        sidebarCollapsed={sidebarCollapsed}
+        setSidebarCollapsed={setSidebarCollapsed}
+        activeItem="karya-ai"
+        setActiveItem={() => {}}
+      />
+
+      {/* Parked rail — chats opened before the current one (next to the sidebar).
+          Capped width + overlapping strips so the chat barely shifts. */}
+      {leftItems.length > 0 && (
+        <div className="flex-shrink-0 border-r border-gray-100 bg-white overflow-hidden" style={{ width: '150px' }}>
+          <StripRail
+            key={`left-${activeConversationId}`}
+            items={leftItems}
+            activeId={activeConversationId}
+            onSelect={switchConversation}
+            onDelete={handleDeleteConversation}
+            parked
+          />
+        </div>
+      )}
+
+      {/* Center: TopNavbar + Chat (shifts right when strips are parked) */}
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <TopNavbar />
+        <div className="relative flex-1 min-h-0 overflow-hidden">
+          <div className={`h-full flex flex-col ${chatAnim === 'open' ? 'animate-chat-open' : ''}`}>
+            <AgentChat
+              sidebarOpen={true}
+              onToggleSidebar={() => {}}
+              conversationId={activeConversationId}
+              onTitleUpdate={handleTitleUpdate}
+              onConversationCreated={handleConversationCreated}
+              onLeadsUpdate={setLeadsView}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Right rail — New button + the remaining chats */}
+      <div className="flex-shrink-0 flex flex-col bg-white" style={{ width: '280px' }}>
+        <div className="px-4 pt-4 pb-1 flex items-center justify-end">
+          <button
+            onClick={handleNewChat}
+            className="flex items-center gap-1.5 text-[12px] font-bold text-blue-600 hover:text-white border border-blue-200 hover:bg-blue-600 hover:border-blue-600 px-3 py-1.5 rounded-lg transition-all"
+          >
+            <Plus className="h-3.5 w-3.5" /> New
+          </button>
+        </div>
+        {isLoadingConversations ? (
+          <div className="flex items-center justify-center flex-1 px-6">
+            <Loader2 className="h-5 w-5 text-gray-300 animate-spin" />
+          </div>
+        ) : conversations.length === 0 ? (
+          <div className="flex flex-col items-center justify-center flex-1 px-6 text-center">
+            <MessageSquare className="h-7 w-7 text-gray-200 mb-2" />
+            <p className="text-xs text-gray-400">No chats yet</p>
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <StripRail
+              items={rightItems}
+              activeId={activeConversationId}
+              onSelect={switchConversation}
+              onDelete={handleDeleteConversation}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

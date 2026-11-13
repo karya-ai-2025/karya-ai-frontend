@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 // Get auth header
 const getAuthHeader = () => {
@@ -73,6 +73,15 @@ export const updateQuickWins = async (quickWins) => {
 
 export const skipStep = async (step) => {
   return apiCall(`/onboarding/business/skip/${step}`, 'POST');
+};
+
+// AI generation helpers
+export const generateICPName = async (description) => {
+  return apiCall('/onboarding/business/generate-icp-name', 'POST', { description });
+};
+
+export const generateMarketingGoals = async (currentActivities, desiredPlan) => {
+  return apiCall('/onboarding/business/generate-marketing-goals', 'POST', { currentActivities, desiredPlan });
 };
 
 export const saveAllOnboardingData = async (data) => {

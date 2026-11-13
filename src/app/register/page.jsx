@@ -4,7 +4,10 @@ import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertCircle, CheckCircle, Check, X } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Briefcase, Users, AlertTriangle, Phone, CheckCircle, Check, X, Building2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
+import { trackEvent } from '@/services/analyticsApi';
 
 // Constants
 const ROLES = {
@@ -18,19 +21,65 @@ const ROLE_CONFIG = {
     subtitle: 'Start transforming your marketing today',
     icon: Briefcase,
     gradient: 'bg-gradient-to-r from-blue-600 to-orange-500',
-    onboardingRoute: '/onboarding-owner/welcome'
+    onboardingRoute: '/onboarding-owner/welcome',
+    lhs: {
+      badge: 'Join 743+ growing teams today',
+      headingTop: 'Start growing',
+      headingAccent: 'faster today.',
+      sub: 'From your first prompt to your first 100 customers — AI handles the planning, experts handle execution.',
+      steps: [
+        { n: '1', t: 'Sign up free', d: 'No credit card required. Setup in 5 minutes.' },
+        { n: '2', t: 'AI builds your roadmap', d: '90-day GTM plan generated instantly.' },
+        { n: '3', t: 'Match with experts', d: 'Pre-vetted talent, ready to execute.' },
+      ],
+      testimonial: { quote: 'We scaled from ₹30L to ₹1.2Cr/month in under 3 months. Worth every rupee.', name: 'Amit Patel', role: 'Founder, E-Grow' },
+    },
   },
   [ROLES.EXPERT]: {
     title: 'Join as Expert',
     subtitle: 'Connect with businesses and grow your career',
     icon: Users,
     gradient: 'bg-gradient-to-r from-blue-600 to-orange-500',
-    onboardingRoute: '/onboarding-expert/profile-setup'
+    onboardingRoute: '/onboarding-expert/welcome',
+    lhs: {
+      badge: 'Join 200+ vetted experts',
+      headingTop: 'Grow your',
+      headingAccent: 'expert practice.',
+      sub: 'Get matched with businesses that need your skills — you focus on delivering, we bring the clients.',
+      steps: [
+        { n: '1', t: 'Create your profile', d: 'Showcase your skills, services, and portfolio.' },
+        { n: '2', t: 'Get matched to projects', d: 'AI connects you with the right businesses.' },
+        { n: '3', t: 'Execute & earn', d: 'Deliver great work and grow your practice.' },
+      ],
+      testimonial: { quote: 'I landed 5 retainer clients through Karya in my first 2 months.', name: 'Priya Sharma', role: 'Growth Consultant' },
+    },
   }
 };
 
+// A business signs up either on its own or as a company with a team. Asked
+// once, here — it cannot be changed afterwards. Experts are always individual.
+const ACCOUNT_TYPES = {
+  INDIVIDUAL: 'individual',
+  ENTERPRISE: 'enterprise'
+};
+
+const ACCOUNT_TYPE_OPTIONS = [
+  {
+    id: ACCOUNT_TYPES.INDIVIDUAL,
+    icon: User,
+    title: 'Single user',
+    description: 'Just me. My own campaigns, leads and credits.'
+  },
+  {
+    id: ACCOUNT_TYPES.ENTERPRISE,
+    icon: Building2,
+    title: 'Enterprise',
+    description: 'My company. Invite a team with roles and shared credits.'
+  }
+];
+
 // API Base URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 // Password strength checker
 const checkPasswordStrength = (password) => {
@@ -55,7 +104,37 @@ const checkPasswordStrength = (password) => {
 function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Both roles are open to the public. Business/owner used to be hidden behind a
+  // ?team=<code> link while it was "coming soon"; that gate is gone, so ?role=owner
+  // works for anyone and the switcher offers both. Owner is the default landing.
   const role = searchParams.get('role') || ROLES.OWNER;
+  const { isAuthenticated, loading: authLoading, activeRole, register: authRegister } = useAuth();
+
+  // Redirect users who land on /register while ALREADY logged in.
+  // Depends on [authLoading] only, so it fires ONCE when the auth check settles —
+  // NOT when isAuthenticated flips after a fresh registration. That flip used to
+  // re-fire this effect and send new users to the dashboard, skipping onboarding.
+  // A just-registered user is redirected to onboarding by handleSubmit instead.
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.replace(activeRole === 'expert' ? '/expert-dashboard' : '/business-dashboard');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading]);
+
+  // Top of the onboarding funnel — "No. of sign ups". Reaching the signup form is
+  // the sign-up intent, and the role is known here (expert default / owner via team
+  // link) even pre-login, which the funnel needs to split Expert vs Business.
+  // Fires once per session (the backend dedupes by session), only for guests.
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      trackEvent('SIGNUP_CLICKED', { role });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading]);
+
+  const [accountType, setAccountType] = useState(ACCOUNT_TYPES.INDIVIDUAL);
+  const isEnterpriseSignup = role === ROLES.OWNER && accountType === ACCOUNT_TYPES.ENTERPRISE;
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -69,6 +148,7 @@ function RegisterContent() {
     fullName: '',
     email: '',
     company: '',
+    phone: '',
     password: '',
     confirmPassword: '',
     acceptTerms: false
@@ -78,6 +158,7 @@ function RegisterContent() {
     fullName: false,
     email: false,
     company: false,
+    phone: false,
     password: false,
     confirmPassword: false,
     acceptTerms: false
@@ -94,8 +175,9 @@ function RegisterContent() {
 
   const validateEmail = (email) => {
     if (!email.trim()) return 'Email is required';
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return 'Please enter a valid email address';
+    // Strict: valid local part + real domain labels + alphabetic TLD (e.g. gmail.com, outlook.com, karya-ai.com)
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email.trim())) return 'Enter a valid email like name@gmail.com';
     if (emailExists) return 'An account with this email already exists';
     return '';
   };
@@ -103,6 +185,15 @@ function RegisterContent() {
   const validateCompany = (company) => {
     if (role === ROLES.OWNER && !company.trim()) return 'Company name is required';
     if (company.length > 100) return 'Company name cannot exceed 100 characters';
+    return '';
+  };
+
+  // Matches the backend rule in validators/authValidators.js. Optional there,
+  // but required here so every account has a contact number.
+  const validatePhone = (phone) => {
+    if (!phone.trim()) return 'Phone number is required';
+    const cleaned = phone.replace(/[\s().-]/g, '');
+    if (!/^[+]?[0-9]{10,15}$/.test(cleaned)) return 'Enter a valid phone number';
     return '';
   };
 
@@ -132,6 +223,7 @@ function RegisterContent() {
     fullName: validateFullName(formData.fullName),
     email: validateEmail(formData.email),
     company: validateCompany(formData.company),
+    phone: validatePhone(formData.phone),
     password: validatePassword(formData.password),
     confirmPassword: validateConfirmPassword(formData.confirmPassword),
     acceptTerms: validateTerms(formData.acceptTerms)
@@ -146,7 +238,7 @@ function RegisterContent() {
   // Debounced email check
   useEffect(() => {
     const checkEmail = async () => {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
       if (!formData.email || !emailRegex.test(formData.email)) {
         setEmailExists(false);
         return;
@@ -180,6 +272,7 @@ function RegisterContent() {
       fullName: true,
       email: true,
       company: true,
+      phone: true,
       password: true,
       confirmPassword: true,
       acceptTerms: true
@@ -195,38 +288,26 @@ function RegisterContent() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          fullName: formData.fullName.trim(),
-          email: formData.email.toLowerCase().trim(),
-          password: formData.password,
-          confirmPassword: formData.confirmPassword,
-          role,
-          company: formData.company.trim() || undefined
-        })
+      const result = await authRegister({
+        fullName: formData.fullName.trim(),
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        role,
+        // Only a business account can be an enterprise; the backend ignores
+        // this for experts either way.
+        accountType: isEnterpriseSignup ? ACCOUNT_TYPES.ENTERPRISE : ACCOUNT_TYPES.INDIVIDUAL,
+        company: formData.company.trim() || undefined,
+        phone: formData.phone.trim()
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
+      if (!result.success) {
+        throw new Error(result.error || 'Registration failed');
       }
 
-      // Store token
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-      }
-
-      setSuccess('Account created! Redirecting to onboarding...');
-
-      // Navigate to onboarding
-      setTimeout(() => {
-        router.push(ROLE_CONFIG[role].onboardingRoute);
-      }, 1500);
+      // Straight into onboarding. Email OTP verification is switched off for now,
+      // so nothing stands between registering and getting started.
+      router.replace(ROLE_CONFIG[role].onboardingRoute);
 
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
@@ -252,6 +333,8 @@ function RegisterContent() {
     setError(`${provider} signup coming soon!`);
   };
 
+  if (authLoading || isAuthenticated) return null;
+
   const currentRole = ROLE_CONFIG[role] || ROLE_CONFIG[ROLES.OWNER];
   const Icon = currentRole.icon;
 
@@ -264,51 +347,137 @@ function RegisterContent() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      {/* Animated Background */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-blue-300 rounded-full filter blur-xl animate-blob"></div>
-        <div className="absolute top-40 right-20 w-72 h-72 bg-blue-300 rounded-full filter blur-xl animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-20 left-40 w-72 h-72 bg-violet-300 rounded-full filter blur-xl animate-blob animation-delay-4000"></div>
+    <div className="min-h-screen bg-white flex">
+      {/* LEFT: Brand Panel */}
+      <div className="hidden lg:flex w-[45%] bg-gray-950 relative overflow-hidden flex-col p-12">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1d4ed815_1px,transparent_1px),linear-gradient(to_bottom,#1d4ed815_1px,transparent_1px)] bg-[size:3rem_3rem]" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-600/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl" />
+
+        <div className="relative flex flex-col h-full">
+          <Link href="/" className="flex items-center gap-3 mb-auto">
+            <Image src="/karya-ai-logo.png" alt="Karya AI" width={44} height={44} className="rounded-xl object-contain" />
+            <span className="text-xl font-black text-white">Karya-AI</span>
+          </Link>
+
+          <div className="my-auto">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 border border-blue-500/30 rounded-full mb-6">
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              <span className="text-blue-300 text-xs font-semibold">{currentRole.lhs.badge}</span>
+            </div>
+            <h2 className="text-4xl font-black text-white leading-[1.1] mb-4">
+              {currentRole.lhs.headingTop}<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-orange-400">{currentRole.lhs.headingAccent}</span>
+            </h2>
+            <p className="text-gray-400 text-lg leading-relaxed mb-10">{currentRole.lhs.sub}</p>
+
+            {/* Steps */}
+            <div className="space-y-4 mb-10">
+              {currentRole.lhs.steps.map(s=>(
+                <div key={s.n} className="flex items-start gap-4">
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-black flex-shrink-0 mt-0.5">{s.n}</div>
+                  <div>
+                    <p className="text-white font-bold text-sm">{s.t}</p>
+                    <p className="text-gray-500 text-xs">{s.d}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+              <div className="flex gap-1 mb-3">{[1,2,3,4,5].map(i=><span key={i} className="text-yellow-400 text-sm">★</span>)}</div>
+              <p className="text-gray-300 text-sm leading-relaxed mb-4">{`"${currentRole.lhs.testimonial.quote}"`}</p>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full" />
+                <div>
+                  <p className="text-white text-sm font-bold">{currentRole.lhs.testimonial.name}</p>
+                  <p className="text-gray-500 text-xs">{currentRole.lhs.testimonial.role}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-gray-700 text-xs mt-auto">&copy; 2026 Karya-AI. All rights reserved.</p>
+        </div>
       </div>
 
-      <div className="relative max-w-md w-full animate-fade-in-up">
-        {/* Logo/Brand */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
-            <Image src="/karya-ai-logo.png" alt="Karya AI" width={48} height={48} className="rounded-xl object-contain group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/20" />
-            <span className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">Karya-AI</span>
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{currentRole.title}</h1>
-          <p className="text-gray-500">{currentRole.subtitle}</p>
-
-          {/* Role Switcher */}
-          <div className="mt-4 flex items-center justify-center gap-2">
-            <button
-              onClick={() => router.push(`/register?role=${ROLES.OWNER}`)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                role === ROLES.OWNER
-                  ? 'bg-blue-50 text-blue-700 border border-blue-300'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              Business Owner
-            </button>
-            <button
-              onClick={() => router.push(`/register?role=${ROLES.EXPERT}`)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                role === ROLES.EXPERT
-                  ? 'bg-blue-50 text-blue-700 border border-blue-300'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              Expert
-            </button>
+      {/* RIGHT: Form Panel */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-white overflow-y-auto">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="lg:hidden text-center mb-8">
+            <Link href="/" className="inline-flex items-center gap-2">
+              <Image src="/karya-ai-logo.png" alt="Karya AI" width={44} height={44} className="rounded-xl object-contain" />
+              <span className="text-xl font-black text-gray-900">Karya-AI</span>
+            </Link>
           </div>
-        </div>
+
+          {/* Heading */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-black text-gray-900 mb-2">{currentRole.title}</h1>
+            <p className="text-gray-500">{currentRole.subtitle}</p>
+
+            {/* Role Switcher */}
+            <div className="mt-5 flex items-center gap-2 p-1 bg-gray-100 rounded-xl w-fit">
+              <button
+                onClick={() => router.push(`/register?role=${ROLES.OWNER}`)}
+                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer ${
+                  role === ROLES.OWNER ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Business Owner
+              </button>
+              <button
+                onClick={() => router.push(`/register?role=${ROLES.EXPERT}`)}
+                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                  role === ROLES.EXPERT ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Expert
+              </button>
+            </div>
+
+            {/* Account type — business accounts only */}
+            {role === ROLES.OWNER && (
+              <div className="mt-5">
+                <p className="text-sm font-medium text-gray-600 mb-2">How will you use Karya-AI?</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {ACCOUNT_TYPE_OPTIONS.map((option) => {
+                    const OptionIcon = option.icon;
+                    const selected = accountType === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => setAccountType(option.id)}
+                        disabled={isLoading}
+                        aria-pressed={selected}
+                        className={`text-left p-4 rounded-xl border transition-all cursor-pointer disabled:opacity-50 ${
+                          selected
+                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/30'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <OptionIcon className={`w-4 h-4 ${selected ? 'text-blue-600' : 'text-gray-500'}`} />
+                          <span className="text-sm font-bold text-gray-900">{option.title}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 leading-snug">{option.description}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+                {isEnterpriseSignup && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    You&apos;ll be the admin of your company&apos;s workspace and can invite managers and employees after signing up.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
         {/* Register Form */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
+        <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm">
           {/* Success Message */}
           {success && (
             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
@@ -319,9 +488,9 @@ function RegisterContent() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-red-600">{error}</p>
+            <div className="mb-6 p-4 bg-[#fef2f2] border border-[#fca5a5] rounded-lg flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-[#dc2626] shrink-0 mt-0.5" />
+              <p className="text-sm font-medium text-[#b91c1c]">{error}</p>
             </div>
           )}
 
@@ -329,11 +498,11 @@ function RegisterContent() {
             {/* Full Name Input */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-2">
-                Full Name <span className="text-red-500">*</span>
+                Full Name <span className="text-[#ef4444]">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <User className={`w-5 h-5 ${touched.fullName && errors.fullName ? 'text-red-500' : 'text-gray-500'}`} />
+                  <User className={`w-5 h-5 ${touched.fullName && errors.fullName ? 'text-[#ef4444]' : 'text-gray-500'}`} />
                 </div>
                 <input
                   type="text"
@@ -344,25 +513,25 @@ function RegisterContent() {
                   disabled={isLoading}
                   className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.fullName && errors.fullName
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
+                      ? 'border-[#fca5a5] focus:border-[#ef4444] focus:ring-[#ef4444]/50'
                       : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="John Doe"
                 />
               </div>
               {touched.fullName && errors.fullName && (
-                <p className="mt-1 text-xs text-red-500">{errors.fullName}</p>
+                <p className="mt-1 text-xs text-[#ef4444]">{errors.fullName}</p>
               )}
             </div>
 
             {/* Email Input */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-2">
-                Work Email <span className="text-red-500">*</span>
+                Work Email <span className="text-[#ef4444]">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className={`w-5 h-5 ${touched.email && errors.email ? 'text-red-500' : 'text-gray-500'}`} />
+                  <Mail className={`w-5 h-5 ${touched.email && errors.email ? 'text-[#ef4444]' : 'text-gray-500'}`} />
                 </div>
                 <input
                   type="email"
@@ -373,7 +542,7 @@ function RegisterContent() {
                   disabled={isLoading}
                   className={`w-full pl-12 pr-10 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.email && errors.email
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
+                      ? 'border-[#fca5a5] focus:border-[#ef4444] focus:ring-[#ef4444]/50'
                       : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="you@company.com"
@@ -385,19 +554,19 @@ function RegisterContent() {
                 )}
               </div>
               {touched.email && errors.email && (
-                <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+                <p className="mt-1 text-xs text-[#ef4444]">{errors.email}</p>
               )}
             </div>
 
             {/* Company Input */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-2">
-                Company Name {role === ROLES.OWNER && <span className="text-red-500">*</span>}
+                Company Name {role === ROLES.OWNER && <span className="text-[#ef4444]">*</span>}
                 {role === ROLES.EXPERT && <span className="text-gray-400 text-xs ml-1">(Optional)</span>}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Briefcase className={`w-5 h-5 ${touched.company && errors.company ? 'text-red-500' : 'text-gray-500'}`} />
+                  <Briefcase className={`w-5 h-5 ${touched.company && errors.company ? 'text-[#ef4444]' : 'text-gray-500'}`} />
                 </div>
                 <input
                   type="text"
@@ -408,25 +577,55 @@ function RegisterContent() {
                   disabled={isLoading}
                   className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.company && errors.company
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
+                      ? 'border-[#fca5a5] focus:border-[#ef4444] focus:ring-[#ef4444]/50'
                       : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="Your Company"
                 />
               </div>
               {touched.company && errors.company && (
-                <p className="mt-1 text-xs text-red-500">{errors.company}</p>
+                <p className="mt-1 text-xs text-[#ef4444]">{errors.company}</p>
+              )}
+            </div>
+
+            {/* Phone Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2">
+                Phone Number <span className="text-[#ef4444]">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Phone className={`w-5 h-5 ${touched.phone && errors.phone ? 'text-[#ef4444]' : 'text-gray-500'}`} />
+                </div>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  onBlur={() => handleBlur('phone')}
+                  disabled={isLoading}
+                  autoComplete="tel"
+                  className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
+                    touched.phone && errors.phone
+                      ? 'border-[#fca5a5] focus:border-[#ef4444] focus:ring-[#ef4444]/50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
+                  }`}
+                  placeholder="+91 98765 43210"
+                />
+              </div>
+              {touched.phone && errors.phone && (
+                <p className="mt-1 text-xs text-[#ef4444]">{errors.phone}</p>
               )}
             </div>
 
             {/* Password Input */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-2">
-                Password <span className="text-red-500">*</span>
+                Password <span className="text-[#ef4444]">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className={`w-5 h-5 ${touched.password && errors.password ? 'text-red-500' : 'text-gray-500'}`} />
+                  <Lock className={`w-5 h-5 ${touched.password && errors.password ? 'text-[#ef4444]' : 'text-gray-500'}`} />
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -437,7 +636,7 @@ function RegisterContent() {
                   disabled={isLoading}
                   className={`w-full pl-12 pr-12 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.password && errors.password
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
+                      ? 'border-[#fca5a5] focus:border-[#ef4444] focus:ring-[#ef4444]/50'
                       : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
                   }`}
                   placeholder="••••••••"
@@ -459,14 +658,14 @@ function RegisterContent() {
                     <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className={`h-full transition-all duration-300 ${
-                          passwordStrength.color === 'red' ? 'bg-red-500 w-1/5' :
+                          passwordStrength.color === 'red' ? 'bg-[#ef4444] w-1/5' :
                           passwordStrength.color === 'yellow' ? 'bg-yellow-500 w-3/5' :
                           'bg-green-500 w-full'
                         }`}
                       />
                     </div>
                     <span className={`text-xs font-medium ${
-                      passwordStrength.color === 'red' ? 'text-red-400' :
+                      passwordStrength.color === 'red' ? 'text-[#f87171]' :
                       passwordStrength.color === 'yellow' ? 'text-yellow-400' :
                       'text-green-400'
                     }`}>
@@ -487,11 +686,11 @@ function RegisterContent() {
             {/* Confirm Password Input */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-2">
-                Confirm Password <span className="text-red-500">*</span>
+                Confirm Password <span className="text-[#ef4444]">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className={`w-5 h-5 ${touched.confirmPassword && errors.confirmPassword ? 'text-red-500' : 'text-gray-500'}`} />
+                  <Lock className={`w-5 h-5 ${touched.confirmPassword && errors.confirmPassword ? 'text-[#ef4444]' : 'text-gray-500'}`} />
                 </div>
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
@@ -502,7 +701,7 @@ function RegisterContent() {
                   disabled={isLoading}
                   className={`w-full pl-12 pr-12 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                     touched.confirmPassword && errors.confirmPassword
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/50'
+                      ? 'border-[#fca5a5] focus:border-[#ef4444] focus:ring-[#ef4444]/50'
                       : formData.confirmPassword && formData.confirmPassword === formData.password
                       ? 'border-green-300 focus:border-green-500 focus:ring-green-500/50'
                       : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/50'
@@ -519,7 +718,7 @@ function RegisterContent() {
                 </button>
               </div>
               {touched.confirmPassword && errors.confirmPassword && (
-                <p className="mt-1 text-xs text-red-500">{errors.confirmPassword}</p>
+                <p className="mt-1 text-xs text-[#ef4444]">{errors.confirmPassword}</p>
               )}
               {formData.confirmPassword && formData.confirmPassword === formData.password && !errors.password && (
                 <p className="mt-1 text-xs text-green-500 flex items-center gap-1">
@@ -540,7 +739,7 @@ function RegisterContent() {
                   onBlur={() => handleBlur('acceptTerms')}
                   disabled={isLoading}
                   className={`w-4 h-4 mt-0.5 rounded border-gray-300 bg-white text-blue-600 focus:ring-2 focus:ring-blue-500/50 ${
-                    touched.acceptTerms && errors.acceptTerms ? 'border-red-500' : ''
+                    touched.acceptTerms && errors.acceptTerms ? 'border-[#ef4444]' : ''
                   }`}
                 />
                 <label htmlFor="acceptTerms" className="ml-2 text-sm text-gray-600">
@@ -555,7 +754,7 @@ function RegisterContent() {
                 </label>
               </div>
               {touched.acceptTerms && errors.acceptTerms && (
-                <p className="mt-1 text-xs text-red-500 ml-6">{errors.acceptTerms}</p>
+                <p className="mt-1 text-xs text-[#ef4444] ml-6">{errors.acceptTerms}</p>
               )}
             </div>
 
@@ -563,7 +762,7 @@ function RegisterContent() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-3 ${currentRole.gradient} hover:opacity-90 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
+              className={`w-full py-3.5 ${currentRole.gradient} hover:opacity-90 rounded-2xl text-white font-black transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
             >
               {isLoading ? (
                 <>
@@ -578,51 +777,16 @@ function RegisterContent() {
               )}
             </button>
 
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-gray-50 text-gray-500">Or sign up with</span>
-              </div>
-            </div>
-
-            {/* Social Sign Up Buttons */}
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => handleSocialSignup('Google')}
-                disabled={isLoading}
-                className="py-3 px-4 bg-white border border-gray-200 rounded-xl text-gray-900 font-medium hover:bg-gray-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Google
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSocialSignup('LinkedIn')}
-                disabled={isLoading}
-                className="py-3 px-4 bg-white border border-gray-200 rounded-xl text-gray-900 font-medium hover:bg-gray-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                </svg>
-                LinkedIn
-              </button>
-            </div>
           </form>
+
+          {/* Sign in with Google / LinkedIn — creates the account on first use */}
+          <SocialAuthButtons role={role} disabled={isLoading} />
 
           {/* Sign In Link */}
           <div className="mt-6 text-center">
-            <p className="text-gray-500">
+            <p className="text-gray-500 text-sm">
               Already have an account?{' '}
-              <Link href={`/login?role=${role}`} className="text-blue-600 hover:text-blue-600 font-medium transition-colors">
+              <Link href={`/login?role=${role}`} className="text-blue-600 font-bold transition-colors hover:text-blue-700">
                 Sign in
               </Link>
             </p>
@@ -630,30 +794,13 @@ function RegisterContent() {
         </div>
 
         {/* Back to Home */}
-        <div className="mt-6 text-center">
-          <Link href="/" className="text-gray-500 hover:text-gray-900 transition-colors text-sm">
+        <div className="mt-5 text-center">
+          <Link href="/" className="text-gray-400 hover:text-gray-600 transition-colors text-sm">
             ← Back to home
           </Link>
         </div>
-      </div>
-
-      {/* CSS for animations */}
-      <style>{`
-        @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-      `}</style>
+        </div>{/* end max-w-md */}
+      </div>{/* end right panel */}
     </div>
   );
 }

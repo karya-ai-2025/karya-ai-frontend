@@ -1,8 +1,9 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import { trackEvent } from '@/services/analyticsApi';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 const AuthContext = createContext(null);
 
@@ -15,17 +16,35 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
+  // Start with SSR-safe defaults — both server and client render the same initial state,
+  // preventing hydration mismatches. localStorage is read only in useEffect (client-only).
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check if user is logged in on mount
+  // Runs only on the client after hydration
   useEffect(() => {
-    checkAuth();
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    // Restore from cache immediately — unblocks navbar/route-guards without any network wait
+    try {
+      const cached = localStorage.getItem('user');
+      if (cached) setUser(JSON.parse(cached));
+    } catch {}
+    setLoading(false); // render instantly from cache
+
+    // Background re-validate — abort cleanly on unmount (React Strict Mode safe)
+    const controller = new AbortController();
+    checkAuth(controller.signal);
+    return () => controller.abort('unmount');
   }, []);
 
   // Check authentication status
-  const checkAuth = async () => {
+  // signal is optional — pass one from useEffect for cleanup, omit for manual calls
+  const checkAuth = async (signal) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -36,23 +55,30 @@ export const AuthProvider = ({ children }) => {
       const response = await fetch(`${API_URL}/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        credentials: 'include'
+        credentials: 'include',
+        ...(signal ? { signal } : {}),
       });
 
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
-      } else {
+      } else if (response.status === 401) {
+        // Token is invalid/expired — clear and force fresh login
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
       }
+      // Any other status (5xx, etc.) — keep cached user, server may be temporarily down
     } catch (err) {
-      console.error('Auth check failed:', err);
-      setUser(null);
+      if (err.name === 'AbortError') {
+        // Component unmounted or navigation happened — silently keep cached user, do NOT clear token
+        return;
+      }
+      // Network error (backend unreachable) — keep cached user so user stays logged in
+      console.warn('Auth background check failed:', err.message);
     } finally {
       setLoading(false);
     }
@@ -69,19 +95,55 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ email, password, role })
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        const data = await response.json().catch(() => ({ message: 'Login failed' }));
+        throw new Error(data.message || `Login failed (${response.status})`);
       }
 
+      const data = await response.json();
+
+      localStorage.removeItem('myProjects'); // clear previous user's cached projects
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       setUser(data.user);
 
+      trackEvent('LOGIN_SUCCESS', { role });
       return { success: true, user: data.user };
     } catch (err) {
       setError(err.message);
+      trackEvent('LOGIN_FAILED', { email }, 'failure');
+      return { success: false, error: err.message };
+    }
+  };
+
+  // Finish a social sign-in (Google / LinkedIn). The backend hands the callback
+  // page a token; this stores it and loads the account it belongs to.
+  const loginWithToken = async (token) => {
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.user) {
+        throw new Error(data.message || 'Could not sign you in. Please try again.');
+      }
+
+      localStorage.removeItem('myProjects'); // clear previous user's cached projects
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      setUser(data.user);
+
+      trackEvent('LOGIN_SUCCESS', { role: data.user.activeRole, method: 'social' });
+      return { success: true, user: data.user };
+    } catch (err) {
+      setError(err.message);
+      trackEvent('LOGIN_FAILED', { method: 'social' }, 'failure');
       return { success: false, error: err.message };
     }
   };
@@ -107,6 +169,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(data.user));
       setUser(data.user);
 
+      trackEvent('SIGNUP', { role: data.user?.activeRole });
       return { success: true, user: data.user };
     } catch (err) {
       setError(err.message);
@@ -116,6 +179,7 @@ export const AuthProvider = ({ children }) => {
 
   // Logout function - callers handle navigation via their own useRouter
   const logout = async () => {
+    trackEvent('LOGOUT');
     try {
       const token = localStorage.getItem('token');
       await fetch(`${API_URL}/auth/logout`, {
@@ -131,6 +195,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('myProjects');
       setUser(null);
     }
   };
@@ -229,6 +294,94 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Change password (logged in user)
+  const changePassword = async (currentPassword, newPassword) => {
+    setError(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/auth/change-password`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to change password');
+      }
+
+      // Update token if returned
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      }
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setUser(data.user);
+      }
+
+      return { success: true };
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
+  // Deactivate account
+  const deactivateAccount = async (password) => {
+    setError(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/auth/deactivate`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to deactivate account');
+      }
+
+      // Clear local storage and user state
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
+
+      return { success: true };
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
+  // Resend verification email
+  const resendVerification = async () => {
+    try {
+      const response = await fetch(`${API_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: user?.email })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to resend verification');
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
   // Get auth header for API calls
   const getAuthHeader = () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -242,6 +395,22 @@ export const AuthProvider = ({ children }) => {
   const hasExpertProfile = user?.hasExpertProfile || false;
   const canSwitchRole = hasOwnerProfile && hasExpertProfile;
 
+  // ── Enterprise ──────────────────────────────────────────────────────────
+  // An individual account has no organization. An enterprise account carries
+  // `user.organization` — the company, this person's role in it, and the flat
+  // list of things that role may do.
+  const organization = user?.organization || null;
+  const isEnterprise = user?.accountType === 'enterprise' && !!organization;
+  const orgRole = organization?.role || null;
+
+  // May this person do this? Individuals own their account outright, so the
+  // answer is always yes; enterprise members are held to their role. This only
+  // decides what to SHOW — the backend checks every request independently.
+  const can = (capability) => {
+    if (!isEnterprise) return true;
+    return (organization.capabilities || []).includes(capability);
+  };
+
   const value = {
     user,
     loading,
@@ -251,12 +420,20 @@ export const AuthProvider = ({ children }) => {
     hasOwnerProfile,
     hasExpertProfile,
     canSwitchRole,
+    organization,
+    isEnterprise,
+    orgRole,
+    can,
     login,
+    loginWithToken,
     register,
     logout,
     switchRole,
     createProfile,
     updateProfile,
+    changePassword,
+    deactivateAccount,
+    resendVerification,
     checkAuth,
     getAuthHeader,
     setError

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, ArrowLeft, Search, Check, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { updateQuickWins, skipStep } from '@/services/onboardingApi';
+import { trackEvent } from '@/services/analyticsApi';
 
 function QuickWins() {
   const router = useRouter();
@@ -48,15 +49,16 @@ function QuickWins() {
       setIsLoading(true);
       await skipStep(7);
       // Navigate to dashboard
-      router.push('/business-dashboard');
+      router.replace('/business-dashboard');
     } catch (err) {
-      router.push('/business-dashboard');
+      router.replace('/business-dashboard');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleComplete = async () => {
+    trackEvent('ONBOARDING_COMPLETED', { role: 'owner' });
     setIsLoading(true);
     setError('');
 
@@ -78,7 +80,7 @@ function QuickWins() {
       }
 
       // Navigate to dashboard
-      router.push('/business-dashboard');
+      router.replace('/business-dashboard');
     } catch (err) {
       setError(err.message || 'Failed to complete setup. Please try again.');
     } finally {
@@ -87,7 +89,7 @@ function QuickWins() {
   };
 
   const handleBack = () => {
-    router.push('/onboarding-owner/marketing-activities');
+    router.back();
   };
 
   return (
@@ -96,7 +98,7 @@ function QuickWins() {
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-500">Step 7 of 7</span>
+            <span className="text-sm text-gray-500">Step 5 of 5</span>
             <span className="text-sm text-gray-500">100% Complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
